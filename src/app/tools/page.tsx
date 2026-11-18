@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Upload } from "lucide-react";
+import { CredentialsResultCard } from "@/components/CredentialsResultCard";
 import { useLanguage } from "@/components/LanguageProvider";
 import { CREDIT_PACKS } from "@/config/pricing";
 import { getFaqEntries } from "@/content/site-content";
@@ -202,7 +203,7 @@ export default function ToolsHomePage() {
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [quickResult, setQuickResult] = useState<InspectionResult | null>(null);
-  const [quickLoading, setQuickLoading] = useState(false);
+  const [quickStage, setQuickStage] = useState<"idle" | "reading" | "checking">("idle");
   const [exampleReport, setExampleReport] = useState<ExampleReport | null>(null);
 
   useEffect(() => {
@@ -216,15 +217,27 @@ export default function ToolsHomePage() {
 
   const inspectFile = async (file?: File | null) => {
     if (!file) return;
-    setQuickLoading(true);
+    setQuickStage("reading");
     try {
-      const res = await inspectBlob(file, file.name);
+      const res = await inspectBlob(file, file.name, (stage) => {
+        setQuickStage(stage);
+      });
       setQuickResult((prev) => {
         prev?.cleanup();
         return res;
       });
     } finally {
-      setQuickLoading(false);
+      setQuickStage("idle");
+    }
+  };
+
+  const resetQuickResult = () => {
+    setQuickResult((prev) => {
+      prev?.cleanup();
+      return null;
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -286,7 +299,11 @@ export default function ToolsHomePage() {
         >
           <Upload aria-hidden="true" className="mx-auto h-7 w-7 text-[var(--lime)]" />
           <p className="mt-2 text-sm font-semibold text-[var(--cream)]">
-            {quickLoading ? "Reading file…" : c.dropTitle}
+            {quickStage === "reading"
+              ? "Reading file…"
+              : quickStage === "checking"
+                ? "Checking credentials…"
+                : c.dropTitle}
           </p>
           <p className="mt-1 text-xs text-[var(--mint)]">{c.dropHint}</p>
           <label htmlFor={fileInputId} className="visually-hidden">
@@ -303,12 +320,7 @@ export default function ToolsHomePage() {
         </div>
 
         {quickResult && (
-          <div className="rounded-[20px] bg-[var(--cream)] text-[var(--plum)] p-4 text-xs space-y-1">
-            <p className="font-bold">
-              {quickResult.fileName}: {quickResult.statusHeadline}
-            </p>
-            <p>{quickResult.statusDetail}</p>
-          </div>
+          <CredentialsResultCard result={quickResult} onReset={resetQuickResult} />
         )}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">

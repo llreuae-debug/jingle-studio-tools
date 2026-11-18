@@ -7,4 +7,5 @@ export const SITE_CONFIG = {
   themeColor: "#3F113D",
   backgroundColor: "#F6FBDD",
   accentColor: "#B9D175",
+  synthIdHelpUrl: "https://support.google.com/gemini/answer/16722517?hl=en",
 };

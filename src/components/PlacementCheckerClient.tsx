@@ -15,6 +15,7 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import { CredentialsResultCard } from "@/components/CredentialsResultCard";
 import { useLanguage } from "@/components/LanguageProvider";
 import { PLACEMENT_SPECS, type PlacementId } from "@/config/platforms";
 import {
@@ -212,11 +213,11 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
   const cleanupRef = useRef<(() => void) | null>(null);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [stage, setStage] = useState<"idle" | "reading" | "checking">("idle");
+  const isLoading = stage !== "idle";
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [result, setResult] = useState<InspectionResult | null>(null);
   const [metrics, setMetrics] = useState<MediaMetrics>({});
-  const [selectedNode, setSelectedNode] = useState<ParsedManifestNode | null>(null);
   const [copied, setCopied] = useState(false);
   const [announcement, setAnnouncement] = useState("");
 
@@ -229,20 +230,24 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
   const handleFile = useCallback(
     async (file?: File | null) => {
       if (!file) return;
-      setIsLoading(true);
+      setStage("reading");
       setErrorMsg(null);
-      setAnnouncement(`Inspecting ${file.name}`);
+      setAnnouncement(`Reading ${file.name}`);
 
       try {
         const [inspection, measured] = await Promise.all([
-          inspectBlob(file, file.name),
+          inspectBlob(file, file.name, (s) => {
+            setStage(s);
+            if (s === "checking") {
+              setAnnouncement(`Checking credentials for ${file.name}`);
+            }
+          }),
           measureMediaLocally(file),
         ]);
         if (cleanupRef.current) cleanupRef.current();
         cleanupRef.current = inspection.cleanup;
         setResult(inspection);
         setMetrics(measured);
-        setSelectedNode(inspection.rootNode);
         setAnnouncement(`${file.name}: ${inspection.statusHeadline}`);
       } catch (err) {
         const msg =
@@ -252,7 +257,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
         setErrorMsg(msg);
         setAnnouncement(msg);
       } finally {
-        setIsLoading(false);
+        setStage("idle");
       }
     },
     []
@@ -265,8 +270,10 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
     }
     setResult(null);
     setMetrics({});
-    setSelectedNode(null);
     setErrorMsg(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const copyCaption = async () => {
@@ -279,7 +286,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
     }
   };
 
-  const activeNode = selectedNode || result?.rootNode || null;
+  const activeNode = result?.rootNode || null;
 
   // Format fit checks
   const sizeMb = result ? result.fileSize / (1024 * 1024) : 0;
@@ -361,7 +368,11 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
                 onClick={() => fileInputRef.current?.click()}
                 className="inline-flex items-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
               >
-                {isLoading ? t.check.reading : t.check.chooseFile}
+                {stage === "reading"
+                  ? "Reading file…"
+                  : stage === "checking"
+                    ? "Checking credentials…"
+                    : t.check.chooseFile}
               </button>
             </div>
 
@@ -384,261 +395,112 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
 
       {result && (
         <section aria-label="Inspection result" className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="filename text-base font-semibold text-[var(--color-ink)]">
-                <span>{splitFileName(result.fileName).stem}</span>
-                {splitFileName(result.fileName).ext}
-              </div>
-              <p className="text-xs text-[var(--color-muted)]">
-                {sizeMb.toFixed(2)} MB • {result.mimeType}
-                {metrics.width && metrics.height ? ` • ${metrics.width}×${metrics.height}` : ""}
-                {metrics.durationSec ? ` • ${metrics.durationSec.toFixed(1)}s` : ""}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={resetView}
-              className="rounded-lg border border-[var(--color-border)] bg-white px-3.5 py-2 text-sm font-medium text-[var(--color-ink)] hover:bg-slate-50"
-            >
-              {t.check.checkAnother}
-            </button>
-          </div>
+          <CredentialsResultCard result={result} onReset={resetView} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left column */}
-            <div className="lg:col-span-4 space-y-4">
-              <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white">
-                {result.mimeType.startsWith("image/") ? (
-                  <img
-                    src={result.previewUrl}
-                    alt={`Preview of ${result.fileName}`}
-                    className="w-full max-h-64 object-contain bg-slate-100"
-                  />
-                ) : result.mimeType.startsWith("video/") ? (
-                  <video
-                    src={result.previewUrl}
-                    controls
-                    className="w-full max-h-64 bg-black"
-                  />
-                ) : (
-                  <div className="h-40 flex items-center justify-center bg-slate-100 text-xs text-[var(--color-muted)]">
-                    Preview unavailable for {result.mimeType}
-                  </div>
-                )}
-              </div>
-
-              <StatusBanner
-                status={result.status}
-                headline={result.statusHeadline}
-                detail={result.statusDetail}
-              />
-
-              {/* Format fit */}
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 space-y-2.5 text-xs">
-                <h2 className="font-semibold text-sm text-[var(--color-ink)]">
-                  {t.check.formatFit}
-                </h2>
-                <ul className="space-y-1.5">
-                  <li className="flex items-center justify-between">
-                    <span>File type ({result.mimeType})</span>
-                    <span className={typeOk ? "text-[#16865B] font-medium" : "text-[#C78316] font-medium"}>
-                      {typeOk ? "Fit" : "Check format"}
-                    </span>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>Size ({sizeMb.toFixed(2)} / {spec.maxFileSizeMb} MB)</span>
-                    <span className={sizeOk ? "text-[#16865B] font-medium" : "text-[#C83C4D] font-medium"}>
-                      {sizeOk ? "Fit" : "Too large"}
-                    </span>
-                  </li>
-                  {spec.aspectRatioRange && metrics.aspectRatio && (
-                    <li className="flex items-center justify-between">
-                      <span>Aspect ({metrics.aspectRatio.toFixed(2)})</span>
-                      <span className={aspectOk ? "text-[#16865B] font-medium" : "text-[#C78316] font-medium"}>
-                        {aspectOk ? "Fit" : `Target ${spec.aspectRatioRange.label}`}
-                      </span>
-                    </li>
-                  )}
-                  {spec.maxDurationSec && metrics.durationSec !== undefined && (
-                    <li className="flex items-center justify-between">
-                      <span>Duration ({metrics.durationSec.toFixed(1)}s / {spec.maxDurationSec}s)</span>
-                      <span className={durationOk ? "text-[#16865B] font-medium" : "text-[#C83C4D] font-medium"}>
-                        {durationOk ? "Fit" : "Too long"}
-                      </span>
-                    </li>
-                  )}
-                </ul>
-              </div>
-
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-xs text-[var(--color-muted)] space-y-1.5">
-                <p className="font-semibold text-[var(--color-ink)]">{t.check.cannotProveTitle}</p>
-                <p>{t.check.cannotProveBody}</p>
-              </div>
-            </div>
-
-            {/* Centre column: Ingredient Tree */}
-            <div className="lg:col-span-4 rounded-xl border border-[var(--color-border)] bg-white p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-[var(--color-ink)]">
-                History &amp; Ingredients
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Format fit */}
+            <div className="glass-surface rounded-[28px] p-5 space-y-2.5 text-xs">
+              <h2 className="font-semibold text-sm text-[var(--plum)]">
+                {t.check.formatFit}
               </h2>
-              {result.rootNode ? (
-                <ul role="tree" aria-label="Credential ingredient tree" className="space-y-1.5">
-                  <IngredientTreeItem
-                    node={result.rootNode}
-                    selectedId={activeNode?.id || ""}
-                    onSelect={setSelectedNode}
-                  />
-                </ul>
-              ) : (
-                <p className="text-xs text-[var(--color-muted)]">
-                  No manifest history found in this file.
-                </p>
-              )}
+              <ul className="space-y-1.5">
+                <li className="flex items-center justify-between">
+                  <span>File type ({result.mimeType})</span>
+                  <span className={typeOk ? "text-[#16865B] font-medium" : "text-[#9A5D07] font-medium"}>
+                    {typeOk ? "Fit" : "Check format"}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>Size ({sizeMb.toFixed(2)} / {spec.maxFileSizeMb} MB)</span>
+                  <span className={sizeOk ? "text-[#16865B] font-medium" : "text-[#A32032] font-medium"}>
+                    {sizeOk ? "Fit" : "Too large"}
+                  </span>
+                </li>
+                {spec.aspectRatioRange && metrics.aspectRatio && (
+                  <li className="flex items-center justify-between">
+                    <span>Aspect ({metrics.aspectRatio.toFixed(2)})</span>
+                    <span className={aspectOk ? "text-[#16865B] font-medium" : "text-[#9A5D07] font-medium"}>
+                      {aspectOk ? "Fit" : `Target ${spec.aspectRatioRange.label}`}
+                    </span>
+                  </li>
+                )}
+                {spec.maxDurationSec && metrics.durationSec !== undefined && (
+                  <li className="flex items-center justify-between">
+                    <span>Duration ({metrics.durationSec.toFixed(1)}s / {spec.maxDurationSec}s)</span>
+                    <span className={durationOk ? "text-[#16865B] font-medium" : "text-[#A32032] font-medium"}>
+                      {durationOk ? "Fit" : "Too long"}
+                    </span>
+                  </li>
+                )}
+              </ul>
             </div>
 
-            {/* Right column: Details + Caption + Platform Steps + Labelled by Mistake */}
-            <div className="lg:col-span-4 space-y-3">
-              {activeNode && activeNode.hasCredentials && (
-                <>
-                  <details
-                    open
-                    className="rounded-xl border border-[var(--color-border)] bg-white p-4"
-                  >
-                    <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)]">
-                      Signing &amp; process
-                    </summary>
-                    <dl className="mt-3 space-y-2 text-xs">
-                      <div>
-                        <dt className="text-[var(--color-muted)]">Signer</dt>
-                        <dd className="font-medium text-[var(--color-ink)]">
-                          {activeNode.issuer || "Unknown / Unrecognized"}
-                        </dd>
-                      </div>
-                      {activeNode.signingTimeLocal && (
-                        <div>
-                          <dt className="text-[var(--color-muted)]">Signed (local time)</dt>
-                          <dd className="font-medium text-[var(--color-ink)]">
-                            {activeNode.signingTimeLocal}
-                          </dd>
-                        </div>
-                      )}
-                      {activeNode.claimGenerator && (
-                        <div>
-                          <dt className="text-[var(--color-muted)]">App / device</dt>
-                          <dd className="font-medium text-[var(--color-ink)]">
-                            {activeNode.claimGenerator}
-                          </dd>
-                        </div>
-                      )}
-                      {activeNode.creditInfo.author && (
-                        <div>
-                          <dt className="text-[var(--color-muted)]">
-                            Author (Self-declared)
-                          </dt>
-                          <dd className="font-medium text-[var(--color-ink)]">
-                            {activeNode.creditInfo.author}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </details>
+            {/* Recommended honest caption */}
+            <div className="glass-surface rounded-[28px] p-5 space-y-2.5">
+              <h2 className="font-semibold text-sm text-[var(--plum)]">
+                {t.check.captionTitle}
+              </h2>
+              <p className="rounded-[16px] bg-white/75 p-3 text-xs text-[var(--plum)]">
+                {spec.recommendedCaption[locale]}
+              </p>
+              <button
+                type="button"
+                onClick={copyCaption}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--plum)]/20 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+              >
+                {copied ? (
+                  <>
+                    <Check aria-hidden="true" className="h-3.5 w-3.5 text-[#16865B]" />
+                    {t.check.copied}
+                  </>
+                ) : (
+                  <>
+                    <Copy aria-hidden="true" className="h-3.5 w-3.5" />
+                    {t.check.copyCaption}
+                  </>
+                )}
+              </button>
+            </div>
 
-                  {activeNode.aiInfo.isAiGeneratedOrModified && (
-                    <details
-                      open
-                      className="rounded-xl border border-blue-200 bg-blue-50/50 p-4"
-                    >
-                      <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)] flex items-center gap-2">
-                        <Sparkles aria-hidden="true" className="h-4 w-4 text-[var(--color-blue)]" />
-                        AI information (Self-declared)
-                      </summary>
-                      <div className="mt-2 space-y-1 text-xs text-[var(--color-ink)]">
-                        {activeNode.aiInfo.digitalSourceTypes.length > 0 && (
-                          <p>Type: {activeNode.aiInfo.digitalSourceTypes.join(", ")}</p>
-                        )}
-                        {activeNode.aiInfo.tools.length > 0 && (
-                          <p>Tools: {activeNode.aiInfo.tools.join(", ")}</p>
-                        )}
-                      </div>
-                    </details>
-                  )}
-                </>
-              )}
+            {/* Platform AI label steps */}
+            <details open className="glass-surface rounded-[28px] p-5">
+              <summary className="cursor-pointer font-semibold text-sm text-[var(--plum)]">
+                {t.check.platformStepsTitle}
+              </summary>
+              <ol className="mt-3 space-y-1.5 text-xs text-[var(--plum-muted)] list-decimal list-inside">
+                {spec.platformSteps[locale].map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </details>
 
-              {/* Recommended honest caption */}
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 space-y-2.5">
-                <h2 className="font-semibold text-sm text-[var(--color-ink)]">
-                  {t.check.captionTitle}
-                </h2>
-                <p className="rounded-lg bg-[var(--color-surface)] p-3 text-xs text-[var(--color-ink)]">
-                  {spec.recommendedCaption[locale]}
-                </p>
-                <button
-                  type="button"
-                  onClick={copyCaption}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] hover:bg-slate-50"
+            {/* Labelled by mistake? */}
+            <details open className="glass-surface rounded-[28px] p-5">
+              <summary className="cursor-pointer font-semibold text-sm text-[var(--plum)] flex items-center gap-2">
+                <Info aria-hidden="true" className="h-4 w-4 text-[var(--plum)]" />
+                {t.check.labelledByMistakeTitle}
+              </summary>
+              <div className="mt-3 space-y-2.5 text-xs text-[var(--plum-muted)]">
+                <p>{t.check.labelledByMistakeIntro}</p>
+                {activeNode?.aiInfo.isAiGeneratedOrModified ? (
+                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-2.5 text-amber-950">
+                    Declared signals:{" "}
+                    {activeNode.aiInfo.digitalSourceTypes.join(", ") || "c2pa.ai-disclosure"}
+                  </div>
+                ) : (
+                  <p>{t.check.noSignalsFound}</p>
+                )}
+                <a
+                  href={spec.officialHelpUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--plum)] underline"
                 >
-                  {copied ? (
-                    <>
-                      <Check aria-hidden="true" className="h-3.5 w-3.5 text-[#16865B]" />
-                      {t.check.copied}
-                    </>
-                  ) : (
-                    <>
-                      <Copy aria-hidden="true" className="h-3.5 w-3.5" />
-                      {t.check.copyCaption}
-                    </>
-                  )}
-                </button>
+                  {spec.officialHelpLabel[locale]}
+                  <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+                </a>
               </div>
-
-              {/* Platform AI label steps */}
-              <details
-                open
-                className="rounded-xl border border-[var(--color-border)] bg-white p-4"
-              >
-                <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)]">
-                  {t.check.platformStepsTitle}
-                </summary>
-                <ol className="mt-3 space-y-1.5 text-xs text-[var(--color-muted)] list-decimal list-inside">
-                  {spec.platformSteps[locale].map((step, i) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ol>
-              </details>
-
-              {/* Labelled by mistake? */}
-              <details
-                open
-                className="rounded-xl border border-[var(--color-border)] bg-white p-4"
-              >
-                <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)] flex items-center gap-2">
-                  <Info aria-hidden="true" className="h-4 w-4 text-[var(--color-blue)]" />
-                  {t.check.labelledByMistakeTitle}
-                </summary>
-                <div className="mt-3 space-y-2.5 text-xs text-[var(--color-muted)]">
-                  <p>{t.check.labelledByMistakeIntro}</p>
-                  {activeNode?.aiInfo.isAiGeneratedOrModified ? (
-                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-2.5 text-amber-950">
-                      Declared signals:{" "}
-                      {activeNode.aiInfo.digitalSourceTypes.join(", ") || "c2pa.ai-disclosure"}
-                    </div>
-                  ) : (
-                    <p>{t.check.noSignalsFound}</p>
-                  )}
-                  <a
-                    href={spec.officialHelpUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 font-medium text-[var(--color-blue)] hover:underline"
-                  >
-                    {spec.officialHelpLabel[locale]}
-                    <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </details>
-            </div>
+            </details>
           </div>
         </section>
       )}

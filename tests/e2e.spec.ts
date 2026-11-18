@@ -202,3 +202,46 @@ for (const route of PUBLIC_ROUTES) {
     expect(errors).toEqual([]);
   });
 }
+
+test("CredentialsResultCard works in browser on /tools and check tool at mobile width without horizontal overflow", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/tools", { waitUntil: "networkidle" });
+
+  const fileInput = page.locator('input[type="file"]').first();
+  await fileInput.setInputFiles("public/favicon-96x96.png");
+
+  const card = page.getByRole("article", { name: "Credentials check result" });
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await expect(card).toContainText("No Content Credentials found");
+  await expect(card).toContainText(
+    "No declaration was found. This does not show how the file was made."
+  );
+  await expect(card).toContainText("Not checked here");
+  await expect(card.getByRole("link", { name: /How to check in Gemini/i })).toBeVisible();
+
+  await card.getByRole("button", { name: "View full report" }).click();
+  await expect(card).toContainText("File SHA-256 fingerprint");
+
+  const hasOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+  );
+  expect(hasOverflow).toBe(false);
+
+  // Also verify on /tools/content-credentials-check
+  await page.goto("/tools/content-credentials-check", { waitUntil: "networkidle" });
+  await page.locator('input[type="file"]').first().setInputFiles("public/favicon-96x96.png");
+  const checkCard = page.getByRole("article", { name: "Credentials check result" });
+  await expect(checkCard).toBeVisible({ timeout: 15000 });
+  await expect(checkCard).toContainText("No Content Credentials found");
+  await expect(checkCard.getByRole("link", { name: "Sign your own work" })).toBeVisible();
+
+  expect(errors).toEqual([]);
+});

@@ -26,6 +26,8 @@ export interface ParsedCreditInfo {
   website?: string;
   socialAccounts: string[];
   doNotTrain: boolean;
+  hasTrainingMiningDeclaration: boolean;
+  trainingPreferenceLabel?: string;
 }
 
 export interface ParsedManifestNode {
@@ -42,6 +44,7 @@ export interface ParsedManifestNode {
   aiInfo: ParsedAiInfo;
   creditInfo: ParsedCreditInfo;
   exifDetails: Record<string, string>;
+  captureDetails: Record<string, string>;
   hasCredentials: boolean;
   relationship?: string;
   ingredients: ParsedManifestNode[];
@@ -51,6 +54,7 @@ export interface InspectionResult {
   fileName: string;
   fileSize: number;
   mimeType: string;
+  sha256: string;
   previewUrl: string;
   status: VerificationStatusKind;
   statusHeadline: string;
@@ -58,6 +62,7 @@ export interface InspectionResult {
   validationErrors: string[];
   trustListSha256?: string;
   rootNode: ParsedManifestNode | null;
+  earlierManifests: ParsedManifestNode[];
   cleanup: () => void;
 }
 
@@ -144,7 +149,10 @@ function extractManifestDetails(manifest: any): Omit<
   let website: string | undefined;
   const socialAccounts: string[] = [];
   let doNotTrain = false;
+  let hasTrainingMiningDeclaration = false;
+  let trainingPreferenceLabel: string | undefined;
   const exifDetails: Record<string, string> = {};
+  const captureDetails: Record<string, string> = {};
 
   const assertions = Array.isArray(manifest?.assertions) ? manifest.assertions : [];
 
@@ -194,10 +202,18 @@ function extractManifestDetails(manifest: any): Omit<
       }
       if (data.url) website = String(data.url);
     } else if (label === "c2pa.training-mining" && data) {
+      hasTrainingMiningDeclaration = true;
       const entries = data.entries || {};
       const values = Object.values(entries) as Array<{ use?: string }>;
       if (values.some((v) => v?.use === "notAllowed")) {
         doNotTrain = true;
+        trainingPreferenceLabel = "Do not use for AI training (notAllowed)";
+      } else if (values.some((v) => v?.use === "constrained")) {
+        trainingPreferenceLabel = "Constrained AI training";
+      } else if (values.some((v) => v?.use === "allowed")) {
+        trainingPreferenceLabel = "AI training allowed";
+      } else {
+        trainingPreferenceLabel = "Declared";
       }
     } else if ((label === "stds.exif" || label === "exif") && data && typeof data === "object") {
       const interestingKeys = [
@@ -212,6 +228,12 @@ function extractManifestDetails(manifest: any): Omit<
       for (const key of interestingKeys) {
         if (data[key] !== undefined && data[key] !== null) {
           exifDetails[key.replace("exif:", "")] = String(data[key]);
+        }
+      }
+      for (const [key, val] of Object.entries(data)) {
+        if (val === undefined || val === null) continue;
+        if (/gps|location|lat|lon|altitude|datetimeoriginal|createdate/i.test(key)) {
+          captureDetails[key.replace(/^exif:/i, "")] = String(val);
         }
       }
     }
@@ -240,15 +262,28 @@ function extractManifestDetails(manifest: any): Omit<
       website,
       socialAccounts: Array.from(new Set(socialAccounts)),
       doNotTrain,
+      hasTrainingMiningDeclaration,
+      trainingPreferenceLabel,
     },
     exifDetails,
+    captureDetails,
   };
+}
+
+async function computeSha256Hex(blob: Blob): Promise<string> {
+  const buf = await blob.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function inspectBlob(
   blob: Blob,
-  fileName: string
+  fileName: string,
+  onStage?: (stage: "reading" | "checking") => void
 ): Promise<InspectionResult> {
+  onStage?.("reading");
   const objectUrls: string[] = [];
   const previewUrl = URL.createObjectURL(blob);
   objectUrls.push(previewUrl);
@@ -259,9 +294,13 @@ export async function inspectBlob(
     }
   };
 
-  const c2pa = await getC2pa();
-  const trust = await getActiveTrustList();
+  const [sha256, c2pa, trust] = await Promise.all([
+    computeSha256Hex(blob),
+    getC2pa(),
+    getActiveTrustList(),
+  ]);
 
+  onStage?.("checking");
   const reader = await Reader.fromBlob(
     c2pa,
     blob.type || undefined,
@@ -273,14 +312,16 @@ export async function inspectBlob(
       fileName,
       fileSize: blob.size,
       mimeType: blob.type || "unknown",
+      sha256,
       previewUrl,
       status: "none",
       statusHeadline: "No Content Credentials found",
       statusDetail:
-        "This file does not contain C2PA Content Credentials. This does not mean the file is human-made or unedited—credentials may never have been attached, or may have been stripped by a platform.",
+        "No declaration was found. This does not show how the file was made.",
       validationErrors: [],
       trustListSha256: trust.sha256 || undefined,
       rootNode: null,
+      earlierManifests: [],
       cleanup,
     };
   }
@@ -351,8 +392,13 @@ export async function inspectBlob(
               digitalSourceTypes: [],
               tools: [],
             },
-            creditInfo: { socialAccounts: [], doNotTrain: false },
+            creditInfo: {
+              socialAccounts: [],
+              doNotTrain: false,
+              hasTrainingMiningDeclaration: false,
+            },
             exifDetails: {},
+            captureDetails: {},
             hasCredentials: false,
             relationship: ing?.relationship,
             ingredients: [],
@@ -373,12 +419,23 @@ export async function inspectBlob(
 
     const rootNode = activeLabel ? await buildNode(activeLabel) : null;
 
+    const earlierManifests: ParsedManifestNode[] = [];
+    for (const label of Object.keys(manifests)) {
+      if (label === activeLabel) continue;
+      const node = await buildNode(label);
+      if (node) earlierManifests.push(node);
+    }
+
+    const validationStateInvalid =
+      String(store?.validation_state || "").toLowerCase() === "invalid";
     const hasUntrustedOnly =
+      !validationStateInvalid &&
       validationStatuses.length > 0 &&
       validationStatuses.every((s) =>
         (s.code || "").toLowerCase().includes("untrusted")
       );
-    const hasHardErrors = validationErrors.length > 0 && !hasUntrustedOnly;
+    const hasHardErrors =
+      validationStateInvalid || (validationErrors.length > 0 && !hasUntrustedOnly);
 
     let status: VerificationStatusKind = "verified";
     let statusHeadline = "Content Credentials valid";
@@ -390,18 +447,19 @@ export async function inspectBlob(
       status = "warning";
       statusHeadline = "Validation warning";
       statusDetail =
-        "The file or its Content Credentials failed one or more integrity checks.";
+        "The file or its record may have changed after signing. Your file was not changed.";
     } else if (hasUntrustedOnly || !rootNode?.issuer) {
       status = "unrecognized";
       statusHeadline = "Unrecognized signer";
       statusDetail =
-        "The signature is intact, but the signing certificate is not on the C2PA trust list.";
+        "The signature could not be matched to the trust list. Your file was not changed.";
     }
 
     return {
       fileName,
       fileSize: blob.size,
       mimeType: blob.type || "unknown",
+      sha256,
       previewUrl,
       status,
       statusHeadline,
@@ -409,6 +467,7 @@ export async function inspectBlob(
       validationErrors,
       trustListSha256: trust.sha256 || undefined,
       rootNode,
+      earlierManifests,
       cleanup,
     };
   } finally {
