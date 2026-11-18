@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { Reader } from "@contentauth/c2pa-node";
-import { signImageWithC2pa } from "@/lib/c2pa-server";
+import { readC2paStoreFromBuffer, signImageWithC2pa } from "@/lib/c2pa-server";
 
 const SAMPLE_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
@@ -25,12 +24,9 @@ export async function GET() {
     doNotTrain: true,
   });
 
-  const reader = await Reader.fromAsset({
-    buffer: signed.signedBuffer,
-    mimeType: "image/png",
-  });
-  const store = reader?.json();
-  const active = reader?.getActive();
+  const verified = await readC2paStoreFromBuffer(signed.signedBuffer, "image/png");
+  const store = verified?.store;
+  const active = verified?.activeManifest;
 
   cachedReport = {
     label: "Example file",

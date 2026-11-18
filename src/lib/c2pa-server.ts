@@ -3,7 +3,53 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { Builder, LocalSigner, Reader } from "@contentauth/c2pa-node";
+import { readManifestStoreWasm, signWithWasm } from "./c2pa-wasm-node";
+
+type C2paNodeModule = typeof import("@contentauth/c2pa-node");
+let cachedNativeC2pa: C2paNodeModule | null | undefined;
+
+async function getNativeC2pa(): Promise<C2paNodeModule | null> {
+  if (cachedNativeC2pa !== undefined) return cachedNativeC2pa;
+  try {
+    const mod = await import("@contentauth/c2pa-node");
+    // Probe native binary load (Reader.fromAsset on empty buffer triggers index.node load if lazy)
+    await mod.Reader.fromAsset({ buffer: Buffer.alloc(0), mimeType: "image/png" }).catch(
+      (err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (
+          msg.includes("GLIBCXX") ||
+          msg.includes(".node") ||
+          msg.includes("dlopen") ||
+          msg.includes("ERR_DLOPEN_FAILED")
+        ) {
+          throw err;
+        }
+      }
+    );
+    cachedNativeC2pa = mod;
+    return mod;
+  } catch {
+    cachedNativeC2pa = null;
+    return null;
+  }
+}
+
+export async function readC2paStoreFromBuffer(
+  buffer: Buffer,
+  mimeType: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<{ store: any; activeManifest: any } | null> {
+  const native = await getNativeC2pa();
+  if (native) {
+    const reader = await native.Reader.fromAsset({ buffer, mimeType });
+    if (!reader) return null;
+    return {
+      store: reader.json(),
+      activeManifest: reader.getActive(),
+    };
+  }
+  return readManifestStoreWasm(buffer, mimeType);
+}
 
 export type AiUseChoice =
   | "full_ai"
@@ -315,6 +361,30 @@ function getHardValidationErrors(store: any): string[] {
     .map((s) => s.explanation || s.code || "Validation failure");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isUntrustedOnlyStore(store: any): boolean {
+  const statuses: Array<{ code?: string }> = Array.isArray(store?.validation_status)
+    ? store.validation_status
+    : [];
+  return (
+    statuses.length > 0 &&
+    statuses.every((s) => {
+      const code = (s.code || "").toLowerCase();
+      return (
+        code === "signingcredential.untrusted" ||
+        code === "signingcredential.ocsp.skipped" ||
+        code.startsWith("claimsignature.") ||
+        code.startsWith("assertion.")
+      );
+    })
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasInvalidState(store: any): boolean {
+  return store?.validation_state === "Invalid" && !isUntrustedOnlyStore(store);
+}
+
 export async function signImageWithC2pa(params: SignInputParams): Promise<SignOutputResult> {
   const mapping = mapDisclosure(params.aiUse);
 
@@ -326,16 +396,13 @@ export async function signImageWithC2pa(params: SignInputParams): Promise<SignOu
   }
 
   // 1. Inspect existing credentials (G2, G3, G4)
-  const existingReader = await Reader.fromAsset({
-    buffer: params.buffer,
-    mimeType: params.mimeType,
-  });
+  const existing = await readC2paStoreFromBuffer(params.buffer, params.mimeType);
 
   let hadParentIngredient = false;
-  if (existingReader) {
-    const store = existingReader.json();
+  if (existing) {
+    const store = existing.store;
     const hardErrors = getHardValidationErrors(store);
-    if (hardErrors.length > 0 || store.validation_state === "Invalid") {
+    if (hardErrors.length > 0 || hasInvalidState(store)) {
       throw new SigningError(
         "ERR_INVALID_EXISTING_CREDENTIALS",
         `Existing Content Credentials failed validation: ${hardErrors.join("; ") || "Invalid manifest"}`
@@ -352,9 +419,9 @@ export async function signImageWithC2pa(params: SignInputParams): Promise<SignOu
     hadParentIngredient = true;
   }
 
-  // 2. Build new manifest
+  // 2. Build new manifest & sign
   const signingTimeIso = new Date().toISOString();
-  const builder = await Builder.withJsonAsync({
+  const manifestDefinition = {
     title: params.fileName,
     format: params.mimeType,
     claim_generator_info: [
@@ -395,68 +462,91 @@ export async function signImageWithC2pa(params: SignInputParams): Promise<SignOu
           ]
         : []),
     ],
-  });
-
-  if (existingReader) {
-    const parentLabel = "parent-ingredient";
-    await builder.addIngredient(
-      JSON.stringify({
-        title: params.fileName,
-        label: parentLabel,
-        relationship: "parentOf",
-      }),
-      { buffer: params.buffer, mimeType: params.mimeType }
-    );
-    builder.addAction(
-      JSON.stringify({
-        action: "c2pa.opened",
-        when: signingTimeIso,
-        softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
-        parameters: {
-          ingredientIds: [parentLabel],
-        },
-      })
-    );
-  } else if (mapping.actionName !== "c2pa.created") {
-    builder.addAction(
-      JSON.stringify({
-        action: "c2pa.created",
-        when: signingTimeIso,
-        softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
-        digitalSourceType: mapping.digitalSourceType,
-      })
-    );
-  }
-
-  const actionPayload: Record<string, unknown> = {
-    action: mapping.actionName,
-    when: signingTimeIso,
-    softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
-    digitalSourceType: mapping.digitalSourceType,
   };
 
-  if (mapping.requiresAiAssertion) {
-    builder.addAssertion("c2pa.ai-disclosure", {
-      modelType: params.modelType!.trim(),
-      ...(params.modelName?.trim() ? { modelName: params.modelName.trim() } : {}),
-      declaredBy: "self-declared",
+  const { cert, key, isTestSignature } = await getSigningCredentials();
+  const native = await getNativeC2pa();
+  let signedBuffer: Buffer | null = null;
+
+  if (native) {
+    const builder = await native.Builder.withJsonAsync(manifestDefinition);
+
+    if (existing) {
+      const parentLabel = "parent-ingredient";
+      await builder.addIngredient(
+        JSON.stringify({
+          title: params.fileName,
+          label: parentLabel,
+          relationship: "parentOf",
+        }),
+        { buffer: params.buffer, mimeType: params.mimeType }
+      );
+      builder.addAction(
+        JSON.stringify({
+          action: "c2pa.opened",
+          when: signingTimeIso,
+          softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
+          parameters: {
+            ingredientIds: [parentLabel],
+          },
+        })
+      );
+    } else if (mapping.actionName !== "c2pa.created") {
+      builder.addAction(
+        JSON.stringify({
+          action: "c2pa.created",
+          when: signingTimeIso,
+          softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
+          digitalSourceType: mapping.digitalSourceType,
+        })
+      );
+    }
+
+    const actionPayload: Record<string, unknown> = {
+      action: mapping.actionName,
+      when: signingTimeIso,
+      softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
+      digitalSourceType: mapping.digitalSourceType,
+    };
+
+    if (mapping.requiresAiAssertion) {
+      builder.addAssertion("c2pa.ai-disclosure", {
+        modelType: params.modelType!.trim(),
+        ...(params.modelName?.trim() ? { modelName: params.modelName.trim() } : {}),
+        declaredBy: "self-declared",
+      });
+    }
+
+    builder.addAction(JSON.stringify(actionPayload));
+
+    const tsaUrl = process.env.C2PA_TSA_URL || undefined;
+    const signer = native.LocalSigner.newSigner(cert, key, "es256", tsaUrl);
+
+    const output: { buffer: Buffer | null } = { buffer: null };
+    builder.sign(
+      signer,
+      { buffer: params.buffer, mimeType: params.mimeType },
+      output
+    );
+    signedBuffer = output.buffer;
+  } else {
+    signedBuffer = await signWithWasm({
+      buffer: params.buffer,
+      mimeType: params.mimeType,
+      fileName: params.fileName,
+      manifestDefinition,
+      hasExistingCredentials: Boolean(existing),
+      signingTimeIso,
+      actionName: mapping.actionName,
+      digitalSourceType: mapping.digitalSourceType,
+      requiresAiAssertion: mapping.requiresAiAssertion,
+      modelType: params.modelType,
+      modelName: params.modelName,
+      certPem: cert.toString("utf8"),
+      keyPem: key.toString("utf8"),
     });
   }
 
-  builder.addAction(JSON.stringify(actionPayload));
-
-  // 3. Sign
-  const { cert, key, isTestSignature } = await getSigningCredentials();
-  const tsaUrl = process.env.C2PA_TSA_URL || undefined;
-  const signer = LocalSigner.newSigner(cert, key, "es256", tsaUrl);
-
-  const output: { buffer: Buffer | null } = { buffer: null };
-  builder.sign(
-    signer,
-    { buffer: params.buffer, mimeType: params.mimeType },
-    output
-  );
-  const signedBuffer = output.buffer;
   if (!signedBuffer) {
     throw new SigningError(
       "ERR_SIGNING_FAILED",
@@ -465,21 +555,18 @@ export async function signImageWithC2pa(params: SignInputParams): Promise<SignOu
   }
 
   // 4. Post-sign validation (failed files are never delivered)
-  const verifyReader = await Reader.fromAsset({
-    buffer: signedBuffer,
-    mimeType: params.mimeType,
-  });
+  const verified = await readC2paStoreFromBuffer(signedBuffer, params.mimeType);
 
-  if (!verifyReader) {
+  if (!verified) {
     throw new SigningError(
       "ERR_POST_SIGN_VALIDATION_FAILED",
       "Signed file could not be read back for post-sign validation."
     );
   }
 
-  const verifyStore = verifyReader.json();
+  const verifyStore = verified.store;
   const postErrors = getHardValidationErrors(verifyStore);
-  if (postErrors.length > 0 || verifyStore.validation_state === "Invalid") {
+  if (postErrors.length > 0 || hasInvalidState(verifyStore)) {
     throw new SigningError(
       "ERR_POST_SIGN_VALIDATION_FAILED",
       `Post-sign validation failed: ${postErrors.join("; ") || "Invalid manifest"}`
@@ -487,7 +574,7 @@ export async function signImageWithC2pa(params: SignInputParams): Promise<SignOu
   }
 
   const outputSha256 = crypto.createHash("sha256").update(signedBuffer).digest("hex");
-  const activeManifest = verifyReader.getActive();
+  const activeManifest = verified.activeManifest;
   const signerName =
     activeManifest?.signature_info?.issuer ||
     (isTestSignature ? "Jingle Studio Dev Test Signer" : "Jingle Studio");

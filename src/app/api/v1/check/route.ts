@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Reader } from "@contentauth/c2pa-node";
 import { authenticateApiKey } from "@/lib/api-keys";
+import { readC2paStoreFromBuffer } from "@/lib/c2pa-server";
 import { detectRealMimeType } from "@/lib/security";
 
 const MAX_CHECK_BYTES = 25 * 1024 * 1024;
@@ -46,18 +46,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Read credentials without storing the file
-  const reader = await Reader.fromAsset({ buffer, mimeType });
-  if (!reader) {
+  const result = await readC2paStoreFromBuffer(buffer, mimeType);
+  if (!result) {
     return NextResponse.json({
       hasCredentials: false,
       status: "none",
-      note: "No Content Credentials found. This does not mean the file is human-made or unedited.",
+      note: "No Content Credentials found. This does not show how the file was made.",
       manifestStore: null,
     });
   }
 
-  const store = reader.json();
-  const active = reader.getActive();
+  const { store, activeManifest: active } = result;
   return NextResponse.json({
     hasCredentials: true,
     status: store.validation_state === "Invalid" ? "warning" : "signed",

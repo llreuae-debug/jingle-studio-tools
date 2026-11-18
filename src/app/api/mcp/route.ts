@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { Reader } from "@contentauth/c2pa-node";
 import { getDb, schema } from "@/db";
 import { authenticateApiKey } from "@/lib/api-keys";
-import type { AiUseChoice } from "@/lib/c2pa-server";
+import { readC2paStoreFromBuffer, type AiUseChoice } from "@/lib/c2pa-server";
 import { getWorkspaceBalance } from "@/lib/credits";
 import { detectRealMimeType } from "@/lib/security";
 import {
@@ -151,17 +150,17 @@ export async function POST(req: NextRequest) {
           },
         });
       }
-      const reader = await Reader.fromAsset({ buffer: buf, mimeType });
-      const payload = reader
+      const result = await readC2paStoreFromBuffer(buf, mimeType);
+      const payload = result
         ? {
             hasCredentials: true,
-            validationState: reader.json().validation_state,
-            signer: reader.getActive()?.signature_info?.issuer || null,
-            manifestStore: reader.json(),
+            validationState: result.store.validation_state,
+            signer: result.activeManifest?.signature_info?.issuer || null,
+            manifestStore: result.store,
           }
         : {
             hasCredentials: false,
-            note: "No Content Credentials found. This does not mean the file is human-made or unedited.",
+            note: "No Content Credentials found. This does not show how the file was made.",
           };
       return NextResponse.json({
         jsonrpc: "2.0",
