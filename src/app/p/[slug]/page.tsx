@@ -55,7 +55,7 @@ export default async function PublicProofPage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 sm:p-8 space-y-5">
+      <div className="glass-surface p-6 sm:p-8 space-y-5">
         <div className="flex items-center gap-2.5 text-[#16865B]">
           <ShieldCheck aria-hidden="true" className="h-6 w-6" />
           <span className="text-xs font-semibold uppercase tracking-wider">

@@ -95,27 +95,27 @@ function StatusBanner({
 }) {
   const styles: Record<VerificationStatusKind, { wrap: string; icon: React.ReactNode }> = {
     verified: {
-      wrap: "border-[#16865B]/30 bg-emerald-50 text-emerald-950",
-      icon: <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-[#16865B]" />,
+      wrap: "border-[rgba(63,17,61,0.18)] bg-[var(--mint)] text-[var(--plum)]",
+      icon: <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--plum)]" />,
     },
     unrecognized: {
-      wrap: "border-[#C78316]/30 bg-amber-50 text-amber-950",
-      icon: <ShieldQuestion aria-hidden="true" className="h-5 w-5 shrink-0 text-[#C78316]" />,
+      wrap: "border-[rgba(63,17,61,0.18)] bg-[var(--lime)]/70 text-[var(--plum)]",
+      icon: <ShieldQuestion aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--plum)]" />,
     },
     warning: {
-      wrap: "border-[#C83C4D]/30 bg-rose-50 text-rose-950",
-      icon: <ShieldAlert aria-hidden="true" className="h-5 w-5 shrink-0 text-[#C83C4D]" />,
+      wrap: "border-[#a32032]/35 bg-rose-100/90 text-[var(--plum)]",
+      icon: <ShieldAlert aria-hidden="true" className="h-5 w-5 shrink-0 text-[#a32032]" />,
     },
     none: {
-      wrap: "border-[var(--color-border)] bg-slate-100 text-[var(--color-ink)]",
-      icon: <HelpCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--color-muted)]" />,
+      wrap: "border-[var(--glass-border)] bg-[var(--glass-fill)] text-[var(--plum)]",
+      icon: <HelpCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--plum-muted)]" />,
     },
   };
 
   const current = styles[status];
 
   return (
-    <div className={`rounded-xl border p-4 flex items-start gap-3 ${current.wrap}`}>
+    <div className={`rounded-[20px] border p-4 flex items-start gap-3 ${current.wrap}`}>
       {current.icon}
       <div className="min-w-0">
         <p className="font-semibold text-sm">{headline}</p>
@@ -304,18 +304,18 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
       </div>
 
       <section className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]">
-          <span className="rounded-full bg-[var(--color-navy)] px-2.5 py-0.5 font-medium text-white">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--plum-muted)]">
+          <span className="rounded-full bg-[var(--plum)] px-3 py-0.5 font-semibold text-[var(--lime)]">
             {spec.platformName}
           </span>
           <span>
             {t.check.lastChecked}: {spec.lastChecked}
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-ink)]">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--plum)]">
           {spec.title[locale]}
         </h1>
-        <p className="text-sm sm:text-base text-[var(--color-muted)] max-w-2xl">
+        <p className="text-sm sm:text-base text-[var(--plum-muted)] max-w-2xl">
           {spec.subtitle[locale]}
         </p>
       </section>
@@ -333,17 +333,15 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
               setIsDragging(false);
               handleFile(e.dataTransfer.files?.[0]);
             }}
-            className={`rounded-2xl border-2 border-dashed p-8 sm:p-12 text-center transition-colors ${
-              isDragging
-                ? "border-[var(--color-blue)] bg-blue-50/70"
-                : "border-[var(--color-border)] bg-white"
+            className={`glass-surface p-8 sm:p-12 text-center transition-colors ${
+              isDragging ? "ring-2 ring-[var(--plum)] bg-[var(--mint)]/70" : ""
             }`}
           >
-            <Upload aria-hidden="true" className="mx-auto h-10 w-10 text-[var(--color-blue)]" />
-            <h2 className="mt-4 text-lg font-semibold text-[var(--color-ink)]">
+            <Upload aria-hidden="true" className="mx-auto h-10 w-10 text-[var(--plum)]" />
+            <h2 className="mt-4 text-lg font-semibold text-[var(--plum)]">
               {t.check.dropTitle}
             </h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">{t.check.dropSubtitle}</p>
+            <p className="mt-1 text-sm text-[var(--plum-muted)]">{t.check.dropSubtitle}</p>
 
             <div className="mt-6">
               <label htmlFor={fileInputId} className="visually-hidden">
@@ -361,13 +359,13 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
                 type="button"
                 disabled={isLoading}
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-blue)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-electric)] disabled:opacity-60"
+                className="inline-flex items-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
               >
                 {isLoading ? t.check.reading : t.check.chooseFile}
               </button>
             </div>
 
-            <p className="mt-5 text-xs text-[var(--color-muted)]">
+            <p className="mt-5 text-xs text-[var(--plum-muted)]">
               Supported: {spec.recommendedFormatsLabel}
             </p>
           </div>

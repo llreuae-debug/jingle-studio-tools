@@ -15,6 +15,34 @@ const PUBLIC_ROUTES = [
   "/login",
 ];
 
+test("GlassTabs keyboard navigation and drag work without console errors", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/tools", { waitUntil: "domcontentloaded" });
+
+  const tablist = page.getByRole("tablist", { name: "Main tools navigation" });
+  await expect(tablist).toBeVisible();
+
+  const tabs = tablist.getByRole("tab");
+  await expect(tabs).toHaveCount(4);
+
+  // Keyboard ArrowRight + End + Home
+  await tabs.first().focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("End");
+  await expect(tabs.nth(3)).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Home");
+  await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+
+  expect(errors).toEqual([]);
+});
+
 test("GET /api/health returns ok and connected DB", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.status()).toBe(200);

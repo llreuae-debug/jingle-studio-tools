@@ -4,7 +4,7 @@ export const metadata = {
 
 export default function AcceptableUsePage() {
   return (
-    <article className="max-w-3xl space-y-5 bg-white rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
+    <article className="max-w-3xl space-y-5 glass-surface p-6 sm:p-8">
       <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-medium text-amber-900">
         Draft for legal review before production launch.
       </div>

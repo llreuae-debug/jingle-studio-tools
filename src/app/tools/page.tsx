@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { CREDIT_PACKS } from "@/config/pricing";
+import { handleCardPointerMove } from "@/lib/pointer-glow";
 
 const TOOL_CARDS = [
   {
@@ -109,33 +110,33 @@ export default function ToolsLandingPage() {
   };
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      {/* Hero */}
-      <section className="rounded-2xl bg-[var(--color-midnight)] text-white p-8 sm:p-12 space-y-6">
-        <span className="inline-block rounded-full bg-[var(--color-blue)]/20 border border-[var(--color-electric)]/40 px-3 py-1 text-xs font-semibold text-[#8EC5FF]">
+      {/* Hero (Plum dark section with Cream & Lime text) */}
+      <section className="rounded-[28px] bg-[var(--plum)] text-[var(--cream)] p-8 sm:p-12 space-y-6 shadow-[var(--glass-shadow)]">
+        <span className="inline-block rounded-full bg-[var(--lime)] px-3.5 py-1 text-xs font-semibold text-[var(--plum)]">
           {t.tools.badge}
         </span>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-3xl">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-3xl text-[var(--cream)]">
           {t.tools.heroTitle}
         </h1>
-        <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
+        <p className="text-sm sm:text-base text-[var(--mint)] max-w-2xl leading-relaxed">
           {t.tools.heroSubtitle}
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Link
             href="/tools/content-credentials-check"
-            className="rounded-lg bg-[var(--color-blue)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-electric)]"
+            className="btn-lime px-5 py-2.5 text-sm font-semibold"
           >
             {t.tools.ctaPrimary}
           </Link>
           <Link
             href="/pricing"
-            className="rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+            className="rounded-full border border-[var(--lime)]/50 px-5 py-2.5 text-sm font-semibold text-[var(--cream)] hover:bg-white/10"
           >
             {t.tools.ctaSecondary}
           </Link>
@@ -144,28 +145,27 @@ export default function ToolsLandingPage() {
 
       {/* Tool cards */}
       <section aria-label="Available tools" className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--color-ink)]">Tools</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="text-xl font-bold text-[var(--plum)]">Tools</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {TOOL_CARDS.map((card) => {
             const Icon = card.icon;
             return (
               <Link
                 key={card.href}
                 href={card.href}
-                className="group rounded-xl border border-[var(--color-border)] bg-white p-5 space-y-3 hover:border-[var(--color-blue)] transition-colors"
+                onPointerMove={handleCardPointerMove}
+                className="glass-surface glass-card-interactive p-6 space-y-3 block"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-surface)] text-[var(--color-blue)]">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--mint)] text-[var(--plum)]">
                     <Icon aria-hidden="true" className="h-5 w-5" />
                   </span>
-                  <span className="rounded-full bg-[var(--color-surface)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-muted)]">
+                  <span className="rounded-full bg-[var(--lime)] px-3 py-0.5 text-[11px] font-semibold text-[var(--plum)]">
                     {card.badge[locale]}
                   </span>
                 </div>
-                <h3 className="font-semibold text-[var(--color-ink)] group-hover:text-[var(--color-blue)]">
-                  {card.title[locale]}
-                </h3>
-                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+                <h3 className="font-semibold text-[var(--plum)]">{card.title[locale]}</h3>
+                <p className="text-xs text-[var(--plum-muted)] leading-relaxed">
                   {card.desc[locale]}
                 </p>
               </Link>
@@ -176,10 +176,8 @@ export default function ToolsLandingPage() {
 
       {/* How it works */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--color-ink)]">
-          {t.tools.howItWorksTitle}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-xl font-bold text-[var(--plum)]">{t.tools.howItWorksTitle}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             {
               step: "1",
@@ -197,43 +195,38 @@ export default function ToolsLandingPage() {
               body: "Download C2PA-signed files individually or as a ZIP, and optionally publish a revocable public proof page.",
             },
           ].map((item) => (
-            <div
-              key={item.step}
-              className="rounded-xl border border-[var(--color-border)] bg-white p-5 space-y-2"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-navy)] text-white text-xs font-bold">
+            <div key={item.step} className="glass-surface p-6 space-y-2.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--plum)] text-[var(--lime)] text-xs font-bold">
                 {item.step}
               </span>
-              <h3 className="font-semibold text-sm text-[var(--color-ink)]">{item.title}</h3>
-              <p className="text-xs text-[var(--color-muted)] leading-relaxed">{item.body}</p>
+              <h3 className="font-semibold text-sm text-[var(--plum)]">{item.title}</h3>
+              <p className="text-xs text-[var(--plum-muted)] leading-relaxed">{item.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* What results can and cannot prove */}
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 sm:p-8 space-y-5">
-        <h2 className="text-xl font-bold text-[var(--color-ink)]">
-          {t.tools.whatItProvesTitle}
-        </h2>
+      <section className="glass-surface p-6 sm:p-8 space-y-5">
+        <h2 className="text-xl font-bold text-[var(--plum)]">{t.tools.whatItProvesTitle}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2.5">
-            <h3 className="text-sm font-semibold text-[#16865B] flex items-center gap-2">
-              <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
+          <div className="rounded-[20px] bg-[var(--mint)]/70 p-5 space-y-2.5">
+            <h3 className="text-sm font-semibold text-[var(--plum)] flex items-center gap-2">
+              <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-[var(--plum)]" />
               What it can show
             </h3>
-            <ul className="space-y-2 text-xs text-[var(--color-ink)]">
+            <ul className="space-y-2 text-xs text-[var(--plum)]">
               {t.tools.whatItProvesYes.map((line, i) => (
                 <li key={i}>• {line}</li>
               ))}
             </ul>
           </div>
-          <div className="space-y-2.5">
-            <h3 className="text-sm font-semibold text-[#C78316] flex items-center gap-2">
-              <ShieldAlert aria-hidden="true" className="h-4 w-4" />
+          <div className="rounded-[20px] bg-[var(--lime)]/45 p-5 space-y-2.5">
+            <h3 className="text-sm font-semibold text-[var(--plum)] flex items-center gap-2">
+              <ShieldAlert aria-hidden="true" className="h-4 w-4 text-[var(--plum)]" />
               What it cannot prove
             </h3>
-            <ul className="space-y-2 text-xs text-[var(--color-ink)]">
+            <ul className="space-y-2 text-xs text-[var(--plum)]">
               {t.tools.whatItProvesNo.map((line, i) => (
                 <li key={i}>• {line}</li>
               ))}
@@ -245,30 +238,26 @@ export default function ToolsLandingPage() {
       {/* Pricing summary */}
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-[var(--color-ink)]">
-            {t.tools.pricingTitle}
-          </h2>
-          <Link
-            href="/pricing"
-            className="text-sm font-medium text-[var(--color-blue)] hover:underline"
-          >
+          <h2 className="text-xl font-bold text-[var(--plum)]">{t.tools.pricingTitle}</h2>
+          <Link href="/pricing" className="text-sm font-semibold text-[var(--plum)] underline">
             See full pricing
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {CREDIT_PACKS.map((pack) => (
             <div
               key={pack.id}
-              className="rounded-xl border border-[var(--color-border)] bg-white p-5 space-y-2"
+              onPointerMove={handleCardPointerMove}
+              className="glass-surface glass-card-interactive p-6 space-y-2"
             >
-              <h3 className="font-semibold text-[var(--color-ink)]">{pack.name}</h3>
-              <p className="text-2xl font-bold text-[var(--color-midnight)]">
+              <h3 className="font-semibold text-[var(--plum)]">{pack.name}</h3>
+              <p className="text-2xl font-bold text-[var(--plum)]">
                 ${(pack.amountCents / 100).toFixed(0)}{" "}
-                <span className="text-xs font-normal text-[var(--color-muted)]">
+                <span className="text-xs font-normal text-[var(--plum-muted)]">
                   / {pack.credits} credits
                 </span>
               </p>
-              <p className="text-xs text-[var(--color-muted)]">{pack.description}</p>
+              <p className="text-xs text-[var(--plum-muted)]">{pack.description}</p>
             </div>
           ))}
         </div>
@@ -276,38 +265,28 @@ export default function ToolsLandingPage() {
 
       {/* FAQ */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--color-ink)]">
-          {t.tools.faqTitle}
-        </h2>
+        <h2 className="text-xl font-bold text-[var(--plum)]">{t.tools.faqTitle}</h2>
         <div className="space-y-3">
           {FAQS.map((item, idx) => (
-            <details
-              key={idx}
-              className="rounded-xl border border-[var(--color-border)] bg-white p-4"
-            >
-              <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)]">
+            <details key={idx} className="glass-surface p-5">
+              <summary className="cursor-pointer font-semibold text-sm text-[var(--plum)]">
                 {item.q}
               </summary>
-              <p className="mt-2 text-xs text-[var(--color-muted)] leading-relaxed">
-                {item.a}
-              </p>
+              <p className="mt-2 text-xs text-[var(--plum-muted)] leading-relaxed">{item.a}</p>
             </details>
           ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section className="rounded-2xl bg-[var(--color-navy)] text-white p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <section className="rounded-[28px] bg-[var(--plum)] text-[var(--cream)] p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[var(--glass-shadow)]">
         <div className="space-y-1">
           <h2 className="text-lg font-bold">Ready to check or sign your media?</h2>
-          <p className="text-xs text-slate-300">
+          <p className="text-xs text-[var(--mint)]">
             Free checks require no account. Sign in to batch-sign up to 50 files at a time.
           </p>
         </div>
-        <Link
-          href="/tools/ai-disclosure-signer"
-          className="rounded-lg bg-[var(--color-blue)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-electric)]"
-        >
+        <Link href="/tools/ai-disclosure-signer" className="btn-lime px-5 py-2.5 text-sm font-semibold">
           Open AI Disclosure Signer
         </Link>
       </section>

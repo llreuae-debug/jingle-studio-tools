@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppFooter, AppHeader } from "@/components/AppChrome";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { MeshFlow } from "@/components/MeshFlow";
 import { auth } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import "./globals.css";
@@ -39,13 +40,14 @@ export default async function RootLayout({
 
   return (
     <html lang={initialLocale} className={inter.variable}>
-      <body className="min-h-screen flex flex-col bg-[var(--color-surface)] text-[var(--color-ink)] antialiased">
+      <body className="relative min-h-screen flex flex-col bg-[var(--cream)] text-[var(--plum)] antialiased">
+        <MeshFlow />
         <LanguageProvider initialLocale={initialLocale}>
           <a href="#main-content" className="skip-link">
             Skip to main content
           </a>
           <AppHeader userEmail={userEmail} userRole={userRole} />
-          <main id="main-content" className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+          <main id="main-content" className="relative z-10 flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
             {children}
           </main>
           <AppFooter />

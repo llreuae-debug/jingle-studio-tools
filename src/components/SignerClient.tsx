@@ -186,33 +186,33 @@ export function SignerClient({
       {isTestMode && (
         <div
           role="status"
-          className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-950 flex items-center gap-2.5"
+          className="rounded-[20px] border border-[rgba(63,17,61,0.18)] bg-[var(--lime)]/75 px-4 py-3 text-xs font-semibold text-[var(--plum)] flex items-center gap-2.5"
         >
-          <Info aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C78316]" />
+          <Info aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--plum)]" />
           <span>{t.signer.testBanner}</span>
         </div>
       )}
 
       <section className="space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-ink)]">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--plum)]">
             {t.signer.title}
           </h1>
           {isAuthenticated && (
-            <span className="rounded-full bg-[var(--color-navy)] px-3 py-1 text-xs font-semibold text-white">
+            <span className="rounded-full bg-[var(--plum)] px-3.5 py-1 text-xs font-semibold text-[var(--lime)]">
               Balance: {creditBalance} credits
             </span>
           )}
         </div>
-        <p className="text-sm text-[var(--color-muted)]">{t.signer.subtitle}</p>
+        <p className="text-sm text-[var(--plum-muted)]">{t.signer.subtitle}</p>
       </section>
 
       {!isAuthenticated && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs text-[var(--color-ink)] flex flex-wrap items-center justify-between gap-3">
+        <div className="glass-surface p-4 text-xs text-[var(--plum)] flex flex-wrap items-center justify-between gap-3">
           <span>Sign in to submit batch signing jobs and download signed files.</span>
           <Link
             href="/login?callbackUrl=/app/sign"
-            className="rounded-lg bg-[var(--color-blue)] px-3.5 py-2 font-semibold text-white hover:bg-[var(--color-electric)]"
+            className="btn-plum px-4 py-2 font-semibold"
           >
             Sign in to continue
           </Link>
@@ -435,7 +435,7 @@ export function SignerClient({
         <button
           type="submit"
           disabled={submitting || Boolean(invalidExistingFile)}
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-blue)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--color-electric)] disabled:opacity-50"
+          className="inline-flex items-center gap-2 btn-plum px-6 py-3 text-sm font-semibold disabled:opacity-50"
         >
           <FileSignature aria-hidden="true" className="h-4 w-4" />
           {submitting
