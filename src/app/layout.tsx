@@ -76,6 +76,8 @@ export default async function RootLayout({
 
   const session = await auth();
   const userEmail = session?.user?.email || null;
+  const userName = session?.user?.name || null;
+  const userImage = session?.user?.image || null;
   const userRole = (session?.user as { role?: string } | undefined)?.role || null;
 
   const orgJsonLd = {
@@ -103,7 +105,12 @@ export default async function RootLayout({
           <a href="#main-content" className="skip-link">
             Skip to main content
           </a>
-          <AppHeader userEmail={userEmail} userRole={userRole} />
+          <AppHeader
+            userEmail={userEmail}
+            userName={userName}
+            userImage={userImage}
+            userRole={userRole}
+          />
           <main id="main-content" className="relative z-10 flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
             {children}
           </main>

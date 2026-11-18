@@ -30,6 +30,46 @@ const PUBLIC_ROUTES = [
   "/login",
 ];
 
+test("Login UI, error messages, signed-out guards, and no secrets in HTML", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/login", { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Continue with Google/i })).toBeVisible();
+  const html = await page.content();
+  expect(html).not.toContain("AUTH_GOOGLE_SECRET");
+  expect(html).not.toContain("AUTH_SECRET");
+
+  // Error message checks
+  await page.goto("/login?error=AccessDenied", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Google sign-in was cancelled. You can try again.")).toBeVisible();
+
+  await page.goto("/login?error=Unverified", { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByText("Please use a Google account with a verified email address.")
+  ).toBeVisible();
+
+  await page.goto("/login?error=Disabled", { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByText("This account is unavailable. Contact support for help.")
+  ).toBeVisible();
+
+  await page.goto("/login?error=LinkRequired", { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByText("Verify your existing account before connecting Google.")
+  ).toBeVisible();
+
+  // Signed-out /app redirects to /login
+  await page.goto("/app", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/login/);
+
+  // Signed-out private APIs return 401/403
+  expect((await request.get("/api/jobs")).status()).toBe(401);
+  expect((await request.get("/api/billing")).status()).toBe(401);
+  expect((await request.get("/api/admin")).status()).toBe(403);
+});
+
 test("All icon, manifest, and brand asset URLs return 200 with valid types and head tags", async ({
   page,
   request,

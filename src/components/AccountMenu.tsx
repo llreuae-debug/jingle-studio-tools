@@ -1,0 +1,102 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import { ChevronDown, LayoutDashboard, LogOut, Settings } from "lucide-react";
+
+function getInitials(name?: string | null, email?: string | null): string {
+  const source = (name || email || "U").trim();
+  const parts = source.split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
+}
+
+export function AccountMenu({
+  user,
+}: {
+  user: { name?: string | null; email: string; image?: string | null };
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const initials = getInitials(user.name, user.email);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 rounded-full border border-[rgba(63,17,61,0.18)] bg-[var(--mint)]/75 pl-1.5 pr-3 py-1 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+      >
+        {user.image && !imgFailed ? (
+          <img
+            src={user.image}
+            alt={user.name || user.email}
+            width={24}
+            height={24}
+            referrerPolicy="no-referrer"
+            onError={() => setImgFailed(true)}
+            className="h-6 w-6 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--plum)] text-[10px] font-bold text-[var(--lime)]"
+          >
+            {initials}
+          </span>
+        )}
+        <span className="hidden sm:inline max-w-[120px] truncate">
+          {user.name || user.email}
+        </span>
+        <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-60 glass-surface p-2 z-50 space-y-1 text-xs"
+        >
+          <div className="px-3 py-2 border-b border-[rgba(63,17,61,0.12)]">
+            {user.name && (
+              <p className="font-semibold text-[var(--plum)] truncate">{user.name}</p>
+            )}
+            <p className="text-[var(--plum-muted)] truncate">{user.email}</p>
+          </div>
+          <Link
+            role="menuitem"
+            href="/app"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-full px-3 py-2 font-medium text-[var(--plum)] hover:bg-[var(--mint)]"
+          >
+            <LayoutDashboard aria-hidden="true" className="h-3.5 w-3.5" />
+            Dashboard
+          </Link>
+          <Link
+            role="menuitem"
+            href="/app/settings"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-full px-3 py-2 font-medium text-[var(--plum)] hover:bg-[var(--mint)]"
+          >
+            <Settings aria-hidden="true" className="h-3.5 w-3.5" />
+            Settings
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => void signOut({ callbackUrl: "/tools" })}
+            className="w-full flex items-center gap-2 rounded-full px-3 py-2 font-medium text-[#a32032] hover:bg-rose-100/70"
+          >
+            <LogOut aria-hidden="true" className="h-3.5 w-3.5" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

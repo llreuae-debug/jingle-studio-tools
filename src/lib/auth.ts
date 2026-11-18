@@ -1,11 +1,25 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { DrizzleAuthAdapter } from "./auth-adapter";
 import { grantWelcomeCredits } from "./credits";
+import { resolveGoogleSignIn } from "./google-signin";
+import { sanitizeReturnPath } from "./safe-redirect";
+import { logStructured } from "./security";
+
+function validateAuthConfig() {
+  const isProdBuild = process.env.NEXT_PHASE === "phase-production-build";
+  if (process.env.NODE_ENV === "production" && !isProdBuild && !process.env.AUTH_SECRET) {
+    throw new Error(
+      "Missing required environment variable AUTH_SECRET in production."
+    );
+  }
+}
+
+validateAuthConfig();
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -28,6 +42,12 @@ function isAdminEmail(email: string): boolean {
   return list.includes(email.toLowerCase());
 }
 
+export function isGoogleSignInConfigured(): boolean {
+  const id = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
+  const secret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  return Boolean(id && secret);
+}
+
 export async function ensureUserAndWorkspace(params: {
   email: string;
   name?: string | null;
@@ -43,11 +63,16 @@ export async function ensureUserAndWorkspace(params: {
 
   if (existing.length > 0) {
     const user = existing[0];
+    if (user.disabled) return null;
     if (params.password && user.passwordHash) {
       if (!verifyPassword(params.password, user.passwordHash)) {
         return null;
       }
     }
+    await db
+      .update(schema.users)
+      .set({ lastLoginAt: new Date() })
+      .where(eq(schema.users.id, user.id));
     return user;
   }
 
@@ -61,6 +86,8 @@ export async function ensureUserAndWorkspace(params: {
     name: params.name || normalizedEmail.split("@")[0],
     passwordHash,
     role,
+    disabled: false,
+    lastLoginAt: new Date(),
   });
 
   const workspaceId = crypto.randomUUID();
@@ -86,81 +113,130 @@ export async function ensureUserAndWorkspace(params: {
   return created[0];
 }
 
+export async function revokeAllUserSessions(userId: string): Promise<void> {
+  const db = await getDb();
+  await db.delete(schema.sessions).where(eq(schema.sessions.userId, userId));
+  logStructured("info", "sessions_revoked_all", { userId });
+}
+
+const googleClientId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+
 const providers = [
-  Credentials({
-    name: "Email",
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" },
-      name: { label: "Name", type: "text" },
-    },
-    async authorize(credentials) {
-      const email = typeof credentials?.email === "string" ? credentials.email : "";
-      const password =
-        typeof credentials?.password === "string" ? credentials.password : "";
-      const name = typeof credentials?.name === "string" ? credentials.name : undefined;
-
-      if (!email || !password || password.length < 6) {
-        return null;
-      }
-
-      const user = await ensureUserAndWorkspace({ email, name, password });
-      if (!user) return null;
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      };
-    },
-  }),
-  ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+  ...(googleClientId && googleClientSecret
     ? [
         Google({
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          clientId: googleClientId,
+          clientSecret: googleClientSecret,
+          allowDangerousEmailAccountLinking: false,
+          authorization: {
+            params: {
+              scope: "openid email profile",
+            },
+          },
         }),
       ]
     : []),
 ];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: DrizzleAuthAdapter(),
   providers,
   trustHost: true,
   secret: process.env.AUTH_SECRET || "dev-jingle-studio-auth-secret-change-in-prod",
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "database",
+    maxAge: 30 * 24 * 60 * 60,
+  },
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-authjs.session-token"
+          : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email) {
-        const dbUser = await ensureUserAndWorkspace({
-          email: user.email,
-          name: user.name,
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        const googleProfile = profile as
+          | {
+              sub?: string;
+              email?: string;
+              email_verified?: boolean;
+              name?: string;
+              picture?: string;
+            }
+          | undefined;
+
+        const sub = googleProfile?.sub || account.providerAccountId;
+        const email = googleProfile?.email || user.email || "";
+        const emailVerified = Boolean(googleProfile?.email_verified);
+
+        const outcome = await resolveGoogleSignIn({
+          providerAccountId: sub,
+          email,
+          emailVerified,
+          name: googleProfile?.name || user.name,
+          avatarUrl: googleProfile?.picture || user.image,
         });
-        if (dbUser) {
-          user.id = dbUser.id;
+
+        if (!outcome.ok) {
+          return `/login?error=${outcome.code}`;
         }
+
+        user.id = outcome.userId;
+        (user as { role?: string }).role = outcome.role;
       }
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.sub = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.role = (user as { role?: string }).role || "user";
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return `${baseUrl}${sanitizeReturnPath(url, "/app")}`;
       }
-      return token;
+      try {
+        const target = new URL(url);
+        const base = new URL(baseUrl);
+        if (target.origin === base.origin) {
+          return target.toString();
+        }
+      } catch {
+        // fallback below
+      }
+      return `${baseUrl}/app`;
     },
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
-        (session.user as { role?: string }).role = (token.role as string) || "user";
+    async session({ session, user }) {
+      if (session.user && user) {
+        session.user.id = user.id;
+        (session.user as { role?: string }).role =
+          (user as { role?: string }).role || "user";
+        session.user.image =
+          (user as { avatarUrl?: string | null }).avatarUrl || user.image || null;
       }
       return session;
+    },
+  },
+  events: {
+    async signOut(message) {
+      if ("session" in message && message.session?.sessionToken) {
+        const db = await getDb();
+        await db
+          .delete(schema.sessions)
+          .where(eq(schema.sessions.sessionToken, message.session.sessionToken));
+        logStructured("info", "session_signed_out", {
+          userId: message.session.userId,
+        });
+      }
     },
   },
 });
@@ -170,6 +246,7 @@ export interface SessionContext {
     id: string;
     email: string;
     name: string | null;
+    avatarUrl: string | null;
     role: string;
   };
   workspace: {
@@ -193,7 +270,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
     .from(schema.users)
     .where(eq(schema.users.id, session.user.id));
 
-  if (userRows.length === 0) return null;
+  if (userRows.length === 0 || userRows[0].disabled) return null;
   const user = userRows[0];
 
   const memberRows = await db
@@ -223,6 +300,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       id: user.id,
       email: user.email,
       name: user.name,
+      avatarUrl: user.avatarUrl,
       role: user.role,
     },
     workspace: {

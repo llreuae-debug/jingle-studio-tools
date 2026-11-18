@@ -177,6 +177,25 @@ export default function WorkspaceSettingsPage() {
           </p>
         )}
       </section>
+
+      <section className="glass-surface p-6 space-y-3">
+        <h2 className="text-base font-semibold text-[var(--plum)]">Account Sessions</h2>
+        <p className="text-xs text-[var(--plum-muted)]">
+          Sign out of all active sessions on every browser and device.
+        </p>
+        <button
+          type="button"
+          onClick={async () => {
+            const res = await fetch("/api/auth/revoke-all", { method: "POST" });
+            if (res.ok) {
+              window.location.href = "/login";
+            }
+          }}
+          className="rounded-full bg-[#a32032] px-4 py-2 text-xs font-semibold text-white hover:opacity-90"
+        >
+          Sign out of all devices
+        </button>
+      </section>
     </div>
   );
 }

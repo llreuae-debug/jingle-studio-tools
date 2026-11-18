@@ -12,5 +12,8 @@ export default defineConfig({
     url: "http://127.0.0.1:3000/api/health",
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
+    env: {
+      AUTH_SECRET: "playwright-test-secret-32-bytes-minimum",
+    },
   },
 });

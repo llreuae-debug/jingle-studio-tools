@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, MessageCircle, X } from "lucide-react";
+import { AccountMenu } from "./AccountMenu";
 import { GlassTabs, type GlassTabItem } from "./GlassTabs";
 import { useLanguage } from "./LanguageProvider";
 import { Logo } from "./Logo";
@@ -28,9 +29,13 @@ const TOOL_MENU_LINKS = [
 
 export function AppHeader({
   userEmail,
+  userName,
+  userImage,
   userRole,
 }: {
   userEmail?: string | null;
+  userName?: string | null;
+  userImage?: string | null;
   userRole?: string | null;
 }) {
   const { locale, setLocale, t } = useLanguage();
@@ -152,9 +157,9 @@ export function AppHeader({
           </div>
 
           {userEmail ? (
-            <Link href="/app" className="hidden sm:inline-flex items-center btn-mint px-3.5 py-1.5 text-xs font-semibold">
-              {userEmail}
-            </Link>
+            <AccountMenu
+              user={{ email: userEmail, name: userName, image: userImage }}
+            />
           ) : (
             <Link
               href="/login"
