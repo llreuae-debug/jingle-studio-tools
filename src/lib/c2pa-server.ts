@@ -417,6 +417,15 @@ export async function signImageWithC2pa(params: SignInputParams): Promise<SignOu
         },
       })
     );
+  } else if (mapping.actionName !== "c2pa.created") {
+    builder.addAction(
+      JSON.stringify({
+        action: "c2pa.created",
+        when: signingTimeIso,
+        softwareAgent: { name: "Jingle Studio Tools", version: "1.0.0" },
+        digitalSourceType: mapping.digitalSourceType,
+      })
+    );
   }
 
   const actionPayload: Record<string, unknown> = {

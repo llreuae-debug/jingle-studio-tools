@@ -6,6 +6,21 @@ const PUBLIC_ROUTES = [
   "/privacy",
   "/terms",
   "/acceptable-use",
+  "/how-it-works",
+  "/learn",
+  "/learn/content-credentials",
+  "/learn/synthid",
+  "/faq",
+  "/blog",
+  "/blog/how-to-read-a-content-credentials-report",
+  "/blog/how-to-disclose-ai-use-in-property-marketing",
+  "/blog/what-to-do-if-a-real-photo-is-labelled-as-ai",
+  "/blog/content-credentials-and-synthid",
+  "/developers",
+  "/developers/rest-api",
+  "/developers/mcp",
+  "/developers/docs",
+  "/contact",
   "/tools/content-credentials-check",
   "/tools/instagram-post-check",
   "/tools/instagram-story-check",
@@ -15,6 +30,29 @@ const PUBLIC_ROUTES = [
   "/login",
 ];
 
+test("All header and footer links on /tools resolve with status < 400 and no # links", async ({ page, request }) => {
+  await page.goto("/tools", { waitUntil: "domcontentloaded" });
+  const hrefs = await page.$$eval("header a, footer a", (els) =>
+    els.map((a) => a.getAttribute("href") || "")
+  );
+
+  for (const href of hrefs) {
+    expect(href).not.toBe("#");
+    if (href.startsWith("/")) {
+      const res = await request.get(href);
+      expect(res.status(), `Broken link: ${href}`).toBeLessThan(400);
+    }
+  }
+});
+
+test("GET /api/example-report returns real C2PA signed report", async ({ request }) => {
+  const res = await request.get("/api/example-report");
+  expect(res.status()).toBe(200);
+  const body = await res.json();
+  expect(body.label).toBe("Example file");
+  expect(body.signer).toContain("Jingle Studio");
+});
+
 test("GlassTabs keyboard navigation and drag work without console errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -23,7 +61,7 @@ test("GlassTabs keyboard navigation and drag work without console errors", async
   });
 
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto("/tools", { waitUntil: "domcontentloaded" });
+  await page.goto("/tools", { waitUntil: "networkidle" });
 
   const tablist = page.getByRole("tablist", { name: "Main tools navigation" });
   await expect(tablist).toBeVisible();
