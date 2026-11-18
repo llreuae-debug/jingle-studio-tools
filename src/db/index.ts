@@ -1,0 +1,204 @@
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle as drizzlePglite, type PgliteDatabase } from "drizzle-orm/pglite";
+import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
+
+export type AppDb = NodePgDatabase<typeof schema> | PgliteDatabase<typeof schema>;
+
+let dbPromise: Promise<AppDb> | null = null;
+let pgliteClient: PGlite | null = null;
+
+const INIT_SQL = `
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT,
+  password_hash TEXT,
+  role TEXT NOT NULL DEFAULT 'user',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS workspaces (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS memberships (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'member',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS memberships_ws_user_idx ON memberships(workspace_id, user_id);
+
+CREATE TABLE IF NOT EXISTS workspace_invites (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member',
+  token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  accepted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS signing_profiles (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  display_name TEXT NOT NULL,
+  website TEXT,
+  default_training_preference BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sign_jobs (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'queued',
+  file_count INTEGER NOT NULL,
+  credits_reserved INTEGER NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  creator_name TEXT NOT NULL,
+  creator_website TEXT,
+  do_not_train BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS sign_jobs_ws_idem_idx ON sign_jobs(workspace_id, idempotency_key);
+
+CREATE TABLE IF NOT EXISTS sign_job_items (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES sign_jobs(id) ON DELETE CASCADE,
+  original_name TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  input_key TEXT,
+  input_sha256 TEXT NOT NULL,
+  output_key TEXT,
+  output_sha256 TEXT,
+  status TEXT NOT NULL DEFAULT 'queued',
+  error_code TEXT,
+  error_message TEXT,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS disclosures (
+  id TEXT PRIMARY KEY,
+  job_item_id TEXT NOT NULL UNIQUE REFERENCES sign_job_items(id) ON DELETE CASCADE,
+  ai_use TEXT NOT NULL,
+  digital_source_type TEXT NOT NULL,
+  model_type TEXT,
+  model_name TEXT,
+  declared_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS purchases (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  provider_ref TEXT NOT NULL UNIQUE,
+  pack_id TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  credits INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  bank_reference TEXT,
+  approved_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS credit_ledger_entries (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  delta INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  job_id TEXT,
+  purchase_id TEXT,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public_credentials (
+  id TEXT PRIMARY KEY,
+  job_item_id TEXT NOT NULL UNIQUE REFERENCES sign_job_items(id) ON DELETE CASCADE,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'live',
+  title TEXT NOT NULL,
+  thumbnail_data_url TEXT,
+  signer TEXT NOT NULL,
+  creator_name TEXT NOT NULL,
+  disclosure_summary TEXT NOT NULL,
+  signing_time_iso TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  revoked_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS abuse_reports (
+  id TEXT PRIMARY KEY,
+  public_credential_id TEXT NOT NULL REFERENCES public_credentials(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  details TEXT,
+  reporter_email TEXT,
+  status TEXT NOT NULL DEFAULT 'open',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+  id TEXT PRIMARY KEY,
+  actor_user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS trust_list_snapshots (
+  id TEXT PRIMARY KEY,
+  source_url TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  pem_bundle TEXT NOT NULL,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+`;
+
+async function initDb(): Promise<AppDb> {
+  const url = process.env.DATABASE_URL || "pglite://.pglite";
+
+  if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
+    const pool = new Pool({ connectionString: url });
+    await pool.query(INIT_SQL);
+    return drizzlePg(pool, { schema });
+  }
+
+  const dataDir = url.startsWith("pglite://")
+    ? url.slice("pglite://".length) || ".pglite"
+    : ".pglite";
+
+  pgliteClient = new PGlite(dataDir === ":memory:" ? undefined : dataDir);
+  await pgliteClient.exec(INIT_SQL);
+  return drizzlePglite(pgliteClient, { schema });
+}
+
+export async function getDb(): Promise<AppDb> {
+  if (!dbPromise) {
+    dbPromise = initDb();
+  }
+  return dbPromise;
+}
+
+export function resetDbForTests() {
+  dbPromise = null;
+  pgliteClient = null;
+}
+
+export { schema };

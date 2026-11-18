@@ -1,0 +1,6 @@
+allowBuilds:
+  '@contentauth/c2pa-node': set this to true or false
+  esbuild: set this to true or false
+onlyBuiltDependencies:
+  - "@contentauth/c2pa-node"
+  - "esbuild"

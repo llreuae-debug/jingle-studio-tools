@@ -1,0 +1,60 @@
+feature,area,priority,original,clone,notes
+Choose a file from the device to check,check,must,yes,no,Verify S01
+Drag and drop a file to check,check,must,yes,no,Verify S01
+Show supported formats on the empty screen,check,must,yes,no,Verify S01
+Read JPEG PNG and WebP,check,must,yes,no,First format set
+Read HEIC HEIF AVIF TIFF DNG and SVG,check,should,yes,no,Verify lists these
+Read MP4 MOV AVI and audio files,check,could,yes,no,Large files need separate handling
+Read PDF,check,could,yes,no,Verify lists PDF
+Check a public asset by URL,check,should,yes,no,Asset host must allow cross-origin requests
+Open a result from a shareable source link,check,should,yes,no,Verify S03
+Show asset title and thumbnail,result,must,yes,no,S02 left and right panels
+Show signer issuer and signing time in local time,result,must,yes,no,S02
+Show an Unrecognized notice for signers not on the trust list,result,must,yes,no,S02
+Show a warning when validation errors exist,result,must,yes,no,Hash mismatch or missing referenced claim
+Show a clear No Content Credential state,result,must,yes,no,Must not imply the file is human-made
+Show the app or device used,result,must,yes,no,From claim_generator
+Show the list of actions,result,must,yes,no,From the active manifest
+Show ingredient thumbnails with a credentials marker,result,must,yes,no,S02
+Show the AI-generated content section with the AI tool used,result,must,yes,no,Appears when a generative AI action exists
+Show Produced by with author and website,result,should,yes,no,Label as declared by the signer
+Show the do-not-train message,result,should,yes,no,S02
+Show ingredients in a tree,result,should,yes,no,S02 centre panel and S04
+Show connected social accounts,result,could,yes,no,S02
+Show camera capture details,result,could,yes,no,Exif assertions can reveal personal data
+Search a cloud index for matching credentials,result,could,yes,skip,Depends on Adobe Content Credentials Cloud which is their data
+Validate signers against the official C2PA trust list,trust,must,yes,no,Verify uses a known certificate list
+Batch-apply credentials to up to 50 JPG or PNG files,sign,must,yes,no,Adobe S07
+Sign files that were made in any app,sign,must,yes,no,Adobe S07
+Add creator name and website,sign,must,yes,no,Adobe S08
+Download the signed files,sign,must,yes,no,S10
+Inspect credentials inside the signed-in app,sign,must,yes,no,Reuses S02
+Set a generative AI training preference,sign,should,yes,no,A signal only and other companies may not honour it
+Connect social accounts to credentials,sign,could,yes,no,Adobe S11
+Verified name through Verified on LinkedIn,sign,could,yes,skip,Partner integration between Adobe and LinkedIn
+Durable credentials recovered after a screenshot,sign,could,yes,skip,Needs watermarking plus a hosted lookup index outside this slice
+Browser extension that finds credentials on a page,extension,could,yes,no,Adobe S13
+Keep existing credentials as a signed ingredient chain,provenance,must,no,no,Guardrail G2 and never strip or overwrite
+Validate every file again after signing,provenance,must,no,no,Blocks delivery if the new manifest fails
+Block signing when existing credentials fail validation,provenance,must,no,no,Guardrail G3
+Keep trust lists current automatically,provenance,must,no,no,Scheduled refresh
+Plain-language note on what a result cannot prove,provenance,must,no,no,Guardrail G5
+Mark author and AI answers as self-declared,provenance,must,no,no,Guardrail G6
+AI-use disclosure step before signing,disclosure,must,no,no,S16
+Map disclosure answers to C2PA digital source types,disclosure,must,no,no,See the disclosure mapping in recon.md
+Block a no-AI declaration when an ingredient is labelled AI,disclosure,must,no,no,Guardrail G4
+Write the c2pa.ai-disclosure assertion with model details,disclosure,should,no,no,Check the normative spec at build time
+Free checks without an account,accounts,must,no,no,Reading runs in the browser
+Sign up and sign in,accounts,must,no,no,S14
+Credit balance with an auditable ledger,billing,must,no,no,S17
+Buy credit packs,billing,must,no,no,Check provider availability for a Pakistan-based business
+Batch job progress with per-file results,jobs,must,no,no,S18
+Job history with re-download window,jobs,should,no,no,S15
+Delete uploaded files automatically after a job,privacy,must,no,no,Signing happens on the server
+Reusable brand signing profile,agency,should,no,no,S19
+Workspaces with team members and roles,agency,should,no,no,S19
+Public verification page for a signed asset,sharing,should,no,no,S20
+Embeddable verified badge linking to the public page,sharing,could,no,no,Useful for property listings
+Developer API with keys,api,could,no,no,S21
+Sign MP4 and MOV video,sign,could,no,no,Adobe's 2025 beta listed video as planned
+CAWG identity assertions for verified organisations,sign,could,no,no,Claim certificates identify the product and not the author
