@@ -30,6 +30,45 @@ const PUBLIC_ROUTES = [
   "/login",
 ];
 
+test("All icon, manifest, and brand asset URLs return 200 with valid types and head tags", async ({
+  page,
+  request,
+}) => {
+  const assetChecks: Array<[string, string]> = [
+    ["/favicon.ico", "image/"],
+    ["/favicon.svg", "image/svg+xml"],
+    ["/favicon-32x32.png", "image/png"],
+    ["/apple-touch-icon.png", "image/png"],
+    ["/icon-192.png", "image/png"],
+    ["/icon-maskable-512.png", "image/png"],
+    ["/site.webmanifest", "manifest"],
+    ["/browserconfig.xml", "xml"],
+    ["/og-image.png", "image/png"],
+    ["/brand/logo-horizontal-plum.svg", "image/svg+xml"],
+    ["/brand/logo-square-512.png", "image/png"],
+    ["/robots.txt", "text/plain"],
+  ];
+
+  for (const [url, expectedType] of assetChecks) {
+    const res = await request.get(url);
+    expect(res.status(), url).toBe(200);
+    expect(res.headers()["content-type"], url).toContain(expectedType);
+  }
+
+  await page.goto("/tools", { waitUntil: "networkidle" });
+  const toolsOgImage = await page.locator('meta[property="og:image"]').first().getAttribute("content");
+  expect(toolsOgImage).toMatch(/^https:\/\/.+\/tools\/opengraph-image/);
+
+  const imgsOk = await page.$$eval("img", (imgs) =>
+    imgs.every((img) => img.complete && img.naturalWidth > 0)
+  );
+  expect(imgsOk).toBe(true);
+
+  await page.goto("/pricing", { waitUntil: "domcontentloaded" });
+  const defaultOgImage = await page.locator('meta[property="og:image"]').first().getAttribute("content");
+  expect(defaultOgImage).toMatch(/^https:\/\/.+\/og-image\.png$/);
+});
+
 test("All header and footer links on /tools resolve with status < 400 and no # links", async ({ page, request }) => {
   await page.goto("/tools", { waitUntil: "domcontentloaded" });
   const hrefs = await page.$$eval("header a, footer a", (els) =>

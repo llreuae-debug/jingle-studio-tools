@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jingle Studio Mark">
+  <title>Jingle Studio Mark</title>
+  
+  <circle cx="276" cy="114" r="40" fill="#F6FBDD"/>
+  <circle cx="276" cy="114" r="21" fill="#3F113D"/>
+  <path d="M 276 204 L 276 340 C 276 392 238 416 196 404" fill="none" stroke="#F6FBDD" stroke-width="74" stroke-linecap="round"/>
+</svg>

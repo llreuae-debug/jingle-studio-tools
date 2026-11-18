@@ -4,3 +4,4 @@ allowBuilds:
 onlyBuiltDependencies:
   - "@contentauth/c2pa-node"
   - "esbuild"
+  - "sharp"

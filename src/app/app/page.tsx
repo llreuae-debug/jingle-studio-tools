@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
+import { Logo } from "@/components/Logo";
 import { getDb, schema } from "@/db";
 import { getSessionContext } from "@/lib/auth";
 import { getWorkspaceBalance } from "@/lib/credits";
@@ -25,7 +26,8 @@ export default async function AppDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+        <div className="space-y-2">
+          <Logo variant="horizontal" size="sm" theme="light" />
           <h1 className="text-2xl font-bold text-[var(--color-ink)]">
             {ctx.workspace.name}
           </h1>

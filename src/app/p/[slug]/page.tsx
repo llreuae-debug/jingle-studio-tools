@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { ProofActionsClient } from "@/components/ProofActionsClient";
 import { getDb, schema } from "@/db";
 import { getSessionContext } from "@/lib/auth";
@@ -56,11 +57,14 @@ export default async function PublicProofPage({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="glass-surface p-6 sm:p-8 space-y-5">
-        <div className="flex items-center gap-2.5 text-[#16865B]">
-          <ShieldCheck aria-hidden="true" className="h-6 w-6" />
-          <span className="text-xs font-semibold uppercase tracking-wider">
-            Public Content Credential Record
-          </span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-[#16865B]">
+            <ShieldCheck aria-hidden="true" className="h-6 w-6" />
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              Public Content Credential Record
+            </span>
+          </div>
+          <Logo variant="mark" size="sm" theme="light" />
         </div>
 
         <h1 className="text-2xl font-bold text-[var(--color-ink)]">{record.title}</h1>

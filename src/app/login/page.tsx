@@ -4,6 +4,7 @@ import React, { Suspense, useId, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, Lock } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 function LoginForm() {
   const router = useRouter();
@@ -47,7 +48,8 @@ function LoginForm() {
 
   return (
     <div className="mx-auto max-w-md glass-surface p-6 sm:p-8 space-y-6">
-      <div className="space-y-1">
+      <div className="space-y-3">
+        <Logo variant="horizontal" size="sm" theme="light" />
         <h1 className="text-2xl font-bold text-[var(--plum)]">Sign in or create account</h1>
         <p className="text-xs text-[var(--plum-muted)]">
           New accounts automatically receive a personal workspace with 10 free starter credits.

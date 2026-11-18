@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 112" role="img" aria-label="Jingle Studio Tools">
+  <title>Jingle Studio Tools</title>
+  <g transform="translate(8,8) scale(0.1875)">
+    <rect x="0" y="0" width="512" height="512" rx="112" fill="#3F113D"/>
+    <circle cx="276" cy="114" r="40" fill="#B9D175"/>
+    <circle cx="276" cy="114" r="21" fill="#F6FBDD"/>
+    <path d="M 276 204 L 276 340 C 276 392 238 416 196 404" fill="none" stroke="#B9D175" stroke-width="74" stroke-linecap="round"/>
+  </g>
+  <text x="124" y="69" fill="#F6FBDD" font-family="Inter, Arial, Helvetica, sans-serif" font-size="44" font-weight="600" letter-spacing="-1.2">Jingle Studio</text>
+</svg>

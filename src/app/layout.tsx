@@ -1,27 +1,67 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppFooter, AppHeader } from "@/components/AppChrome";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { MeshFlow } from "@/components/MeshFlow";
+import { SITE_CONFIG } from "@/config/site";
 import { auth } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: SITE_CONFIG.themeColor },
+    { media: "(prefers-color-scheme: dark)", color: SITE_CONFIG.themeColor },
+  ],
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_CONFIG.siteUrl),
+  applicationName: SITE_CONFIG.name,
   title: {
-    default: "Jingle Studio Tools — Content Credentials & Honest AI Disclosure",
-    template: "%s | Jingle Studio Tools",
+    default: `${SITE_CONFIG.name} — Content Credentials & Honest AI Disclosure`,
+    template: `%s | ${SITE_CONFIG.name}`,
   },
-  description:
-    "Free in-browser C2PA Content Credentials checker, Instagram & TikTok format fit tools, and batch AI-disclosure signing.",
+  description: SITE_CONFIG.description,
+  manifest: "/site.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: SITE_CONFIG.shortName,
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
-    title: "Jingle Studio Tools — Content Credentials & Honest AI Disclosure",
-    description:
-      "Verify provenance locally in your browser or batch-sign media with honest C2PA AI disclosures.",
+    title: `${SITE_CONFIG.name} — Content Credentials & Honest AI Disclosure`,
+    description: SITE_CONFIG.description,
     type: "website",
+    url: SITE_CONFIG.siteUrl,
+    images: [
+      {
+        url: `${SITE_CONFIG.siteUrl}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: SITE_CONFIG.name,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_CONFIG.name} — Content Credentials & Honest AI Disclosure`,
+    description: SITE_CONFIG.description,
+    images: [`${SITE_CONFIG.siteUrl}/twitter-image.png`],
   },
 };
 
@@ -38,8 +78,25 @@ export default async function RootLayout({
   const userEmail = session?.user?.email || null;
   const userRole = (session?.user as { role?: string } | undefined)?.role || null;
 
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE_CONFIG.name,
+    url: SITE_CONFIG.siteUrl,
+    logo: `${SITE_CONFIG.siteUrl}/brand/logo-square-512.png`,
+  };
+
   return (
     <html lang={initialLocale} className={inter.variable}>
+      <head>
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color={SITE_CONFIG.themeColor} />
+        <meta name="msapplication-TileColor" content={SITE_CONFIG.themeColor} />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+      </head>
       <body className="relative min-h-screen flex flex-col bg-[var(--cream)] text-[var(--plum)] antialiased">
         <MeshFlow />
         <LanguageProvider initialLocale={initialLocale}>

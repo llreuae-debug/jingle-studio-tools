@@ -3,9 +3,10 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, Menu, MessageCircle, ShieldCheck, X } from "lucide-react";
+import { ChevronDown, Menu, MessageCircle, X } from "lucide-react";
 import { GlassTabs, type GlassTabItem } from "./GlassTabs";
 import { useLanguage } from "./LanguageProvider";
+import { Logo } from "./Logo";
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923138654411";
 
@@ -69,16 +70,10 @@ export function AppHeader({
     <header className="sticky top-0 z-40 px-4 sm:px-6 pt-3">
       <div className="mx-auto max-w-6xl glass-surface px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/tools"
+          href="/"
           className="flex items-center gap-2 font-semibold text-[var(--plum)] tracking-tight"
         >
-          <span
-            aria-hidden="true"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--plum)] text-[var(--lime)]"
-          >
-            <ShieldCheck className="h-4 w-4" />
-          </span>
-          <span>Jingle Studio Tools</span>
+          <Logo variant="horizontal" size="sm" theme="light" />
         </Link>
 
         <nav aria-label="Primary" className="hidden lg:flex items-center gap-4 text-xs font-semibold">
@@ -201,8 +196,11 @@ export function AppHeader({
       {mobileOpen && (
         <nav
           aria-label="Mobile"
-          className="lg:hidden mx-auto max-w-6xl mt-2 glass-surface p-4 space-y-1.5 text-sm"
+          className="lg:hidden mx-auto max-w-6xl mt-2 glass-surface p-4 space-y-2 text-sm"
         >
+          <div className="px-2 pb-2 border-b border-[rgba(63,17,61,0.12)]">
+            <Logo variant="horizontal" size="sm" theme="light" />
+          </div>
           {[
             { href: "/tools", label: "Tools" },
             { href: "/how-it-works", label: "How it works" },
@@ -346,7 +344,8 @@ export function AppFooter() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-4 border-t border-[rgba(63,17,61,0.12)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-[rgba(63,17,61,0.12)]">
+          <Logo variant="horizontal" size="sm" theme="light" />
           <p className="font-semibold text-[var(--plum)]">{t.footer.tagline}</p>
           <p>{t.footer.localNotice}</p>
           <p>{t.footer.disclaimer}</p>
