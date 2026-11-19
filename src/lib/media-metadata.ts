@@ -45,6 +45,10 @@ export interface VideoSummary {
   codec?: string;
   durationSec?: number;
   frameRate?: string;
+  bitrateKbps?: number;
+  audioCodec?: string;
+  audioChannels?: number;
+  audioSampleRate?: number;
   creationTime?: string;
   encoder?: string;
   location?: string;
@@ -67,6 +71,7 @@ export interface MediaMetadataReport {
   hasCameraInfo: boolean;
   hasPersonalMetadata: boolean;
   hasC2paBox: boolean;
+  iptcBytes?: number;
   exif: ExifSummary;
   gps: GpsSummary | null;
   xmp: Record<string, string>;
@@ -641,6 +646,7 @@ function inspectJpeg(buf: Buffer, report: MediaMetadataReport): void {
 
     // APP13 IPTC or COM Comment
     if (marker === 0xed) {
+      report.iptcBytes = payload.length;
       report.textChunks.IPTC = `${payload.length} bytes`;
       report.hasPersonalMetadata = true;
       report.rawTagCount++;
@@ -1097,11 +1103,42 @@ function inspectIsoBmff(buf: Buffer, report: MediaMetadataReport): void {
                   report.video.frameRate = fps;
                 }
               }
+            } else if (handlerType === "soun") {
+              const minf = mdiaKids.find((b) => b.type === "minf");
+              const minfKids = minf
+                ? iterateIsoBoxes(buf, minf.start + minf.headerSize, minf.end)
+                : [];
+              const stbl = minfKids.find((b) => b.type === "stbl");
+              const stblKids = stbl
+                ? iterateIsoBoxes(buf, stbl.start + stbl.headerSize, stbl.end)
+                : [];
+              const stsd = stblKids.find((b) => b.type === "stsd");
+              if (stsd && stsd.end - (stsd.start + stsd.headerSize) >= 44) {
+                const entryOff = stsd.start + stsd.headerSize + 8;
+                const aCodec = buf
+                  .subarray(entryOff + 4, entryOff + 8)
+                  .toString("ascii")
+                  .replace(/\0+$/g, "")
+                  .trim();
+                if (aCodec) {
+                  report.video.audioCodec = aCodec;
+                }
+                if (entryOff + 36 <= stsd.end) {
+                  const ch = buf.readUInt16BE(entryOff + 24);
+                  const sr = buf.readUInt32BE(entryOff + 32) >>> 16;
+                  if (ch > 0 && ch <= 16) report.video.audioChannels = ch;
+                  if (sr >= 8000 && sr <= 384000) report.video.audioSampleRate = sr;
+                }
+              }
             }
           }
         }
       }
     }
+  }
+
+  if (report.durationSec && report.durationSec > 0 && report.video) {
+    report.video.bitrateKbps = Math.round((buf.length * 8) / (report.durationSec * 1000));
   }
 }
 
@@ -1201,14 +1238,23 @@ function inspectWebm(buf: Buffer, report: MediaMetadataReport): void {
       // Tracks
       for (const trk of iterateEbml(buf, pStart, el.end)) {
         if (trk.id !== 0xae) continue;
+        let trackCodec = "";
+        let audioChannels: number | undefined;
+        let audioRate: number | undefined;
+        let isAudioTrack = false;
         for (const tf of iterateEbml(buf, trk.start + trk.headerSize, trk.end)) {
           const tp = tf.start + tf.headerSize;
           if (tf.id === 0x86) {
-            const codec = buf.subarray(tp, tf.end).toString("utf8").replace(/\0+$/g, "");
-            if (codec.startsWith("V_") || !report.codec) {
-              report.codec = codec;
-              report.video.codec = codec;
+            trackCodec = buf.subarray(tp, tf.end).toString("utf8").replace(/\0+$/g, "");
+            if (trackCodec.startsWith("A_")) {
+              isAudioTrack = true;
+              report.video.audioCodec = trackCodec;
+            } else if (trackCodec.startsWith("V_") || !report.codec) {
+              report.codec = trackCodec;
+              report.video.codec = trackCodec;
             }
+          } else if (tf.id === 0x83 && tf.dataSize === 1 && buf[tp] === 2) {
+            isAudioTrack = true;
           } else if (tf.id === 0x23e383 && tf.dataSize <= 8) {
             let ns = 0;
             for (let i = tp; i < tf.end; i++) ns = ns * 256 + buf[i];
@@ -1225,7 +1271,23 @@ function inspectWebm(buf: Buffer, report: MediaMetadataReport): void {
               if (vf.id === 0xb0) report.width = num;
               if (vf.id === 0xba) report.height = num;
             }
+          } else if (tf.id === 0xe1) {
+            isAudioTrack = true;
+            for (const af of iterateEbml(buf, tp, tf.end)) {
+              const ap = af.start + af.headerSize;
+              if (af.id === 0xb5) {
+                if (af.dataSize === 4) audioRate = Math.round(buf.readFloatBE(ap));
+                else if (af.dataSize === 8) audioRate = Math.round(buf.readDoubleBE(ap));
+              } else if (af.id === 0x9f && af.dataSize >= 1 && af.dataSize <= 2) {
+                audioChannels = af.dataSize === 1 ? buf[ap] : buf.readUInt16BE(ap);
+              }
+            }
           }
+        }
+        if (isAudioTrack) {
+          if (trackCodec && !report.video.audioCodec) report.video.audioCodec = trackCodec;
+          if (audioChannels) report.video.audioChannels = audioChannels;
+          if (audioRate) report.video.audioSampleRate = audioRate;
         }
       }
     } else if (el.id === 0x1254c367) {
@@ -1255,6 +1317,10 @@ function inspectWebm(buf: Buffer, report: MediaMetadataReport): void {
         }
       }
     }
+  }
+
+  if (report.durationSec && report.durationSec > 0 && report.video) {
+    report.video.bitrateKbps = Math.round((buf.length * 8) / (report.durationSec * 1000));
   }
 }
 

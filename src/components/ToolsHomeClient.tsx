@@ -6,6 +6,11 @@ import { ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { MediaInspectorWorkbench } from "@/components/MediaInspectorWorkbench";
 import { CREDIT_PACKS } from "@/config/pricing";
+import {
+  CORE_TOOLS,
+  SPECIALIZED_TOOLS,
+  type ToolCategory,
+} from "@/config/tools-catalog";
 import { getFaqEntries } from "@/content/site-content";
 import { handleCardPointerMove } from "@/lib/pointer-glow";
 
@@ -22,11 +27,11 @@ interface ExampleReport {
 
 const HOME_COPY = {
   en: {
-    brandHeading: "SynthID Remover",
-    badge: "AI Media Inspector & Privacy Cleaner",
-    headline: "Inspect Your AI Images & Videos",
+    brandHeading: "JingleStudio Tools",
+    badge: "Privacy-First Media Inspector & Utilities",
+    headline: "Know What's Inside Your Media.",
     subhead:
-      "Understand AI content credentials, inspect embedded metadata and protect your privacy when sharing AI-generated media.",
+      "Inspect image and video files, review embedded metadata, and understand their content credentials with a privacy-first workflow.",
     platformDisclaimer:
       "Note: Checking credentials or removing personal metadata protects your privacy but does not stop Instagram, TikTok, Facebook, YouTube, or X from identifying AI media.",
     btnCheck: "Open full C2PA checker",
@@ -262,6 +267,21 @@ export function ToolsHomeClient() {
   const c = HOME_COPY[locale];
   const faqs = getFaqEntries().slice(0, 5);
   const [exampleReport, setExampleReport] = useState<ExampleReport | null>(null);
+  const [toolFilter, setToolFilter] = useState<"all" | ToolCategory>("all");
+
+  const filteredTools =
+    toolFilter === "all"
+      ? CORE_TOOLS
+      : CORE_TOOLS.filter((tool) => tool.category === toolFilter);
+
+  const handleInspectClick = () => {
+    const el = document.getElementById("inspection-workspace");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const btn = el.querySelector<HTMLElement>("[role='button']");
+      btn?.focus();
+    }
+  };
 
   useEffect(() => {
     fetch("/api/example-report")
@@ -296,10 +316,26 @@ export function ToolsHomeClient() {
           <p className="text-base sm:text-[19px] text-[var(--color-text-muted)] max-w-2xl mx-auto leading-[1.6]">
             {c.subhead}
           </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleInspectClick}
+              className="btn-plum inline-flex min-h-[44px] items-center justify-center px-6 py-2.5 text-sm font-semibold"
+            >
+              Inspect Your File
+            </button>
+            <a
+              href="#tools-dashboard"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
+            >
+              Explore Tools
+            </a>
+          </div>
         </div>
 
         {/* Two-column AI Media Inspector & Privacy Cleaner Workbench */}
-        <div className="text-left">
+        <div id="inspection-workspace" className="text-left scroll-mt-6">
           <MediaInspectorWorkbench />
         </div>
 
@@ -317,6 +353,94 @@ export function ToolsHomeClient() {
           >
             {c.btnSign}
           </Link>
+        </div>
+      </section>
+
+      {/* 10-TOOL DASHBOARD */}
+      <section id="tools-dashboard" aria-label="Media Inspection and Utility Tools" className="space-y-6 scroll-mt-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-[36px] font-bold tracking-[-0.02em] leading-[1.15] text-[var(--color-ink)]">
+              Media Inspection &amp; Utility Suite
+            </h2>
+            <p className="mt-1.5 text-sm text-[var(--color-text-muted)]">
+              Every tool below runs real inspection, provenance verification, or client-side image processing.
+            </p>
+          </div>
+          <div role="group" aria-label="Filter tools by category" className="flex flex-wrap gap-2">
+            {(
+              [
+                { id: "all", label: `All Tools (${CORE_TOOLS.length})` },
+                { id: "inspection", label: "Inspection & Provenance" },
+                { id: "privacy", label: "Privacy & Cleaning" },
+                { id: "image", label: "Image Utilities" },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                aria-pressed={toolFilter === tab.id}
+                onClick={() => setToolFilter(tab.id)}
+                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  toolFilter === tab.id
+                    ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-brand)]"
+                    : "border-[var(--border)] bg-white text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredTools.map((tool) => (
+            <Link
+              key={tool.id}
+              href={tool.href}
+              onPointerMove={handleCardPointerMove}
+              className="glass-surface glass-card-interactive p-5 flex flex-col justify-between gap-3 group"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="rounded-full bg-[var(--color-brand-soft)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--color-brand)]">
+                    {tool.badge}
+                  </span>
+                  <span className="text-[11px] font-medium text-[var(--color-text-muted)]">
+                    {tool.executionScope}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-[var(--color-ink)] group-hover:text-[var(--color-brand)]">
+                  {tool.title}
+                </h3>
+                <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
+                  {tool.description}
+                </p>
+              </div>
+              <div className="flex items-center justify-between border-t border-[var(--border)] pt-3 text-[11px]">
+                <span className="text-[var(--color-text-muted)]">{tool.formats}</span>
+                <span className="font-semibold text-[var(--color-brand)]">Open tool →</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="rounded-[16px] border border-[var(--border)] bg-white p-5 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+            Specialized Provenance &amp; Social Label Checkers
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {SPECIALIZED_TOOLS.map((st) => (
+              <Link
+                key={st.href}
+                href={st.href}
+                className="rounded-[12px] border border-[var(--border)] bg-[var(--color-surface-muted)] p-3 text-xs hover:border-[var(--color-brand)]/40 hover:bg-[var(--color-brand-soft)]"
+              >
+                <p className="font-bold text-[var(--color-ink)]">{st.title}</p>
+                <p className="mt-1 text-[11px] text-[var(--color-text-muted)] line-clamp-2">{st.description}</p>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 

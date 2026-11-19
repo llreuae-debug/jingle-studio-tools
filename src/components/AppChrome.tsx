@@ -19,7 +19,17 @@ const MAIN_TABS: GlassTabItem[] = [
 ];
 
 const TOOL_MENU_LINKS = [
+  { href: "/tools", label: "All Media Tools" },
+  { href: "/tools/media-metadata-inspector", label: "Media Metadata Inspector" },
+  { href: "/tools/exif-viewer", label: "Image EXIF Viewer" },
   { href: "/tools/content-credentials-check", label: "Content Credentials Check" },
+  { href: "/tools/file-integrity-checker", label: "File Integrity Checker" },
+  { href: "/tools/image-converter", label: "Image Format Converter" },
+  { href: "/tools/image-resizer", label: "Image Resizer" },
+  { href: "/tools/image-compressor", label: "Image Compression Tool" },
+  { href: "/tools/video-metadata-inspector", label: "Video Metadata Inspector" },
+  { href: "/tools/privacy-metadata-cleaner", label: "Privacy Metadata Cleaner" },
+  { href: "/tools/report-generator", label: "Inspection Report Generator" },
   { href: "/tools/ai-disclosure-signer", label: "AI Disclosure Signer" },
   { href: "/tools/instagram-post-check", label: "Instagram Post Check" },
   { href: "/tools/instagram-story-check", label: "Instagram Story Check" },

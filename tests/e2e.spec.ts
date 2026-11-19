@@ -304,7 +304,7 @@ test("AI Media Inspector & Privacy Cleaner E2E: JPG/PNG clean, completion downlo
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/tools", { waitUntil: "networkidle" });
   await expect(
-    page.getByRole("heading", { name: /Inspect Your AI Images & Videos/i })
+    page.getByRole("heading", { name: /Know What's Inside Your Media/i })
   ).toBeVisible();
 
   // Case 6: Invalid disguised file rejection via /api/privacy-clean
@@ -335,8 +335,9 @@ test("AI Media Inspector & Privacy Cleaner E2E: JPG/PNG clean, completion downlo
   );
   expect(hasOverflow).toBe(false);
 
-  // Click Clean Privacy Metadata and verify Completion Screen + real download
+  // Click Clean Privacy Metadata, confirm in native <dialog>, and verify Completion Screen + real download
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+  await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
   await expect(
     page.getByRole("heading", { name: "Your Image Is Ready" })
   ).toBeVisible({ timeout: 20000 });
@@ -402,6 +403,7 @@ test("Auth lifecycle (Signup, Verify Email, Forgot Password, Reset Password, Log
   await page.goto("/tools", { waitUntil: "networkidle" });
   await page.locator('input[type="file"]').first().setInputFiles("public/favicon-96x96.png");
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+  await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
   await expect(
     page.getByRole("heading", { name: "Your Image Is Ready" })
   ).toBeVisible({ timeout: 20000 });

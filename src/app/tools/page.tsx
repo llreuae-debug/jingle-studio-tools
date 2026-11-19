@@ -3,9 +3,9 @@ import { ToolsHomeClient } from "@/components/ToolsHomeClient";
 import { getFaqEntries } from "@/content/site-content";
 
 export const metadata: Metadata = {
-  title: "SynthID Remover — AI Media Inspector & Privacy Cleaner",
+  title: "JingleStudio Tools — Know What's Inside Your Media",
   description:
-    "Inspect C2PA Content Credentials and embedded EXIF, GPS, or video metadata, then strip personal metadata losslessly without altering provenance.",
+    "Inspect image and video files, review embedded EXIF/IPTC/XMP metadata, verify C2PA Content Credentials, and clean personal metadata with a privacy-first workflow.",
   alternates: {
     canonical: "/tools",
   },

@@ -213,6 +213,7 @@ test("Cases 1, 2, 3, 4, 8, 9, 11, 13, 15, 16, 17, 18, 19: PNG/JPG/JPEG/WEBP EXIF
     });
 
     await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
 
     // Case 13: Default server has no external SynthID verifier -> MUST show "Your Image Is Ready" and grey "Verification Unavailable"
     await expect(page.getByRole("heading", { name: "Your Image Is Ready" })).toBeVisible({
@@ -383,6 +384,7 @@ test("Cases 5, 6, 7, 14, 19 (UI refresh): Rejects invalid/corrupted/oversized im
   });
 
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Simulated storage outage" })
   ).toBeVisible({ timeout: 10000 });
@@ -419,6 +421,7 @@ test("Cases 5, 6, 7, 14, 19 (UI refresh): Rejects invalid/corrupted/oversized im
 
   // Now complete via real server request
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
   await expect(page.getByRole("heading", { name: "Your Image Is Ready" })).toBeVisible({
     timeout: 20000,
   });
@@ -518,6 +521,7 @@ test("Cases 10, 20, 21, 22, 23: C2PA preserved intact, Registered 25 MB limit, H
 
   await expect(page.getByText("A. C2PA Content Credentials")).toBeVisible({ timeout: 15000 });
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
 
   await expect(page.getByRole("heading", { name: "Your Image Is Ready" })).toBeVisible({
     timeout: 20000,
@@ -552,6 +556,7 @@ test("Cases 10, 20, 21, 22, 23: C2PA preserved intact, Registered 25 MB limit, H
     timeout: 20000,
   });
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
   await expect(page.getByRole("heading", { name: "Your Image Is Ready" })).toBeVisible({
     timeout: 30000,
   });
@@ -676,12 +681,13 @@ test("Case 12: Genuine SynthID verifier displays Your Image Is SynthID-Free on v
     });
     await expect(page.getByText("Verifier available on clean")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
     await expect(
       page.getByRole("heading", { name: "Your Image Is SynthID-Free" })
     ).toBeVisible({ timeout: 20000 });
-    await expect(page.getByText("Verified No Detectable SynthID Signal")).toBeVisible();
+    await expect(page.getByText("Verified No Detectable SynthID Signal").first()).toBeVisible();
     await expect(
-      page.getByText(/Absence of a detected signal does not prove that SynthID is absent/i)
+      page.getByText(/Absence of a detected signal does not prove that SynthID is absent/i).first()
     ).toBeVisible();
 
     // 2. Verifier returns signal_detected -> "Your Image Is Ready" + red "Signal Detected"
@@ -693,6 +699,7 @@ test("Case 12: Genuine SynthID verifier displays Your Image Is SynthID-Free on v
       buffer: png,
     });
     await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
     await expect(
       page.getByRole("heading", { name: "Your Image Is Ready" })
     ).toBeVisible({ timeout: 20000 });
@@ -708,6 +715,7 @@ test("Case 12: Genuine SynthID verifier displays Your Image Is SynthID-Free on v
       buffer: png,
     });
     await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
+    await page.getByRole("button", { name: /Confirm & Clean Copy/i }).click();
     await expect(
       page.getByRole("heading", { name: "Your Image Is Ready" })
     ).toBeVisible({ timeout: 20000 });

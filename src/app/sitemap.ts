@@ -5,6 +5,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.NEXT_PUBLIC_APP_URL || "https://jinglestudio.io";
   const staticRoutes = [
     "/tools",
+    "/tools/media-metadata-inspector",
+    "/tools/exif-viewer",
+    "/tools/file-integrity-checker",
+    "/tools/image-converter",
+    "/tools/image-resizer",
+    "/tools/image-compressor",
+    "/tools/video-metadata-inspector",
+    "/tools/privacy-metadata-cleaner",
+    "/tools/report-generator",
     "/tools/content-credentials-check",
     "/tools/instagram-post-check",
     "/tools/instagram-story-check",

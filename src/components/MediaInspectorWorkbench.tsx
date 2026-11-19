@@ -26,6 +26,12 @@ import {
   XCircle,
 } from "lucide-react";
 import { CredentialsResultCard } from "@/components/CredentialsResultCard";
+import InspectionReportView from "@/components/InspectionReportView";
+import {
+  inspectMediaFileLocally,
+  type LocalMediaInspection,
+} from "@/lib/browser-media-inspector";
+import { triggerVerifiedBlobDownload } from "@/lib/canvas-image-tools";
 import { inspectBlob, type InspectionResult } from "@/lib/c2pa-inspect";
 import type { MediaMetadataReport } from "@/lib/media-metadata";
 import type {
@@ -502,23 +508,44 @@ async function uploadChunkedLargeFile(
   return finalResult;
 }
 
-export function MediaInspectorWorkbench() {
+export interface MediaInspectorWorkbenchProps {
+  defaultFilter?: "all" | "image" | "video";
+  mode?: "workbench" | "inspector" | "privacy" | "video" | "report";
+}
+
+interface QueuedMediaItem {
+  id: string;
+  file: File;
+  status: "ready" | "cleaned" | "error";
+  errorMessage?: string;
+}
+
+export function MediaInspectorWorkbench({
+  defaultFilter = "all",
+  mode = "workbench",
+}: MediaInspectorWorkbenchProps = {}) {
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const confirmDialogRef = useRef<HTMLDialogElement>(null);
   const abortFnRef = useRef<(() => void) | null>(null);
 
   const [sessionInfo, setSessionInfo] =
     useState<PrivacySessionInfo>(DEFAULT_SESSION_INFO);
-  const [mediaFilter, setMediaFilter] = useState<"all" | "image" | "video">("all");
+  const [mediaFilter, setMediaFilter] = useState<"all" | "image" | "video">(defaultFilter);
+  const [queue, setQueue] = useState<QueuedMediaItem[]>([]);
+  const [activeQueueId, setActiveQueueId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewMeta, setPreviewMeta] = useState<LocalPreviewMeta | null>(null);
+  const [localInspection, setLocalInspection] = useState<LocalMediaInspection | null>(null);
   const [localC2pa, setLocalC2pa] = useState<InspectionResult | null>(null);
+  const [localC2paError, setLocalC2paError] = useState<string | null>(null);
   const [localReadingStage, setLocalReadingStage] = useState<
     "idle" | "reading" | "checking"
   >("idle");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [oversizedNeedsUpgrade, setOversizedNeedsUpgrade] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [downloadConfirmation, setDownloadConfirmation] = useState<string | null>(null);
 
   // Privacy cleaner checkboxes
   const [options, setOptions] = useState<PrivacyCleanOptions>({
@@ -591,6 +618,8 @@ export function MediaInspectorWorkbench() {
       if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
       return null;
     });
+    setLocalInspection(null);
+    setLocalC2paError(null);
     setLocalC2pa((prev) => {
       prev?.cleanup();
       return null;
@@ -680,27 +709,42 @@ export function MediaInspectorWorkbench() {
 
       cleanupResources();
       setSelectedFile(file);
+      setDownloadConfirmation(null);
       setLocalReadingStage("reading");
 
       try {
-        const [measured, inspection] = await Promise.all([
+        const [measured, localReport, inspection] = await Promise.all([
           measureLocalFile(file),
+          inspectMediaFileLocally(file),
           inspectBlob(file, file.name, (stage) => setLocalReadingStage(stage)),
         ]);
         setPreviewMeta(measured);
+        setLocalInspection(localReport);
         setLocalC2pa(inspection);
+        setQueue((prev) => {
+          const exists = prev.some((q) => q.file === file);
+          if (exists) {
+            return prev.map((q) =>
+              q.file === file ? { ...q, status: "ready" as const } : q
+            );
+          }
+          const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          setActiveQueueId(newId);
+          return [...prev, { id: newId, file, status: "ready" as const }];
+        });
       } catch (err) {
         cleanupResources();
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         const rawMsg = err instanceof Error ? err.message : String(err || "");
-        setValidationError(
+        const friendlyMsg =
           /invalidasset|out of range|unexpected eof|corrupt|could not be decoded/i.test(
             rawMsg
           )
             ? `${isVideo ? "Video" : "Image"} file "${file.name}" is corrupted or unreadable and could not be decoded.`
-            : rawMsg || "File could not be decoded in the browser."
-        );
+            : rawMsg || "File could not be decoded in the browser.";
+        setLocalC2paError(friendlyMsg);
+        setValidationError(friendlyMsg);
       } finally {
         setLocalReadingStage("idle");
       }
@@ -713,6 +757,54 @@ export function MediaInspectorWorkbench() {
       sessionInfo.maxVideoMb,
       sessionInfo.planName,
     ]
+  );
+
+  const handleFilesSelect = useCallback(
+    async (fileList: FileList | File[] | null | undefined) => {
+      if (!fileList || fileList.length === 0) return;
+      const files = Array.from(fileList);
+      if (files.length === 1) {
+        await handleFileSelect(files[0]);
+        return;
+      }
+      const newItems: QueuedMediaItem[] = files.map((file, idx) => ({
+        id: `${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        status: "ready",
+      }));
+      setQueue((prev) => [...prev, ...newItems]);
+      setActiveQueueId(newItems[0].id);
+      await handleFileSelect(newItems[0].file);
+    },
+    [handleFileSelect]
+  );
+
+  const handleSelectQueueItem = useCallback(
+    async (item: QueuedMediaItem) => {
+      setActiveQueueId(item.id);
+      await handleFileSelect(item.file);
+    },
+    [handleFileSelect]
+  );
+
+  const handleRemoveQueueItem = useCallback(
+    (id: string) => {
+      setQueue((prev) => {
+        const remaining = prev.filter((q) => q.id !== id);
+        if (remaining.length === 0) {
+          cleanupResources();
+          setSelectedFile(null);
+          setServerResult(null);
+          setActiveQueueId(null);
+        } else if (activeQueueId === id) {
+          const next = remaining[0];
+          setActiveQueueId(next.id);
+          void handleFileSelect(next.file);
+        }
+        return remaining;
+      });
+    },
+    [activeQueueId, cleanupResources, handleFileSelect]
   );
 
   useEffect(() => {
@@ -728,6 +820,8 @@ export function MediaInspectorWorkbench() {
     abortFnRef.current?.();
     abortFnRef.current = null;
     cleanupResources();
+    setQueue([]);
+    setActiveQueueId(null);
     setSelectedFile(null);
     setServerResult(null);
     setStages([]);
@@ -736,11 +830,45 @@ export function MediaInspectorWorkbench() {
     setValidationError(null);
     setOversizedNeedsUpgrade(false);
     setDownloadError(null);
+    setDownloadConfirmation(null);
     setDownloadLinkExpired(false);
     setProgressPct(0);
     setShowGpsCoords(false);
     setReportOpen(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleOpenCleanConfirm = () => {
+    if (!selectedFile || processing) return;
+    if (confirmDialogRef.current) {
+      confirmDialogRef.current.showModal();
+    } else {
+      void handleRunCleaning();
+    }
+  };
+
+  const handleDialogClose = () => {
+    const dialog = confirmDialogRef.current;
+    if (!dialog) return;
+    const action = dialog.returnValue;
+    dialog.returnValue = "";
+    if (action === "confirm") {
+      void handleRunCleaning();
+    }
+  };
+
+  const handleDownloadOriginalLocal = () => {
+    if (!selectedFile) return;
+    try {
+      triggerVerifiedBlobDownload(selectedFile, selectedFile.name);
+      setDownloadConfirmation(
+        `Original file "${selectedFile.name}" (${formatBytes(selectedFile.size)}) downloaded without modification.`
+      );
+    } catch (err) {
+      setDownloadError(
+        err instanceof Error ? err.message : "Failed to download original file."
+      );
+    }
   };
 
   const handleCancelProcessing = () => {
@@ -877,6 +1005,9 @@ export function MediaInspectorWorkbench() {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(objectUrl), 15_000);
+      setDownloadConfirmation(
+        `${kind === "cleaned" ? "Privacy-cleaned copy" : "Original file"} "${fileName}" (${formatBytes(blob.size)}) downloaded.`
+      );
     } catch (err) {
       setDownloadError(
         err instanceof Error ? err.message : "Could not download file."
@@ -964,13 +1095,101 @@ export function MediaInspectorWorkbench() {
         ref={fileInputRef}
         id={fileInputId}
         type="file"
+        multiple
         className="visually-hidden"
         accept={FILTER_ACCEPT[mediaFilter]}
-        onChange={(e) => void handleFileSelect(e.target.files?.[0])}
+        onChange={(e) => void handleFilesSelect(e.target.files)}
       />
 
       {/* Main Container Card */}
       <div className="glass-surface rounded-[22px] p-5 sm:p-8 space-y-6">
+        {/* Privacy-First Processing Notice */}
+        <div
+          role="note"
+          aria-label="Privacy-first processing notice"
+          className="rounded-[14px] border border-[var(--color-brand-line)] bg-[var(--color-brand-soft)]/50 px-4 py-3 text-xs text-[var(--color-ink)] flex flex-wrap items-start gap-2.5"
+        >
+          <ShieldCheck
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-[var(--color-brand)] mt-0.5"
+          />
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <p className="font-semibold text-[var(--color-ink)]">
+              Privacy-first local inspection
+              {mode === "video" ? " (Container & stream level)" : ""}
+            </p>
+            <p className="text-[var(--color-text-muted)] leading-relaxed">
+              File headers, EXIF/IPTC/XMP, C2PA Content Credentials, and integrity checks run locally in your browser without uploading files. Server processing runs only if you explicitly confirm <strong>Clean Privacy Metadata</strong>; temporary copies auto-expire and are never used for model training.
+            </p>
+          </div>
+        </div>
+
+        {/* Multi-File Queue Bar */}
+        {queue.length > 0 && (
+          <div
+            aria-label="Selected files queue"
+            className="rounded-[14px] border border-[var(--border)] bg-[var(--color-surface-muted)] p-3 space-y-2"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-bold text-[var(--color-ink)]">
+                Inspection Queue ({queue.length} {queue.length === 1 ? "file" : "files"})
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
+                >
+                  + Add files
+                </button>
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={handleReset}
+                  className="rounded-[8px] border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                >
+                  Clear All Files
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {queue.map((item) => {
+                const isActive = item.id === activeQueueId;
+                return (
+                  <div
+                    key={item.id}
+                    className={`inline-flex items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-xs ${
+                      isActive
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-ink)] font-semibold"
+                        : "border-[var(--border)] bg-white text-[var(--color-text-muted)]"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      disabled={processing}
+                      onClick={() => void handleSelectQueueItem(item)}
+                      className="max-w-[160px] truncate text-left hover:underline disabled:opacity-50"
+                      title={item.file.name}
+                    >
+                      {item.file.name}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${item.file.name} from queue`}
+                      disabled={processing}
+                      onClick={() => handleRemoveQueueItem(item.id)}
+                      className="ml-1 rounded p-0.5 text-[#7a7a88] hover:text-rose-700 disabled:opacity-50"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {!selectedFile && (
           <div className="space-y-5">
             {/* Segmented Format Filter */}
@@ -1018,7 +1237,7 @@ export function MediaInspectorWorkbench() {
               onDrop={(e) => {
                 e.preventDefault();
                 setIsDragging(false);
-                void handleFileSelect(e.dataTransfer.files?.[0]);
+                void handleFilesSelect(e.dataTransfer.files);
               }}
               onClick={() => fileInputRef.current?.click()}
               role="button"
@@ -1249,7 +1468,7 @@ export function MediaInspectorWorkbench() {
                 </div>
               )}
 
-              {/* Replace / Remove Controls */}
+              {/* Replace / Download Original / Remove Controls */}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -1259,6 +1478,15 @@ export function MediaInspectorWorkbench() {
                 >
                   <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
                   Replace file
+                </button>
+                <button
+                  type="button"
+                  disabled={processing}
+                  onClick={handleDownloadOriginalLocal}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-white px-3.5 py-2 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
+                >
+                  <Download aria-hidden="true" className="h-3.5 w-3.5" />
+                  Download Original File
                 </button>
                 <button
                   type="button"
@@ -1958,7 +2186,7 @@ export function MediaInspectorWorkbench() {
                     <button
                       type="button"
                       disabled={processing}
-                      onClick={() => void handleRunCleaning()}
+                      onClick={handleOpenCleanConfirm}
                       className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                     >
                       {processing
@@ -1971,7 +2199,102 @@ export function MediaInspectorWorkbench() {
             </div>
           </div>
         )}
+
+        {downloadConfirmation && (
+          <div
+            role="status"
+            className="rounded-[12px] border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-900"
+          >
+            {downloadConfirmation}
+          </div>
+        )}
+
+        {localInspection && (
+          <InspectionReportView
+            localInspection={localInspection}
+            c2paResult={localC2pa}
+            c2paError={localC2paError}
+            synthIdData={
+              serverResult
+                ? {
+                    statusLabel: serverResult.synthId.label,
+                    badgeStatus:
+                      serverResult.synthId.status === "verified_no_signal"
+                        ? "Verified"
+                        : serverResult.synthId.status === "signal_detected"
+                          ? "Detected"
+                          : "Unable to verify",
+                    explanation: serverResult.synthId.explanation,
+                  }
+                : null
+            }
+            privacyCleanData={
+              serverResult
+                ? {
+                    cleaned: serverResult.personalMetadataStatus === "removed" || serverResult.personalMetadataLabel === "Cleaned" || serverResult.personalMetadataLabel === "Already Clean",
+                    removedFields: serverResult.removedFields,
+                    preservedOriginalBytes: serverResult.preservedOriginalBytes,
+                    outputSha256: serverResult.outputSha256,
+                    cleanedSizeBytes: serverResult.cleanedSizeBytes,
+                  }
+                : null
+            }
+          />
+        )}
       </div>
+
+      {/* Native <dialog> Confirmation Modal before Server-Side Privacy Cleaning */}
+      <dialog
+        ref={confirmDialogRef}
+        aria-labelledby="confirm-clean-title"
+        onClose={handleDialogClose}
+        className="m-auto w-[min(92vw,520px)] rounded-[20px] border border-[var(--color-brand-line)] bg-white p-6 text-[var(--color-ink)] shadow-2xl"
+      >
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h2 id="confirm-clean-title" className="text-lg font-bold text-[var(--color-ink)]">
+              Confirm Privacy Metadata Cleaning
+            </h2>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Review what will happen before uploading this file to generate a privacy-cleaned copy:
+            </p>
+          </div>
+
+          <div className="rounded-[12px] border border-[var(--border)] bg-[var(--color-brand-soft)]/50 p-3.5 text-xs space-y-2">
+            <p className="font-semibold text-[var(--color-ink)]">
+              Selected file: <span className="font-normal">{selectedFile?.name ?? "Media file"}</span>
+            </p>
+            <p className="text-[var(--color-text-muted)]">
+              {localInspection?.personalMetadata.detectedFields.length
+                ? `Detected personal fields to clean: ${localInspection.personalMetadata.detectedFields.join(", ")}.`
+                : "No personal EXIF/GPS fields were detected locally; server cleaning will still produce a verified clean copy."}
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-[var(--color-text-muted)]">
+              <li>Original file is never overwritten; a separate cleaned copy is created.</li>
+              <li>C2PA Content Credentials are preserved intact when present.</li>
+              <li>Privacy cleaning removes container metadata only — it does not remove AI origin or pixel-level SynthID watermarks.</li>
+            </ul>
+          </div>
+
+          <form method="dialog" className="flex flex-wrap justify-end gap-2.5 pt-2">
+            <button
+              type="submit"
+              value="cancel"
+              autoFocus
+              className="min-h-[40px] rounded-[10px] border border-[var(--border)] bg-white px-4 py-2 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              value="confirm"
+              className="min-h-[40px] rounded-[10px] bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+            >
+              Confirm &amp; Clean Copy
+            </button>
+          </form>
+        </div>
+      </dialog>
 
       {/* Preserve Honest Local C2PA Credentials Result Card below the workbench */}
       {localC2pa && (
