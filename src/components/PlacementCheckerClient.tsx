@@ -349,7 +349,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
                   : "bg-[var(--warm-peach)]/45 border-[var(--solar-orange)]/35"
               }`}
             >
-              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--solar-orange)] text-[var(--espresso-black)] shadow-[var(--shadow-2)]">
+              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[14px] bg-[var(--color-brand)] text-white shadow-[var(--shadow-3)]">
                 <Upload aria-hidden="true" className="h-6 w-6" />
               </div>
               <h2 className="mt-4 text-lg font-semibold text-[var(--color-ink)]">

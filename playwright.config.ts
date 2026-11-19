@@ -14,6 +14,7 @@ export default defineConfig({
     timeout: 30_000,
     env: {
       AUTH_SECRET: "playwright-test-secret-32-bytes-minimum",
+      ALLOW_LOCAL_TOKEN_PREVIEW: "true",
     },
   },
 });

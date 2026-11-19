@@ -9,29 +9,29 @@ export default function DevelopersOverviewPage() {
   return (
     <div className="space-y-8">
       <section
-        className="rounded-[28px] p-8 sm:p-12 text-white space-y-4 shadow-[var(--shadow-dark-card)]"
-        style={{ background: "linear-gradient(135deg, #141312 0%, #c93700 58%, #ff5500 100%)" }}
+        className="rounded-[20px] p-8 sm:p-10 text-white space-y-4 shadow-[var(--shadow-dark-card)]"
+        style={{ background: "linear-gradient(135deg, #111116 0%, #4d2ee6 52%, #6c47ff 100%)" }}
       >
         <span className="inline-block rounded-full bg-white/15 border border-white/25 px-3.5 py-1 text-xs font-semibold text-white">
           Developers
         </span>
-        <h1 className="text-3xl sm:text-5xl font-bold tracking-[-0.025em] text-white">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-[-0.025em] text-white">
           Automate Content Credentials
         </h1>
-        <p className="text-sm sm:text-base text-[#fae6da] max-w-2xl leading-relaxed">
+        <p className="text-sm sm:text-base text-[#ebe6ff] max-w-2xl leading-relaxed">
           Inspect C2PA manifests, create batch signing jobs with honest AI disclosures, and check
           workspace credits over our REST API or MCP server.
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
           <Link
             href="/developers/docs"
-            className="rounded-full bg-white text-[var(--espresso-black)] hover:bg-[var(--warm-peach)] px-5 py-2.5 text-xs font-bold shadow-[var(--shadow-2)] transition-colors duration-150"
+            className="rounded-[12px] bg-white text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] px-5 py-2.5 text-xs font-bold shadow-[var(--shadow-2)] transition-colors duration-150"
           >
             API documentation
           </Link>
           <Link
             href="/app/developers"
-            className="rounded-full border border-white/40 px-5 py-2.5 text-xs font-semibold text-white hover:bg-white/15 transition-colors duration-150"
+            className="rounded-[12px] border border-white/40 px-5 py-2.5 text-xs font-semibold text-white hover:bg-white/15 transition-colors duration-150"
           >
             Manage API keys
           </Link>

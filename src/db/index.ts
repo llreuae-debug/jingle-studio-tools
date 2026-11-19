@@ -216,6 +216,80 @@ CREATE TABLE IF NOT EXISTS trust_list_snapshots (
   fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+CREATE TABLE IF NOT EXISTS media_processing_records (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  owner_token_hash TEXT,
+  original_name TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  media_kind TEXT NOT NULL,
+  file_size_bytes INTEGER NOT NULL,
+  cleaned_size_bytes INTEGER,
+  width INTEGER,
+  height INTEGER,
+  duration_ms INTEGER,
+  codec TEXT,
+  frame_rate TEXT,
+  status TEXT NOT NULL DEFAULT 'queued',
+  c2pa_status TEXT NOT NULL DEFAULT 'not_detected',
+  c2pa_result_status TEXT NOT NULL DEFAULT 'not_present',
+  c2pa_issuer TEXT,
+  synthid_status TEXT NOT NULL DEFAULT 'verification_unavailable',
+  personal_metadata_status TEXT NOT NULL DEFAULT 'not_available',
+  removed_fields JSONB,
+  before_metadata JSONB,
+  after_metadata JSONB,
+  cleaning_options JSONB,
+  original_key TEXT,
+  cleaned_key TEXT,
+  thumbnail_data_url TEXT,
+  input_sha256 TEXT,
+  output_sha256 TEXT,
+  error_message TEXT,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS pricing_plans (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  monthly_price_cents INTEGER NOT NULL DEFAULT 0,
+  daily_limit INTEGER NOT NULL DEFAULT 20,
+  max_image_mb INTEGER NOT NULL DEFAULT 25,
+  max_video_mb INTEGER NOT NULL DEFAULT 100,
+  included_credits INTEGER NOT NULL DEFAULT 10,
+  features JSONB NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO pricing_plans (id, name, monthly_price_cents, daily_limit, max_image_mb, max_video_mb, included_credits, features, active)
+VALUES
+  ('free', 'Free', 0, 20, 25, 100, 10, '["Basic metadata & C2PA inspection","Lossless personal metadata cleaning","Up to 25 MB images & 100 MB videos","20 daily checks/cleanings"]'::jsonb, TRUE),
+  ('pro', 'Pro', 1900, 250, 50, 250, 100, '["Extended metadata & provenance reports","7-day processing history & clean downloads","Up to 50 MB images & 250 MB videos","250 daily checks/cleanings & priority batch signing"]'::jsonb, TRUE),
+  ('business', 'Business', 4900, 2000, 100, 500, 500, '["REST API & MCP server access","Team workspaces & shared roles","Up to 100 MB images & 500 MB videos","2,000 daily checks/cleanings"]'::jsonb, TRUE)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL UNIQUE REFERENCES workspaces(id) ON DELETE CASCADE,
+  plan_id TEXT NOT NULL REFERENCES pricing_plans(id),
+  status TEXT NOT NULL DEFAULT 'active',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS system_logs (
+  id TEXT PRIMARY KEY,
+  level TEXT NOT NULL DEFAULT 'info',
+  event TEXT NOT NULL,
+  user_id TEXT,
+  message TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
 
 async function initDb(): Promise<AppDb> {

@@ -3,6 +3,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 interface SettingsPayload {
+  user?: { email: string; name: string | null; emailVerified: string | null };
+  plan?: {
+    id: string;
+    name: string;
+    dailyLimit: number;
+    maxImageMb: number;
+    maxVideoMb: number;
+  };
+  balance?: number;
   activeWorkspace: { id: string; name: string };
   activeRole: string;
   workspaces: Array<{ id: string; name: string; role: string }>;
@@ -84,11 +93,46 @@ export default function WorkspaceSettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-ink)]">Workspace &amp; Brand Profiles</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-ink)]">Account, Workspace &amp; Brand Profiles</h1>
         <p className="text-xs text-[var(--color-muted)]">
           Active workspace: <strong>{data.activeWorkspace.name}</strong> ({data.activeRole})
         </p>
       </div>
+
+      {data.user && (
+        <section className="glass-surface p-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div>
+            <p className="text-[var(--color-text-muted)]">Account</p>
+            <p className="font-semibold text-[var(--color-ink)]">{data.user.name || data.user.email}</p>
+            <p className="text-[var(--color-text-muted)]">{data.user.email}</p>
+            <p className="mt-1">
+              {data.user.emailVerified ? (
+                <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  Email verified
+                </span>
+              ) : (
+                <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                  Email unverified
+                </span>
+              )}
+            </p>
+          </div>
+          <div>
+            <p className="text-[var(--color-text-muted)]">Active Subscription Plan</p>
+            <p className="font-semibold text-[var(--color-ink)]">{data.plan?.name || "Free"}</p>
+            <p className="text-[var(--color-text-muted)]">
+              {data.plan?.dailyLimit ?? 20} files/day • {data.plan?.maxImageMb ?? 25} MB img / {data.plan?.maxVideoMb ?? 100} MB video
+            </p>
+          </div>
+          <div>
+            <p className="text-[var(--color-text-muted)]">Credits &amp; Billing</p>
+            <p className="font-semibold text-[var(--color-ink)]">{data.balance ?? 0} credits remaining</p>
+            <a href="/app/billing" className="text-[var(--color-brand)] font-semibold underline">
+              Manage credits &amp; invoices
+            </a>
+          </div>
+        </section>
+      )}
 
       {message && (
         <div className="rounded-[16px] border border-[var(--color-brand-line)] bg-[var(--warm-peach)]/60 px-4 py-2.5 text-xs text-[var(--espresso-black)]">

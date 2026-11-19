@@ -264,3 +264,75 @@ export const trustListSnapshots = pgTable("trust_list_snapshots", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
   active: boolean("active").notNull().default(true),
 });
+
+export const mediaProcessingRecords = pgTable("media_processing_records", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  ownerTokenHash: text("owner_token_hash"),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  mediaKind: text("media_kind").notNull(), // image | video
+  fileSizeBytes: integer("file_size_bytes").notNull(),
+  cleanedSizeBytes: integer("cleaned_size_bytes"),
+  width: integer("width"),
+  height: integer("height"),
+  durationMs: integer("duration_ms"),
+  codec: text("codec"),
+  frameRate: text("frame_rate"),
+  status: text("status").notNull().default("queued"), // queued | processing | done | failed | expired
+  c2paStatus: text("c2pa_status").notNull().default("not_detected"), // present | not_detected | unable_to_verify
+  c2paResultStatus: text("c2pa_result_status").notNull().default("not_present"), // preserved | not_present | unable_to_preserve
+  c2paIssuer: text("c2pa_issuer"),
+  synthIdStatus: text("synthid_status").notNull().default("verification_unavailable"), // verification_available | no_detectable_signal | verification_unavailable | inconclusive
+  personalMetadataStatus: text("personal_metadata_status").notNull().default("not_available"), // removed | preserved | not_available
+  removedFields: jsonb("removed_fields").$type<string[]>(),
+  beforeMetadata: jsonb("before_metadata"),
+  afterMetadata: jsonb("after_metadata"),
+  cleaningOptions: jsonb("cleaning_options"),
+  originalKey: text("original_key"),
+  cleanedKey: text("cleaned_key"),
+  thumbnailDataUrl: text("thumbnail_data_url"),
+  inputSha256: text("input_sha256"),
+  outputSha256: text("output_sha256"),
+  errorMessage: text("error_message"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const pricingPlans = pgTable("pricing_plans", {
+  id: text("id").primaryKey(), // free | pro | business
+  name: text("name").notNull(),
+  monthlyPriceCents: integer("monthly_price_cents").notNull().default(0),
+  dailyLimit: integer("daily_limit").notNull().default(20),
+  maxImageMb: integer("max_image_mb").notNull().default(25),
+  maxVideoMb: integer("max_video_mb").notNull().default(100),
+  includedCredits: integer("included_credits").notNull().default(10),
+  features: jsonb("features").$type<string[]>().notNull(),
+  active: boolean("active").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id")
+    .notNull()
+    .unique()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+  planId: text("plan_id")
+    .notNull()
+    .references(() => pricingPlans.id),
+  status: text("status").notNull().default("active"), // active | cancelled
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const systemLogs = pgTable("system_logs", {
+  id: text("id").primaryKey(),
+  level: text("level").notNull().default("info"), // info | warn | error
+  event: text("event").notNull(),
+  userId: text("user_id"),
+  message: text("message").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -42,6 +42,11 @@ export function detectRealMimeType(buf: Buffer): string | null {
     return "video/mp4";
   }
 
+  // WebM / Matroska: EBML header 1A 45 DF A3
+  if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) {
+    return "video/webm";
+  }
+
   return null;
 }
 

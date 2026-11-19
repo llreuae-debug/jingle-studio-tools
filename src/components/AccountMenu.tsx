@@ -89,7 +89,10 @@ export function AccountMenu({
           <button
             type="button"
             role="menuitem"
-            onClick={() => void signOut({ callbackUrl: "/tools" })}
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+              await signOut({ callbackUrl: "/tools" });
+            }}
             className="w-full flex items-center gap-2 rounded-full px-3 py-2 font-medium text-[#a32032] hover:bg-rose-100/70"
           >
             <LogOut aria-hidden="true" className="h-3.5 w-3.5" />

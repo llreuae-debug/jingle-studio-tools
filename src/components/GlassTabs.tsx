@@ -13,11 +13,11 @@ const STIFFNESS = 420;
 const DAMPING = 30;
 
 function lerpColor(t: number): string {
-  // --warm-stone (#57534E -> 87, 83, 78) to --solar-orange-deep (#B83600 -> 184, 54, 0)
+  // --color-text-muted (#55555d -> 85, 85, 93) to --color-brand (#6c47ff -> 108, 71, 255)
   const clamped = Math.max(0, Math.min(1, t));
-  const r = Math.round(87 + (184 - 87) * clamped);
-  const g = Math.round(83 + (54 - 83) * clamped);
-  const b = Math.round(78 + (0 - 78) * clamped);
+  const r = Math.round(85 + (108 - 85) * clamped);
+  const g = Math.round(85 + (71 - 85) * clamped);
+  const b = Math.round(93 + (255 - 93) * clamped);
   return `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -323,11 +323,9 @@ export function GlassTabs({
         aria-label={ariaLabel}
         className="relative inline-flex items-center gap-1 p-1 min-h-[44px]"
         style={{
-          background: "rgba(255, 255, 255, 0.62)",
-          border: "1px solid #fefefd",
-          borderRadius: "9999px",
-          backdropFilter: "blur(12px)",
-          boxShadow: "var(--shadow-1)",
+          background: "#f4f4f6",
+          border: "1px solid #e7e7ec",
+          borderRadius: "12px",
         }}
       >
         {/* Elevated sliding active pill */}
@@ -340,9 +338,9 @@ export function GlassTabs({
           className="absolute left-0 top-1/2 h-[36px] cursor-grab active:cursor-grabbing touch-pan-y select-none z-10"
           style={{
             background: "#ffffff",
-            border: "1px solid rgba(255, 85, 0, 0.18)",
-            borderRadius: "9999px",
-            boxShadow: "var(--shadow-5)",
+            border: "1px solid #e7e7ec",
+            borderRadius: "9px",
+            boxShadow: "var(--shadow-2)",
             transformOrigin: "center center",
           }}
         />
@@ -363,7 +361,7 @@ export function GlassTabs({
               tabIndex={focusedIdx === ti ? 0 : -1}
               onClick={() => onSelect(tab)}
               onKeyDown={(e) => handleKeyDown(e, ti)}
-              className="relative z-20 min-h-[36px] px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap select-none cursor-pointer"
+              className="relative z-20 min-h-[36px] px-4 py-1.5 rounded-[9px] text-sm font-semibold whitespace-nowrap select-none cursor-pointer"
             >
               {tab.label.split("").map((ch, ci) => (
                 <span
@@ -372,7 +370,7 @@ export function GlassTabs({
                     if (!charRefs.current[ti]) charRefs.current[ti] = [];
                     charRefs.current[ti][ci] = el;
                   }}
-                  style={{ color: isSelected ? "#b83600" : "#57534e" }}
+                  style={{ color: isSelected ? "#6c47ff" : "#55555d" }}
                 >
                   {ch}
                 </span>

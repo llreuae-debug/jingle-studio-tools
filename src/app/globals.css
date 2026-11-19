@@ -1,102 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  /* DesignLens warm bone + solar orange system */
-  --background: #f5efeb;
-  --tw-ring-offset-color: #ffffff;
-  --espresso-black: #141312;
-  --stone-taupe: #78716c;
-  --solar-orange: #ff5500;
-  --color-accent: #25d366;
-  --card-border-milky: #fefefd;
-  --color-amber-400: #ffb900;
-  --color-red-400: #ff6467;
-  --color-red-600: #e7000b;
-  --color-emerald-700: #007a55;
-
-  /* Supporting measured palette & WCAG AA accessible text tokens */
-  --warm-stone: #57534e;
-  --warm-surface: #f9f6f3;
-  --warm-peach: #fae6da;
-  --warm-charcoal: #191817;
-  --warm-pill: #d6cdc5;
-  --warm-divider: #eeebe8;
-  --solar-orange-hover: #e63e00;
-  --solar-orange-deep: #b83600;
-  --frosted-header: rgba(250, 248, 242, 0.8);
-
-  --foreground: var(--espresso-black);
-  --border: #e5ddd6;
-  --destructive: var(--color-red-600);
+  /* Minimalist White + Faint Grid + #6C47FF Purple SaaS Design System */
+  --background: #ffffff;
+  --foreground: #111111;
+  --border: #e7e7ec;
+  --destructive: #dc2626;
 
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-ink: var(--espresso-black);
-  --color-text-muted: var(--warm-stone);
-  --color-brand: var(--solar-orange-deep);
-  --color-brand-light: var(--solar-orange);
-  --color-brand-pale: var(--warm-peach);
-  --color-brand-hover: var(--solar-orange);
-  --color-brand-soft: var(--warm-peach);
-  --color-brand-line: rgba(255, 85, 0, 0.22);
-  --color-line: var(--border);
-  --color-auth-ink: var(--espresso-black);
-  --color-checker: var(--warm-surface);
-  --color-checker-alt: var(--warm-divider);
-  --color-success: var(--color-emerald-700);
-  --color-warning: var(--color-amber-400);
-  --color-red-500: #fb2c36;
-  --color-surface-muted: var(--warm-surface);
+  --color-ink: #111111;
+  --color-text-muted: #55555d;
+  --color-brand: #6c47ff;
+  --color-brand-light: #8b6cff;
+  --color-brand-pale: #dfd7ff;
+  --color-brand-hover: #5835e6;
+  --color-brand-soft: #f4f1ff;
+  --color-brand-line: #e4ddff;
+  --color-line: #e7e7ec;
+  --color-auth-ink: #1f1459;
+  --color-checker: #f7f7fa;
+  --color-checker-alt: #efeff5;
+  --color-accent: #15803d;
+  --color-success: #15803d;
+  --color-warning: #d97706;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-emerald-700: #047857;
+  --color-amber-400: #fbbf24;
+  --color-surface-muted: #f7f7f9;
+  --tw-ring-offset-color: #ffffff;
 
   /* Typography */
-  --font-heading: var(--font-comfortaa), Comfortaa, var(--font-plus-jakarta-sans), "Plus Jakarta Sans", sans-serif;
-  --font-body: var(--font-plus-jakarta-sans), "Plus Jakarta Sans", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Spacing & container */
-  --space-1: 12px;
-  --space-2: 20px;
+  /* Spacing & Container */
+  --space-1: 8px;
+  --space-2: 16px;
   --space-3: 24px;
   --space-4: 32px;
-  --space-5: 96px;
-  --container: 1280px;
+  --space-5: 64px;
+  --container: 1120px;
 
   /* Radius */
-  --radius-sm: 10px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-3xl: 99px;
-  --radius-card: 24px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-card: 20px;
   --radius-full: 9999px;
 
-  /* Layered warm shadows */
-  --shadow-1: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --shadow-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-3: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-4: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-5: 0 20px 40px -15px rgba(255, 85, 0, 0.08), 0 10px 25px -5px rgba(0, 0, 0, 0.03), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
-  --shadow-dark-card: 0 20px 40px -10px rgba(20, 19, 18, 0.25);
+  /* Shadows */
+  --shadow-1: 0 1px 2px 0 rgba(17, 17, 17, 0.05);
+  --shadow-2: 0 4px 10px -2px rgba(17, 17, 17, 0.06), 0 1px 3px 0 rgba(17, 17, 17, 0.04);
+  --shadow-3: 0 8px 20px -6px rgba(108, 71, 255, 0.28), 0 2px 6px -1px rgba(17, 17, 17, 0.06);
+  --shadow-4: 0 16px 36px -12px rgba(17, 17, 17, 0.14), 0 4px 10px -2px rgba(17, 17, 17, 0.05);
+  --shadow-5: 0 18px 50px -24px rgba(17, 17, 17, 0.14), 0 2px 8px -2px rgba(17, 17, 17, 0.05);
+  --shadow-dark-card: 0 20px 44px -16px rgba(17, 17, 17, 0.28);
 
-  /* Compatibility aliases across existing routes */
+  /* Compatibility aliases so existing pages follow cleanly */
   --cream: var(--background);
-  --plum: var(--espresso-black);
-  --plum-muted: var(--warm-stone);
-  --mint: var(--warm-peach);
-  --lime: var(--warm-peach);
-  --glass-fill: rgba(255, 255, 255, 0.88);
-  --glass-border: var(--card-border-milky);
+  --plum: var(--color-ink);
+  --plum-muted: var(--color-text-muted);
+  --mint: var(--color-brand-soft);
+  --lime: var(--color-brand-line);
+  --glass-fill: #ffffff;
+  --glass-border: var(--border);
   --glass-shadow: var(--shadow-5);
   --glass-shadow-deep: var(--shadow-4);
 
-  --color-midnight: var(--espresso-black);
-  --color-navy: var(--espresso-black);
-  --color-blue: var(--solar-orange-deep);
-  --color-electric: #9c2d00;
-  --color-muted: var(--warm-stone);
+  --espresso-black: var(--color-ink);
+  --stone-taupe: var(--color-text-muted);
+  --warm-stone: var(--color-text-muted);
+  --warm-surface: var(--color-surface-muted);
+  --warm-peach: var(--color-brand-soft);
+  --warm-divider: #f0f0f5;
+  --solar-orange: var(--color-brand);
+  --solar-orange-deep: var(--color-brand-hover);
+  --card-border-milky: var(--border);
+
+  --color-midnight: var(--color-ink);
+  --color-navy: var(--color-ink);
+  --color-blue: var(--color-brand);
+  --color-electric: var(--color-brand-hover);
+  --color-muted: var(--color-text-muted);
   --color-on-dark: var(--color-white);
-  --color-surface: var(--warm-surface);
+  --color-surface: var(--color-surface-muted);
   --color-border: var(--border);
   --color-danger: var(--destructive);
 
@@ -113,32 +107,34 @@
 
 body {
   font-family: var(--font-body);
-  background-color: var(--background);
-  color: var(--espresso-black);
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(to right, rgba(17, 17, 17, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  color: var(--color-ink);
   min-height: 100vh;
 }
 
 /* Global accessible focus ring */
 :focus-visible {
-  outline: 2px solid var(--solar-orange);
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
 
-/* Milky frosted card surface */
+/* Minimalist Elevated SaaS Card */
 .glass-surface {
   position: relative;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--card-border-milky);
+  background: #ffffff;
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-5);
 }
 
-/* Dark espresso showcase card */
 .card-dark {
-  background: var(--espresso-black);
-  color: var(--color-white);
-  border-radius: 28px;
+  background: #111116;
+  color: #ffffff;
+  border-radius: 20px;
   box-shadow: var(--shadow-dark-card);
 }
 
@@ -158,15 +154,15 @@ body {
 }
 
 .glass-input {
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: var(--tw-ring-offset-color);
-  color: var(--espresso-black);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--color-ink);
   box-shadow: var(--shadow-1);
 }
 
 .glass-input::placeholder {
-  color: var(--stone-taupe);
+  color: var(--color-text-muted);
 }
 
 .glass-pill {
@@ -175,13 +171,12 @@ body {
 
 .btn-plum,
 .btn-lime {
-  background-color: var(--espresso-black);
-  color: var(--color-white);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-2);
+  background-color: var(--color-brand);
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: var(--shadow-3);
   transition:
     background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -189,9 +184,7 @@ body {
 @media (hover: hover) {
   .btn-plum:hover,
   .btn-lime:hover {
-    background-color: var(--solar-orange);
-    color: var(--espresso-black);
-    box-shadow: var(--shadow-3);
+    background-color: var(--color-brand-hover);
   }
 }
 
@@ -201,23 +194,19 @@ body {
 }
 
 .btn-mint {
-  background-color: rgba(255, 255, 255, 0.78);
-  color: var(--warm-stone);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-5);
+  background-color: var(--color-brand-soft);
+  color: var(--color-brand-hover);
+  border: 1px solid var(--color-brand-line);
+  border-radius: 12px;
   transition:
     background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (hover: hover) {
   .btn-mint:hover {
-    background-color: var(--warm-peach);
-    color: var(--espresso-black);
-    border-color: var(--color-brand-line);
+    background-color: var(--color-brand-line);
   }
 }
 
@@ -251,9 +240,9 @@ body {
   inset-inline-start: 1rem;
   z-index: 50;
   padding: 0.5rem 1rem;
-  border-radius: var(--radius-full);
-  background: var(--espresso-black);
-  color: var(--color-white);
+  border-radius: 10px;
+  background: var(--color-brand);
+  color: #ffffff;
   font-weight: 600;
   text-decoration: none;
 }

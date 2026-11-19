@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Comfortaa, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppFooter, AppHeader } from "@/components/AppChrome";
 import { LanguageProvider } from "@/components/LanguageProvider";
@@ -8,16 +8,10 @@ import { auth } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import "./globals.css";
 
-const comfortaa = Comfortaa({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-comfortaa",
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plus-jakarta-sans",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-inter",
 });
 
 export const viewport: Viewport = {
@@ -98,7 +92,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang={initialLocale} className={`${comfortaa.variable} ${plusJakartaSans.variable}`}>
+    <html lang={initialLocale} className={inter.variable}>
       <head>
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color={SITE_CONFIG.themeColor} />
         <meta name="msapplication-TileColor" content={SITE_CONFIG.themeColor} />
@@ -108,7 +102,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
       </head>
-      <body className="relative min-h-screen flex flex-col bg-[var(--background)] text-[var(--espresso-black)] antialiased">
+      <body className="relative min-h-screen flex flex-col bg-[var(--background)] text-[var(--color-ink)] antialiased">
         <LanguageProvider initialLocale={initialLocale}>
           <a href="#main-content" className="skip-link">
             Skip to main content
@@ -119,7 +113,7 @@ export default async function RootLayout({
             userImage={userImage}
             userRole={userRole}
           />
-          <main id="main-content" className="relative z-10 flex-1 mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <main id="main-content" className="relative z-10 flex-1 mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             {children}
           </main>
           <AppFooter />

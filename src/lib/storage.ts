@@ -173,3 +173,115 @@ export async function getPrivateDownloadUrl(
   });
   return `/api/files/download?token=${encodeURIComponent(token)}`;
 }
+
+export interface PrivacyDownloadTokenPayload {
+  recordId: string;
+  kind: "original" | "cleaned";
+  ownerScope: string;
+  fileName: string;
+  exp: number;
+}
+
+export function createPrivacyDownloadToken(
+  payload: PrivacyDownloadTokenPayload
+): string {
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", getSigningSecret())
+    .update(`privacy:${data}`)
+    .digest("base64url");
+  return `${data}.${sig}`;
+}
+
+export function verifyPrivacyDownloadToken(
+  token: string
+): PrivacyDownloadTokenPayload | null {
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [data, sig] = parts;
+  const expected = crypto
+    .createHmac("sha256", getSigningSecret())
+    .update(`privacy:${data}`)
+    .digest("base64url");
+  if (sig.length !== expected.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(data, "base64url").toString("utf8")
+    ) as PrivacyDownloadTokenPayload;
+    if (
+      typeof parsed.recordId !== "string" ||
+      (parsed.kind !== "original" && parsed.kind !== "cleaned") ||
+      typeof parsed.ownerScope !== "string" ||
+      typeof parsed.fileName !== "string" ||
+      typeof parsed.exp !== "number" ||
+      Date.now() > parsed.exp
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function buildPrivacyDownloadUrl(params: {
+  recordId: string;
+  kind: "original" | "cleaned";
+  ownerScope: string;
+  fileName: string;
+  ttlSeconds?: number;
+}): string {
+  const token = createPrivacyDownloadToken({
+    recordId: params.recordId,
+    kind: params.kind,
+    ownerScope: params.ownerScope,
+    fileName: params.fileName,
+    exp: Date.now() + (params.ttlSeconds ?? 900) * 1000,
+  });
+  return `/api/privacy-clean/download?token=${encodeURIComponent(token)}`;
+}
+
+export async function purgeExpiredPrivacyFiles(): Promise<number> {
+  try {
+    const { and, lt, ne, isNotNull } = await import("drizzle-orm");
+    const { getDb, schema } = await import("@/db");
+    const db = await getDb();
+    const now = new Date();
+    const expiredRows = await db
+      .select({
+        id: schema.mediaProcessingRecords.id,
+        originalKey: schema.mediaProcessingRecords.originalKey,
+        cleanedKey: schema.mediaProcessingRecords.cleanedKey,
+      })
+      .from(schema.mediaProcessingRecords)
+      .where(
+        and(
+          ne(schema.mediaProcessingRecords.status, "expired"),
+          isNotNull(schema.mediaProcessingRecords.expiresAt),
+          lt(schema.mediaProcessingRecords.expiresAt, now)
+        )
+      )
+      .limit(100);
+
+    for (const row of expiredRows) {
+      if (row.originalKey) await deletePrivateObject(row.originalKey);
+      if (row.cleanedKey) await deletePrivateObject(row.cleanedKey);
+      const { eq } = await import("drizzle-orm");
+      await db
+        .update(schema.mediaProcessingRecords)
+        .set({
+          status: "expired",
+          originalKey: null,
+          cleanedKey: null,
+        })
+        .where(eq(schema.mediaProcessingRecords.id, row.id));
+    }
+
+    return expiredRows.length;
+  } catch {
+    return 0;
+  }
+}

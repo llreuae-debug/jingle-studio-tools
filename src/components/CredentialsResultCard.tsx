@@ -478,7 +478,7 @@ export function CredentialsResultCard({
 
         <Link
           href="/tools/ai-disclosure-signer"
-          className="inline-flex items-center rounded-full bg-[var(--warm-peach)] border border-[var(--color-brand-line)] px-4 py-2.5 text-xs sm:text-sm font-bold text-[var(--color-brand)] hover:bg-[var(--warm-peach)]/80 transition-colors duration-150"
+          className="inline-flex items-center rounded-[12px] bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-4 py-2.5 text-xs sm:text-sm font-bold text-[var(--color-brand)] hover:bg-[var(--color-brand-line)] transition-colors duration-150"
         >
           Sign your own work
         </Link>

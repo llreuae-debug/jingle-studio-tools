@@ -129,7 +129,8 @@ export function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
         body: JSON.stringify({ email, password, name }),
       });
       if (!res.ok) {
-        setError(c.errors.Other);
+        const body = await res.json().catch(() => null);
+        setError(body?.error || c.errors.Other);
       } else {
         router.push(callbackUrl);
         router.refresh();
@@ -282,6 +283,21 @@ export function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
             onChange={(e) => setName(e.target.value)}
             className="w-full glass-input px-3.5 py-2.5 text-sm"
           />
+        </div>
+
+        <div className="flex items-center justify-between text-xs pt-1">
+          <Link
+            href="/forgot-password"
+            className="font-medium text-[var(--color-brand)] hover:underline"
+          >
+            Forgot password?
+          </Link>
+          <Link
+            href="/signup"
+            className="font-medium text-[var(--color-brand)] hover:underline"
+          >
+            Create an account
+          </Link>
         </div>
 
         <button

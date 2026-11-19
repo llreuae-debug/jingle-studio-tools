@@ -21,17 +21,45 @@ function validateAuthConfig() {
 
 validateAuthConfig();
 
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
   const derived = crypto.scryptSync(password, salt, 64).toString("hex");
   return `${salt}:${derived}`;
 }
 
-function verifyPassword(password: string, stored: string): boolean {
+export function verifyPassword(password: string, stored: string): boolean {
   const [salt, expected] = stored.split(":");
   if (!salt || !expected) return false;
   const derived = crypto.scryptSync(password, salt, 64).toString("hex");
   return crypto.timingSafeEqual(Buffer.from(derived), Buffer.from(expected));
+}
+
+export async function createDbSessionForUser(userId: string): Promise<{
+  sessionToken: string;
+  cookieName: string;
+  maxAge: number;
+  secure: boolean;
+}> {
+  const sessionToken = crypto.randomUUID();
+  const maxAge = 30 * 24 * 60 * 60;
+  const expires = new Date(Date.now() + maxAge * 1000);
+  const db = await getDb();
+
+  await db.insert(schema.sessions).values({
+    sessionToken,
+    userId,
+    expires,
+  });
+
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    sessionToken,
+    cookieName: isProd
+      ? "__Secure-authjs.session-token"
+      : "authjs.session-token",
+    maxAge,
+    secure: isProd,
+  };
 }
 
 function isAdminEmail(email: string): boolean {
@@ -64,8 +92,8 @@ export async function ensureUserAndWorkspace(params: {
   if (existing.length > 0) {
     const user = existing[0];
     if (user.disabled) return null;
-    if (params.password && user.passwordHash) {
-      if (!verifyPassword(params.password, user.passwordHash)) {
+    if (params.password) {
+      if (!user.passwordHash || !verifyPassword(params.password, user.passwordHash)) {
         return null;
       }
     }
@@ -248,6 +276,7 @@ export interface SessionContext {
     name: string | null;
     avatarUrl: string | null;
     role: string;
+    emailVerified: Date | null;
   };
   workspace: {
     id: string;
@@ -328,6 +357,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       name: user.name,
       avatarUrl: user.avatarUrl,
       role: user.role,
+      emailVerified: user.emailVerified ?? null,
     },
     workspace: {
       id: active.workspaceId,

@@ -2,84 +2,102 @@ import React from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { CREDIT_PACKS, getCreditCostPerFile } from "@/config/pricing";
+import { listPricingPlans } from "@/lib/plans";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Pricing",
-  description: "Free in-browser Content Credentials checks and credit packs for batch signing.",
+  description:
+    "Subscription tiers for AI media inspection & privacy cleaning, plus credit packs for C2PA batch signing.",
 };
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const costPerFile = getCreditCostPerFile();
+  const plans = await listPricingPlans();
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       <section className="space-y-2 max-w-2xl">
-        <h1 className="text-3xl font-bold text-[var(--plum)]">Pricing</h1>
-        <p className="text-sm text-[var(--plum-muted)]">
-          Checking Content Credentials in your browser is always free. Batch signing costs{" "}
-          <strong className="text-[var(--plum)]">{costPerFile} credit</strong> per signed file;
-          failed files are refunded automatically.
+        <h1 className="text-3xl font-bold text-[var(--color-ink)]">Pricing &amp; Plans</h1>
+        <p className="text-sm text-[var(--color-text-muted)]">
+          Inspect Content Credentials in your browser for free, clean personal metadata on our plans, and purchase credit packs ({costPerFile} credit per signed file) for C2PA batch signing.
         </p>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {CREDIT_PACKS.map((pack) => (
-          <div
-            key={pack.id}
-            className="glass-surface p-6 flex flex-col justify-between space-y-5"
-          >
-            <div className="space-y-2">
-              <h2 className="text-lg font-bold text-[var(--plum)]">{pack.name}</h2>
-              <p className="text-3xl font-bold text-[var(--plum)]">
-                ${(pack.amountCents / 100).toFixed(0)}
-                <span className="text-xs font-normal text-[var(--plum-muted)]">
-                  {" "}
-                  USD • {pack.credits} credits
-                </span>
-              </p>
-              <p className="text-xs text-[var(--plum-muted)]">{pack.description}</p>
-            </div>
-            <Link
-              href="/app/billing"
-              className="inline-flex justify-center btn-plum px-4 py-2.5 text-sm font-semibold"
+      {/* Subscription Plans (Admin configurable) */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-[var(--color-ink)]">Subscription Tiers</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {plans.filter((p) => p.active).map((plan) => (
+            <div
+              key={plan.id}
+              className="glass-surface p-6 flex flex-col justify-between space-y-5"
             >
-              Buy in Billing
-            </Link>
-          </div>
-        ))}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-lg font-bold text-[var(--color-ink)]">{plan.name}</h3>
+                  <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--color-brand)]">
+                    {plan.dailyLimit}/day
+                  </span>
+                </div>
+                <p className="text-3xl font-bold text-[var(--color-ink)]">
+                  {plan.monthlyPriceCents === 0
+                    ? "$0"
+                    : `$${(plan.monthlyPriceCents / 100).toFixed(0)}`}
+                  <span className="text-xs font-normal text-[var(--color-text-muted)]">
+                    {" "}
+                    / month • {plan.maxImageMb} MB img / {plan.maxVideoMb} MB video
+                  </span>
+                </p>
+                <ul className="space-y-1.5 text-xs text-[var(--color-text-muted)]">
+                  {plan.features.map((feat, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Check aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--color-brand)]" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                href={plan.monthlyPriceCents === 0 ? "/signup" : "/app/billing"}
+                className="inline-flex justify-center btn-plum px-4 py-2.5 text-sm font-semibold"
+              >
+                {plan.monthlyPriceCents === 0 ? "Start Free" : "Upgrade / Billing"}
+              </Link>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="glass-surface p-6 sm:p-8 space-y-4">
-        <h2 className="text-lg font-bold text-[var(--plum)]">
-          Free Checks &amp; Team Workspaces
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-[var(--plum)]">
-          <div className="rounded-[20px] bg-[var(--mint)]/60 p-4 space-y-2">
-            <h3 className="font-semibold">Free Browser Checks ($0)</h3>
-            <ul className="space-y-1.5 text-xs text-[var(--plum)]">
-              <li className="flex items-center gap-2">
-                <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
-                Unlimited local C2PA inspections (files stay on your device)
-              </li>
-              <li className="flex items-center gap-2">
-                <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
-                Instagram Post, Story, Reels &amp; TikTok format fit checks
-              </li>
-            </ul>
-          </div>
-          <div className="rounded-[20px] bg-[var(--lime)]/45 p-4 space-y-2">
-            <h3 className="font-semibold">Team Workspaces (Included)</h3>
-            <ul className="space-y-1.5 text-xs text-[var(--plum)]">
-              <li className="flex items-center gap-2">
-                <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
-                Owner, admin, and member roles with shared credit balance
-              </li>
-              <li className="flex items-center gap-2">
-                <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
-                Reusable brand signing profiles &amp; revocable public proof pages
-              </li>
-            </ul>
-          </div>
+      {/* Credit Packs */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold text-[var(--color-ink)]">C2PA Signing Credit Packs</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {CREDIT_PACKS.map((pack) => (
+            <div
+              key={pack.id}
+              className="glass-surface p-6 flex flex-col justify-between space-y-5"
+            >
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-[var(--color-ink)]">{pack.name}</h3>
+                <p className="text-3xl font-bold text-[var(--color-ink)]">
+                  ${(pack.amountCents / 100).toFixed(0)}
+                  <span className="text-xs font-normal text-[var(--color-text-muted)]">
+                    {" "}
+                    USD • {pack.credits} credits
+                  </span>
+                </p>
+                <p className="text-xs text-[var(--color-text-muted)]">{pack.description}</p>
+              </div>
+              <Link
+                href="/app/billing"
+                className="inline-flex justify-center btn-mint px-4 py-2.5 text-sm font-semibold"
+              >
+                Buy in Billing
+              </Link>
+            </div>
+          ))}
         </div>
       </section>
     </div>

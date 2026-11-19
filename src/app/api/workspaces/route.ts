@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { getSessionContext } from "@/lib/auth";
 import { getWorkspaceBalance } from "@/lib/credits";
+import { getEffectivePlanForWorkspace } from "@/lib/plans";
 import { verifySameOrigin } from "@/lib/security";
 
 export async function GET() {
@@ -48,9 +49,18 @@ export async function GET() {
     .from(schema.workspaceInvites)
     .where(eq(schema.workspaceInvites.workspaceId, ctx.workspace.id));
 
-  const balance = await getWorkspaceBalance(ctx.workspace.id);
+  const [balance, plan] = await Promise.all([
+    getWorkspaceBalance(ctx.workspace.id),
+    getEffectivePlanForWorkspace(ctx.workspace.id),
+  ]);
 
   return NextResponse.json({
+    user: {
+      email: ctx.user.email,
+      name: ctx.user.name,
+      emailVerified: ctx.user.emailVerified?.toISOString() || null,
+    },
+    plan,
     activeWorkspace: ctx.workspace,
     activeRole: ctx.membership.role,
     balance,
