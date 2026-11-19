@@ -162,6 +162,32 @@ export default async function AppDashboardPage() {
                           ttlSeconds: 900,
                         })
                       : null;
+                  const origUrl =
+                    !expired && rec.status === "done" && rec.originalKey
+                      ? buildPrivacyDownloadUrl({
+                          recordId: rec.id,
+                          kind: "original",
+                          ownerScope,
+                          fileName: rec.originalName,
+                          ttlSeconds: 900,
+                        })
+                      : null;
+
+                  const metadataLabel =
+                    rec.personalMetadataStatus === "removed"
+                      ? "Cleaned"
+                      : rec.personalMetadataStatus === "preserved"
+                        ? "Not Processed"
+                        : "Already Clean";
+
+                  const synthIdShortLabel =
+                    rec.synthIdStatus === "verified_no_signal"
+                      ? "No Signal"
+                      : rec.synthIdStatus === "signal_detected"
+                        ? "Signal Detected"
+                        : rec.synthIdStatus === "inconclusive"
+                          ? "Inconclusive"
+                          : "Unavailable";
 
                   return (
                     <tr key={rec.id} className="border-b border-[var(--border)] last:border-0">
@@ -201,28 +227,60 @@ export default async function AppDashboardPage() {
                       <td className="py-2.5 pr-4">
                         <div className="flex flex-wrap gap-1.5">
                           <span className="rounded-full bg-[var(--color-surface-muted)] border border-[var(--border)] px-2 py-0.5 text-[11px] font-medium">
-                            Metadata: {rec.personalMetadataStatus.replace("_", " ")}
+                            Metadata: {metadataLabel}
                           </span>
                           <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-brand)]">
                             C2PA: {rec.c2paResultStatus.replace("_", " ")}
                           </span>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                              rec.synthIdStatus === "verified_no_signal"
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                : rec.synthIdStatus === "signal_detected"
+                                  ? "bg-rose-50 border-rose-200 text-rose-700"
+                                  : rec.synthIdStatus === "inconclusive"
+                                    ? "bg-amber-50 border-amber-200 text-amber-800"
+                                    : "bg-slate-100 border-slate-200 text-slate-600"
+                            }`}
+                          >
+                            SynthID: {synthIdShortLabel}
+                          </span>
                         </div>
                       </td>
                       <td className="py-2.5 whitespace-nowrap">
-                        {rec.status === "failed" ? (
-                          <span className="text-rose-700 font-semibold">Failed</span>
-                        ) : cleanUrl ? (
-                          <a
-                            href={cleanUrl}
-                            download={cleanName}
-                            className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--color-brand)] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/app/media/${rec.id}`}
+                            className="rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
                           >
-                            <Download aria-hidden="true" className="h-3 w-3" />
-                            Download Clean
-                          </a>
-                        ) : (
-                          <span className="text-[var(--color-text-muted)]">Expired</span>
-                        )}
+                            View Report
+                          </Link>
+                          {rec.status === "failed" ? (
+                            <span className="text-rose-700 font-semibold">Failed</span>
+                          ) : cleanUrl ? (
+                            <>
+                              <a
+                                href={cleanUrl}
+                                download={cleanName}
+                                className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--color-brand)] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+                              >
+                                <Download aria-hidden="true" className="h-3 w-3" />
+                                Download Processed
+                              </a>
+                              {origUrl && (
+                                <a
+                                  href={origUrl}
+                                  download={rec.originalName}
+                                  className="inline-flex items-center gap-1 rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
+                                >
+                                  Original
+                                </a>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-[var(--color-text-muted)]">Expired</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

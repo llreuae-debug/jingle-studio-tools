@@ -284,12 +284,17 @@ export const mediaProcessingRecords = pgTable("media_processing_records", {
   c2paStatus: text("c2pa_status").notNull().default("not_detected"), // present | not_detected | unable_to_verify
   c2paResultStatus: text("c2pa_result_status").notNull().default("not_present"), // preserved | not_present | unable_to_preserve
   c2paIssuer: text("c2pa_issuer"),
-  synthIdStatus: text("synthid_status").notNull().default("verification_unavailable"), // verification_available | no_detectable_signal | verification_unavailable | inconclusive
+  c2paCredentialStatus: text("c2pa_credential_status"),
+  synthIdStatus: text("synthid_status").notNull().default("verification_unavailable"), // verified_no_signal | signal_detected | verification_unavailable | inconclusive
+  synthIdProvider: text("synthid_provider"),
+  synthIdDetail: text("synthid_detail"),
   personalMetadataStatus: text("personal_metadata_status").notNull().default("not_available"), // removed | preserved | not_available
   removedFields: jsonb("removed_fields").$type<string[]>(),
   beforeMetadata: jsonb("before_metadata"),
   afterMetadata: jsonb("after_metadata"),
   cleaningOptions: jsonb("cleaning_options"),
+  processingTimeMs: integer("processing_time_ms"),
+  processingStages: jsonb("processing_stages"),
   originalKey: text("original_key"),
   cleanedKey: text("cleaned_key"),
   thumbnailDataUrl: text("thumbnail_data_url"),
@@ -299,6 +304,20 @@ export const mediaProcessingRecords = pgTable("media_processing_records", {
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const mediaDownloadRecords = pgTable("media_download_records", {
+  id: text("id").primaryKey(),
+  recordId: text("record_id")
+    .notNull()
+    .references(() => mediaProcessingRecords.id, { onDelete: "cascade" }),
+  workspaceId: text("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  ownerScope: text("owner_scope").notNull(),
+  kind: text("kind").notNull(), // cleaned | original
+  fileName: text("file_name").notNull(),
+  bytesSent: integer("bytes_sent").notNull(),
+  downloadedAt: timestamp("downloaded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const pricingPlans = pgTable("pricing_plans", {

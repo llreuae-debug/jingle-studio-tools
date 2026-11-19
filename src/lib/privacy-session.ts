@@ -8,6 +8,22 @@ import { getEffectivePlanForWorkspace } from "@/lib/plans";
 
 export const PRIVACY_COOKIE_NAME = "privacy_session";
 
+export const GUEST_PLAN_LIMITS: SubscriptionPlanSpec = {
+  id: "free",
+  name: "Guest",
+  monthlyPriceCents: 0,
+  dailyLimit: 10,
+  maxImageMb: 15,
+  maxVideoMb: 50,
+  includedCredits: 0,
+  features: [
+    "Browser C2PA inspection & lossless metadata cleaning",
+    "Up to 15 MB images & 50 MB videos",
+    "10 daily checks/cleanings (24-hour file retention)",
+  ],
+  active: true,
+};
+
 export interface PrivacyActorContext {
   isAuthenticated: boolean;
   userId: string | null;
@@ -43,7 +59,8 @@ export async function resolvePrivacyActor(
   const rawToken =
     existing.length >= 16 ? existing : crypto.randomBytes(24).toString("hex");
   const ownerTokenHash = hashPrivacyCookieToken(rawToken);
-  const plan = await getEffectivePlanForWorkspace(null);
+  // Enforce genuine tighter guest limits (15 MB img / 50 MB vid / 10 daily) until signed in
+  const plan = GUEST_PLAN_LIMITS;
 
   return {
     isAuthenticated: false,

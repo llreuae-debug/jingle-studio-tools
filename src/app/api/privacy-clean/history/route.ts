@@ -54,10 +54,20 @@ export async function GET() {
       c2paStatus: r.c2paStatus,
       c2paResultStatus: r.c2paResultStatus,
       c2paIssuer: r.c2paIssuer,
+      c2paCredentialStatus: r.c2paCredentialStatus,
       synthIdStatus: r.synthIdStatus,
+      synthIdProvider: r.synthIdProvider,
       personalMetadataStatus: r.personalMetadataStatus,
+      personalMetadataLabel:
+        r.personalMetadataStatus === "removed"
+          ? "Cleaned"
+          : r.personalMetadataStatus === "preserved"
+            ? "Not Processed"
+            : "Already Clean",
+      processingTimeMs: r.processingTimeMs,
       removedFields: Array.isArray(r.removedFields) ? r.removedFields : [],
       thumbnailDataUrl: r.thumbnailDataUrl,
+      reportUrl: `/app/media/${r.id}`,
       createdAt: r.createdAt.toISOString(),
       expiresAt: r.expiresAt?.toISOString() || null,
       cleanDownloadUrl:

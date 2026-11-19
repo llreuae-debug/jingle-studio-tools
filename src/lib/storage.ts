@@ -244,6 +244,35 @@ export function buildPrivacyDownloadUrl(params: {
   return `/api/privacy-clean/download?token=${encodeURIComponent(token)}`;
 }
 
+export async function purgeStaleUploadChunks(
+  maxAgeMs = 60 * 60 * 1000
+): Promise<number> {
+  if (useS3()) return 0;
+  try {
+    const chunksRoot = path.join(getLocalStorageDir(), "chunks");
+    const entries = await fs.readdir(chunksRoot, { withFileTypes: true }).catch(() => []);
+    const cutoff = Date.now() - maxAgeMs;
+    let removed = 0;
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const dirPath = path.join(chunksRoot, entry.name);
+      try {
+        const stat = await fs.stat(dirPath);
+        if (stat.mtimeMs < cutoff) {
+          await fs.rm(dirPath, { recursive: true, force: true });
+          removed++;
+        }
+      } catch {
+        // ignore concurrent deletion
+      }
+    }
+    return removed;
+  } catch {
+    return 0;
+  }
+}
+
 export async function purgeExpiredPrivacyFiles(): Promise<number> {
   try {
     const { and, lt, ne, isNotNull } = await import("drizzle-orm");
@@ -280,6 +309,7 @@ export async function purgeExpiredPrivacyFiles(): Promise<number> {
         .where(eq(schema.mediaProcessingRecords.id, row.id));
     }
 
+    await purgeStaleUploadChunks();
     return expiredRows.length;
   } catch {
     return 0;

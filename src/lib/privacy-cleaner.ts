@@ -11,6 +11,18 @@ import {
   type ParsedTiffTag,
   type SupportedMediaMime,
 } from "@/lib/media-metadata";
+import {
+  isSynthIdVerifierConfigured,
+  verifySynthId,
+  type SynthIdSummary,
+  type SynthIdVerificationStatus,
+} from "@/lib/synthid-verifier";
+
+export {
+  isSynthIdVerifierConfigured,
+  type SynthIdSummary,
+  type SynthIdVerificationStatus,
+};
 
 export interface PrivacyCleanOptions {
   removeGps: boolean;
@@ -40,15 +52,46 @@ export interface C2paInspectionSummary {
   provenanceSummary: string | null;
 }
 
-export interface SynthIdSummary {
-  status:
-    | "verification_available"
-    | "no_detectable_signal"
-    | "verification_unavailable"
-    | "inconclusive";
+export type ProcessingStageKey =
+  | "uploaded"
+  | "validated"
+  | "analysed"
+  | "metadata_inspected"
+  | "c2pa_inspected"
+  | "synthid_attempted"
+  | "metadata_cleaned"
+  | "output_generated"
+  | "output_verified"
+  | "download_prepared";
+
+export type ProcessingStageStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "skipped"
+  | "unavailable"
+  | "failed";
+
+export interface ProcessingStageUpdate {
+  step: number;
+  key: ProcessingStageKey;
   label: string;
-  explanation: string;
-  originalSignalModified: false;
+  status: ProcessingStageStatus;
+  detail?: string;
+  durationMs?: number;
+  timestamp: string;
+}
+
+export class ImageValidationError extends Error {
+  statusCode: 400 | 413;
+  code: string;
+
+  constructor(message: string, statusCode: 400 | 413 = 400, code = "ERR_INVALID_IMAGE") {
+    super(message);
+    this.name = "ImageValidationError";
+    this.statusCode = statusCode;
+    this.code = code;
+  }
 }
 
 export interface PrivacyCleanResult {
@@ -65,8 +108,13 @@ export interface PrivacyCleanResult {
   c2paNotice: string | null;
   synthId: SynthIdSummary;
   personalMetadataStatus: "removed" | "preserved" | "not_available";
+  personalMetadataLabel: "Cleaned" | "Already Clean" | "Not Processed";
   removedFields: string[];
   preservedOriginalBytes: boolean;
+  outputVerified: boolean;
+  dimensionsPreserved: boolean;
+  processingTimeMs: number;
+  stages: ProcessingStageUpdate[];
 }
 
 // ============================================================================
@@ -442,17 +490,41 @@ function cleanPngLossless(buf: Buffer, options: PrivacyCleanOptions): Buffer {
       try {
         if (type === "zTXt" && nul + 2 <= data.length) {
           val = zlib.inflateSync(data.subarray(nul + 2)).toString("utf8");
-        } else if (type === "iTXt") {
+        } else if (type === "iTXt" && nul > 0 && nul + 5 < data.length) {
+          const compFlag = data[nul + 1];
           const nulLang = data.indexOf(0, nul + 3);
           const nulTrans = nulLang >= 0 ? data.indexOf(0, nulLang + 1) : -1;
           if (nulTrans >= 0) {
-            val = data.subarray(nulTrans + 1).toString("utf8");
+            const textBytes = data.subarray(nulTrans + 1);
+            val =
+              compFlag === 1
+                ? zlib.inflateSync(textBytes).toString("utf8")
+                : textBytes.toString("utf8");
           }
         }
       } catch {
         val = "";
       }
-      if (shouldDropPngTextKey(key, val, options)) {
+      if (type === "iTXt" && key === "XML:com.adobe.xmp") {
+        if (options.removePersonalMetadata || options.removeExif) {
+          pos += 12 + len;
+          continue;
+        }
+        if (options.removeGps && val) {
+          const stripped = stripGpsFromXmpXml(val);
+          chunks.push(
+            makePngChunk(
+              "iTXt",
+              Buffer.concat([
+                Buffer.from(`${key}\0\0\0\0\0`, "utf8"),
+                Buffer.from(stripped, "utf8"),
+              ])
+            )
+          );
+          pos += 12 + len;
+          continue;
+        }
+      } else if (shouldDropPngTextKey(key, val, options)) {
         pos += 12 + len;
         continue;
       }
@@ -860,128 +932,413 @@ function diffRemovedFields(
 }
 
 // ============================================================================
-// Main Orchestrator
+// Pixel-Level Image Integrity Verifier & 10-Stage Orchestrator
 // ============================================================================
+
+const EXPECTED_SHARP_FORMAT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpeg",
+  "image/webp": "webp",
+};
+
+function checkAborted(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    const err = new Error("Processing cancelled by user.");
+    err.name = "AbortError";
+    throw err;
+  }
+}
+
+export async function verifyImageIntegrity(
+  buf: Buffer,
+  expectedMime: SupportedMediaMime
+): Promise<{ width: number; height: number; format: string }> {
+  const expectedFormat = EXPECTED_SHARP_FORMAT[expectedMime];
+  if (!expectedFormat) {
+    throw new ImageValidationError(
+      `Unsupported image MIME type "${expectedMime}".`,
+      400,
+      "ERR_UNSUPPORTED_MIME"
+    );
+  }
+
+  try {
+    const sharp = (await import("sharp")).default;
+    const instance = sharp(buf, {
+      failOn: "truncated",
+      limitInputPixels: 100_000_000,
+    });
+    const meta = await instance.metadata();
+    // Force full scanline decoding so truncated or corrupt compressed pixel payloads fail reliably
+    await sharp(buf, {
+      failOn: "truncated",
+      limitInputPixels: 100_000_000,
+    }).stats();
+
+    if (
+      !meta.width ||
+      !meta.height ||
+      meta.width <= 0 ||
+      meta.height <= 0 ||
+      meta.format !== expectedFormat
+    ) {
+      throw new ImageValidationError(
+        "Image file is corrupted or truncated and could not be decoded.",
+        400,
+        "ERR_CORRUPTED_IMAGE"
+      );
+    }
+
+    return {
+      width: meta.width,
+      height: meta.height,
+      format: meta.format,
+    };
+  } catch (err) {
+    if (err instanceof ImageValidationError) throw err;
+    throw new ImageValidationError(
+      "Image file is corrupted or truncated and could not be decoded.",
+      400,
+      "ERR_CORRUPTED_IMAGE"
+    );
+  }
+}
 
 export async function cleanMediaPrivacy(params: {
   buffer: Buffer;
   fileName: string;
   mimeType: SupportedMediaMime;
   options?: Partial<PrivacyCleanOptions>;
+  onStage?: (stage: ProcessingStageUpdate) => void;
+  signal?: AbortSignal;
+  initialStages?: ProcessingStageUpdate[];
 }): Promise<PrivacyCleanResult> {
+  const runStart = Date.now();
   const options: PrivacyCleanOptions = {
     ...DEFAULT_CLEAN_OPTIONS,
     ...(params.options || {}),
     preserveC2pa: true, // Always enforce C2PA preservation guardrail
   };
 
-  const inputSha256 = crypto
-    .createHash("sha256")
-    .update(params.buffer)
-    .digest("hex");
+  const stages: ProcessingStageUpdate[] = params.initialStages
+    ? [...params.initialStages]
+    : [];
 
-  const beforeMetadata = inspectMediaMetadata(
-    params.buffer,
-    params.fileName,
-    params.mimeType
-  );
-  const c2pa = await inspectC2paServerSummary(
-    params.buffer,
-    params.mimeType,
-    beforeMetadata.hasC2paBox
-  );
-
-  const synthId: SynthIdSummary = {
-    status: "verification_unavailable",
-    label: "Verification unavailable",
-    explanation:
-      "SynthID is a separate imperceptible watermark checked with official Google tools. The presence or absence of a detectable signal does not establish whether content was AI-generated.",
-    originalSignalModified: false,
+  const emitStage = (update: ProcessingStageUpdate) => {
+    const idx = stages.findIndex((s) => s.key === update.key);
+    if (idx >= 0) stages[idx] = update;
+    else stages.push(update);
+    params.onStage?.(update);
   };
 
-  // Never strip or corrupt C2PA Content Credentials
-  if (c2pa.status !== "not_detected") {
-    return {
-      cleanedBuffer: params.buffer,
+  async function runStage<T>(
+    step: number,
+    key: ProcessingStageKey,
+    label: string,
+    fn: () => Promise<{ result: T; status?: ProcessingStageStatus; detail?: string }>
+  ): Promise<T> {
+    checkAborted(params.signal);
+    const t0 = Date.now();
+    emitStage({
+      step,
+      key,
+      label,
+      status: "running",
+      timestamp: new Date().toISOString(),
+    });
+    try {
+      const out = await fn();
+      emitStage({
+        step,
+        key,
+        label,
+        status: out.status ?? "completed",
+        detail: out.detail,
+        durationMs: Date.now() - t0,
+        timestamp: new Date().toISOString(),
+      });
+      return out.result;
+    } catch (err) {
+      emitStage({
+        step,
+        key,
+        label,
+        status: "failed",
+        detail: err instanceof Error ? err.message : "Stage failed",
+        durationMs: Date.now() - t0,
+        timestamp: new Date().toISOString(),
+      });
+      throw err;
+    }
+  }
+
+  const isImageMime = params.mimeType.startsWith("image/");
+
+  // Stage 2: Validate file container & decode image integrity
+  const beforeDims = await runStage(2, "validated", "File validated", async () => {
+    const val = validateMediaFile({
+      buffer: params.buffer,
       fileName: params.fileName,
-      mimeType: params.mimeType,
-      mediaKind: beforeMetadata.mediaKind,
-      inputSha256,
-      outputSha256: inputSha256,
-      beforeMetadata,
-      afterMetadata: beforeMetadata,
-      c2pa,
-      c2paResultStatus: c2pa.status === "present" ? "preserved" : "unable_to_preserve",
-      c2paNotice:
-        "This file contains C2PA Content Credentials whose cryptographic hash covers the file's bytes. To preserve authenticity and avoid invalidating the credential signature, original bytes were kept intact.",
-      synthId,
-      personalMetadataStatus: beforeMetadata.hasPersonalMetadata ? "preserved" : "not_available",
-      removedFields: [],
-      preservedOriginalBytes: true,
+      declaredMime: params.mimeType,
+      maxImageBytes: 512 * 1024 * 1024,
+      maxVideoBytes: 1024 * 1024 * 1024,
+    });
+    if (!val.ok) {
+      throw new ImageValidationError(val.error, val.statusCode, val.code);
+    }
+    const dims = isImageMime
+      ? await verifyImageIntegrity(params.buffer, params.mimeType)
+      : null;
+    return {
+      result: dims,
+      detail: dims
+        ? `Verified ${dims.format.toUpperCase()} (${dims.width}×${dims.height})`
+        : `Verified ${val.mimeType}`,
     };
-  }
-
-  let cleanedBuffer = params.buffer;
-  if (params.mimeType === "image/jpeg") {
-    cleanedBuffer = cleanJpegLossless(params.buffer, options);
-  } else if (params.mimeType === "image/png") {
-    cleanedBuffer = cleanPngLossless(params.buffer, options);
-  } else if (params.mimeType === "image/webp") {
-    cleanedBuffer = cleanWebpLossless(params.buffer, options);
-  } else if (
-    params.mimeType === "video/mp4" ||
-    params.mimeType === "video/quicktime"
-  ) {
-    cleanedBuffer = cleanIsoBmffLossless(params.buffer, options);
-  } else if (params.mimeType === "video/webm") {
-    cleanedBuffer = cleanWebmLossless(params.buffer, options);
-  }
-
-  // Post-clean verification
-  const postValidation = validateMediaFile({
-    buffer: cleanedBuffer,
-    fileName: params.fileName,
-    declaredMime: params.mimeType,
-    maxImageBytes: 512 * 1024 * 1024,
-    maxVideoBytes: 1024 * 1024 * 1024,
   });
-  if (!postValidation.ok) {
-    throw new Error(`Post-clean verification failed: ${postValidation.error}`);
-  }
 
-  const afterMetadata = inspectMediaMetadata(
-    cleanedBuffer,
-    params.fileName,
-    params.mimeType
+  // Stage 3: Image analysed & input fingerprint
+  const inputSha256 = await runStage(3, "analysed", "Image analysed", async () => {
+    const sha = crypto.createHash("sha256").update(params.buffer).digest("hex");
+    return {
+      result: sha,
+      detail: beforeDims
+        ? `${beforeDims.width}×${beforeDims.height} px • ${params.buffer.length} bytes`
+        : `${params.buffer.length} bytes`,
+    };
+  });
+
+  // Stage 4: Metadata inspected
+  const beforeMetadata = await runStage(
+    4,
+    "metadata_inspected",
+    "Metadata inspected",
+    async () => {
+      const report = inspectMediaMetadata(
+        params.buffer,
+        params.fileName,
+        params.mimeType
+      );
+      if (beforeDims) {
+        report.width = report.width ?? beforeDims.width;
+        report.height = report.height ?? beforeDims.height;
+      }
+      return {
+        result: report,
+        detail: `${report.rawTagCount} metadata tags detected${report.hasGps ? " (includes GPS)" : ""}`,
+      };
+    }
   );
-  if (
-    beforeMetadata.width &&
-    beforeMetadata.height &&
-    (!afterMetadata.width || !afterMetadata.height)
-  ) {
-    throw new Error("Post-clean verification failed: media dimensions could not be read back.");
-  }
 
-  const removedFields = diffRemovedFields(beforeMetadata, afterMetadata);
-  const hadMetadata =
-    beforeMetadata.hasExif ||
-    beforeMetadata.hasGps ||
-    beforeMetadata.hasCameraInfo ||
-    beforeMetadata.hasPersonalMetadata ||
-    beforeMetadata.rawTagCount > 0;
+  // Stage 5: C2PA credentials inspected
+  const c2pa = await runStage(
+    5,
+    "c2pa_inspected",
+    "C2PA credentials inspected",
+    async () => {
+      const summary = await inspectC2paServerSummary(
+        params.buffer,
+        params.mimeType,
+        beforeMetadata.hasC2paBox
+      );
+      return {
+        result: summary,
+        detail:
+          summary.status === "present"
+            ? `${summary.credentialStatus}${summary.issuer ? ` (${summary.issuer})` : ""}`
+            : summary.credentialStatus,
+      };
+    }
+  );
 
-  let personalMetadataStatus: "removed" | "preserved" | "not_available" =
-    "not_available";
-  if (removedFields.length > 0) {
-    personalMetadataStatus = "removed";
-  } else if (hadMetadata) {
-    personalMetadataStatus = "preserved";
-  }
+  // Stage 6: SynthID verification attempted where configured/supported
+  const synthId = await runStage(
+    6,
+    "synthid_attempted",
+    "SynthID verification attempted",
+    async () => {
+      const res = await verifySynthId({
+        buffer: params.buffer,
+        mimeType: params.mimeType,
+        fileName: params.fileName,
+        sha256: inputSha256,
+        signal: params.signal,
+      });
+      return {
+        result: res,
+        status: res.available ? "completed" : "unavailable",
+        detail: res.label,
+      };
+    }
+  );
 
-  const outputSha256 = crypto
-    .createHash("sha256")
-    .update(cleanedBuffer)
-    .digest("hex");
+  // Stage 7: Selected privacy metadata cleaned (strictly preserving C2PA)
+  const preservedOriginalBytes = c2pa.status !== "not_detected";
+  const anyCleanRequested =
+    options.removeGps ||
+    options.removeCameraInfo ||
+    options.removeExif ||
+    options.removePersonalMetadata;
+
+  const cleanedBuffer = await runStage(
+    7,
+    "metadata_cleaned",
+    "Selected privacy metadata cleaned",
+    async () => {
+      if (preservedOriginalBytes) {
+        return {
+          result: params.buffer,
+          status: "skipped",
+          detail: "Original bytes preserved to protect C2PA signature integrity",
+        };
+      }
+      if (!anyCleanRequested) {
+        return {
+          result: params.buffer,
+          status: "skipped",
+          detail: "Skipped per selected cleaning options",
+        };
+      }
+
+      let out = params.buffer;
+      if (params.mimeType === "image/jpeg") {
+        out = cleanJpegLossless(params.buffer, options);
+      } else if (params.mimeType === "image/png") {
+        out = cleanPngLossless(params.buffer, options);
+      } else if (params.mimeType === "image/webp") {
+        out = cleanWebpLossless(params.buffer, options);
+      } else if (
+        params.mimeType === "video/mp4" ||
+        params.mimeType === "video/quicktime"
+      ) {
+        out = cleanIsoBmffLossless(params.buffer, options);
+      } else if (params.mimeType === "video/webm") {
+        out = cleanWebmLossless(params.buffer, options);
+      }
+
+      return {
+        result: out,
+        status: "completed",
+        detail: `Container metadata processed (${out.length} bytes)`,
+      };
+    }
+  );
+
+  // Stage 8: Output file generated
+  const outputSha256 = await runStage(
+    8,
+    "output_generated",
+    "Output file generated",
+    async () => {
+      if (!cleanedBuffer || cleanedBuffer.length === 0) {
+        throw new Error("Generated output file is empty.");
+      }
+      const sha = crypto.createHash("sha256").update(cleanedBuffer).digest("hex");
+      return {
+        result: sha,
+        detail: `${cleanedBuffer.length} bytes (${params.mimeType})`,
+      };
+    }
+  );
+
+  // Stage 9: Output integrity & dimension preservation verified
+  const verifiedOut = await runStage(
+    9,
+    "output_verified",
+    "Output integrity verified",
+    async () => {
+      const postValidation = validateMediaFile({
+        buffer: cleanedBuffer,
+        fileName: params.fileName,
+        declaredMime: params.mimeType,
+        maxImageBytes: 512 * 1024 * 1024,
+        maxVideoBytes: 1024 * 1024 * 1024,
+      });
+      if (!postValidation.ok) {
+        throw new Error(`Post-clean verification failed: ${postValidation.error}`);
+      }
+
+      let afterDims: { width: number; height: number; format: string } | null = null;
+      if (isImageMime) {
+        afterDims = await verifyImageIntegrity(cleanedBuffer, params.mimeType);
+        if (
+          beforeDims &&
+          (afterDims.width !== beforeDims.width ||
+            afterDims.height !== beforeDims.height)
+        ) {
+          throw new Error(
+            "Post-clean verification failed: image dimensions changed during processing."
+          );
+        }
+      }
+
+      const afterMetadata = inspectMediaMetadata(
+        cleanedBuffer,
+        params.fileName,
+        params.mimeType
+      );
+      if (afterDims) {
+        afterMetadata.width = afterMetadata.width ?? afterDims.width;
+        afterMetadata.height = afterMetadata.height ?? afterDims.height;
+      }
+
+      if (
+        beforeMetadata.width &&
+        beforeMetadata.height &&
+        (!afterMetadata.width ||
+          !afterMetadata.height ||
+          afterMetadata.width !== beforeMetadata.width ||
+          afterMetadata.height !== beforeMetadata.height)
+      ) {
+        throw new Error(
+          "Post-clean verification failed: media dimensions could not be verified."
+        );
+      }
+
+      const removedFields = diffRemovedFields(beforeMetadata, afterMetadata);
+      const hadMetadata =
+        beforeMetadata.hasExif ||
+        beforeMetadata.hasGps ||
+        beforeMetadata.hasCameraInfo ||
+        beforeMetadata.hasPersonalMetadata ||
+        beforeMetadata.rawTagCount > 0;
+
+      let personalMetadataStatus: "removed" | "preserved" | "not_available" =
+        "not_available";
+      let personalMetadataLabel: "Cleaned" | "Already Clean" | "Not Processed" =
+        "Already Clean";
+
+      if (removedFields.length > 0) {
+        personalMetadataStatus = "removed";
+        personalMetadataLabel = "Cleaned";
+      } else if (preservedOriginalBytes || hadMetadata) {
+        personalMetadataStatus = "preserved";
+        personalMetadataLabel = "Not Processed";
+      }
+
+      const dimText =
+        afterMetadata.width && afterMetadata.height
+          ? `${afterMetadata.width}×${afterMetadata.height} px verified`
+          : "Container verified";
+
+      return {
+        result: {
+          afterMetadata,
+          removedFields,
+          personalMetadataStatus,
+          personalMetadataLabel,
+        },
+        detail: `${dimText} • ${removedFields.length} fields removed`,
+      };
+    }
+  );
+
+  const c2paResultStatus: PrivacyCleanResult["c2paResultStatus"] =
+    c2pa.status === "not_detected"
+      ? "not_present"
+      : c2pa.status === "present"
+        ? "preserved"
+        : "unable_to_preserve";
 
   return {
     cleanedBuffer,
@@ -991,13 +1348,20 @@ export async function cleanMediaPrivacy(params: {
     inputSha256,
     outputSha256,
     beforeMetadata,
-    afterMetadata,
+    afterMetadata: verifiedOut.afterMetadata,
     c2pa,
-    c2paResultStatus: "not_present",
-    c2paNotice: null,
+    c2paResultStatus,
+    c2paNotice: preservedOriginalBytes
+      ? "This file contains C2PA Content Credentials whose cryptographic hash covers the file's bytes. To preserve authenticity and avoid invalidating the credential signature, original bytes were kept intact."
+      : null,
     synthId,
-    personalMetadataStatus,
-    removedFields,
-    preservedOriginalBytes: false,
+    personalMetadataStatus: verifiedOut.personalMetadataStatus,
+    personalMetadataLabel: verifiedOut.personalMetadataLabel,
+    removedFields: verifiedOut.removedFields,
+    preservedOriginalBytes,
+    outputVerified: true,
+    dimensionsPreserved: true,
+    processingTimeMs: Date.now() - runStart,
+    stages,
   };
 }

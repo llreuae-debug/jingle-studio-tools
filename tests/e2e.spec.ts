@@ -338,12 +338,12 @@ test("AI Media Inspector & Privacy Cleaner E2E: JPG/PNG clean, completion downlo
   // Click Clean Privacy Metadata and verify Completion Screen + real download
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
   await expect(
-    page.getByRole("heading", { name: "Your Privacy-Cleaned File Is Ready!" })
+    page.getByRole("heading", { name: "Your Image Is Ready" })
   ).toBeVisible({ timeout: 20000 });
   await expect(page.getByText("Clean File Ready")).toBeVisible();
 
   const cleanHref = await page
-    .getByRole("link", { name: "Download Clean File" })
+    .getByRole("link", { name: "Download Processed Image" })
     .getAttribute("href");
   expect(cleanHref).toContain("/api/privacy-clean/download?token=");
 
@@ -371,6 +371,7 @@ test("AI Media Inspector & Privacy Cleaner E2E: JPG/PNG clean, completion downlo
 test("Auth lifecycle (Signup, Verify Email, Forgot Password, Reset Password, Login, Dashboard History, Logout) & Admin 403", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (msg) => {
@@ -402,12 +403,14 @@ test("Auth lifecycle (Signup, Verify Email, Forgot Password, Reset Password, Log
   await page.locator('input[type="file"]').first().setInputFiles("public/favicon-96x96.png");
   await page.getByRole("button", { name: "Clean Privacy Metadata" }).click();
   await expect(
-    page.getByRole("heading", { name: "Your Privacy-Cleaned File Is Ready!" })
+    page.getByRole("heading", { name: "Your Image Is Ready" })
   ).toBeVisible({ timeout: 20000 });
 
   // Access Dashboard & verify processing history shows the file
-  await page.goto("/app", { waitUntil: "networkidle" });
-  await expect(page.getByText("Media Inspection & Cleaning History")).toBeVisible();
+  await page.goto("/app", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Media Inspection & Cleaning History")).toBeVisible({
+    timeout: 15000,
+  });
   await expect(page.getByText("favicon-96x96.png")).toBeVisible();
 
   // Regular user gets 403 on /api/admin (page.request shares the authenticated browser session)

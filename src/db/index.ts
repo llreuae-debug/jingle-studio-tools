@@ -236,12 +236,17 @@ CREATE TABLE IF NOT EXISTS media_processing_records (
   c2pa_status TEXT NOT NULL DEFAULT 'not_detected',
   c2pa_result_status TEXT NOT NULL DEFAULT 'not_present',
   c2pa_issuer TEXT,
+  c2pa_credential_status TEXT,
   synthid_status TEXT NOT NULL DEFAULT 'verification_unavailable',
+  synthid_provider TEXT,
+  synthid_detail TEXT,
   personal_metadata_status TEXT NOT NULL DEFAULT 'not_available',
   removed_fields JSONB,
   before_metadata JSONB,
   after_metadata JSONB,
   cleaning_options JSONB,
+  processing_time_ms INTEGER,
+  processing_stages JSONB,
   original_key TEXT,
   cleaned_key TEXT,
   thumbnail_data_url TEXT,
@@ -251,6 +256,24 @@ CREATE TABLE IF NOT EXISTS media_processing_records (
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at TIMESTAMPTZ
+);
+
+ALTER TABLE media_processing_records ADD COLUMN IF NOT EXISTS c2pa_credential_status TEXT;
+ALTER TABLE media_processing_records ADD COLUMN IF NOT EXISTS synthid_provider TEXT;
+ALTER TABLE media_processing_records ADD COLUMN IF NOT EXISTS synthid_detail TEXT;
+ALTER TABLE media_processing_records ADD COLUMN IF NOT EXISTS processing_time_ms INTEGER;
+ALTER TABLE media_processing_records ADD COLUMN IF NOT EXISTS processing_stages JSONB;
+
+CREATE TABLE IF NOT EXISTS media_download_records (
+  id TEXT PRIMARY KEY,
+  record_id TEXT NOT NULL REFERENCES media_processing_records(id) ON DELETE CASCADE,
+  workspace_id TEXT REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  owner_scope TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  bytes_sent INTEGER NOT NULL,
+  downloaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS pricing_plans (

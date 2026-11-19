@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: `File exceeds ${isVideo ? actor.plan.maxVideoMb : actor.plan.maxImageMb} MB limit for your plan.`,
+        code: "ERR_FILE_TOO_LARGE",
       },
       { status: 413 }
     );

@@ -5,7 +5,9 @@ import { getExtension, validateMediaFile } from "@/lib/media-metadata";
 import {
   cleanMediaPrivacy,
   DEFAULT_CLEAN_OPTIONS,
+  ImageValidationError,
   type PrivacyCleanOptions,
+  type ProcessingStageUpdate,
 } from "@/lib/privacy-cleaner";
 import {
   attachPrivacyCookie,
@@ -44,6 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
 
+  const startedAt = Date.now();
   const actor = await resolvePrivacyActor(req);
   const rl = checkRateLimit(`privacy:${actor.ownerScope}`, 30, 60_000);
   if (!rl.allowed) {
@@ -58,7 +61,12 @@ export async function POST(req: NextRequest) {
   if (!daily.allowed) {
     const res = NextResponse.json(
       {
-        error: `Daily processing limit (${daily.limit} files) reached on the ${actor.plan.name} plan.`,
+        error: `Daily processing limit (${daily.limit} files) reached on the ${actor.plan.name} plan.${
+          !actor.isAuthenticated
+            ? " Create a free account to increase your daily limit to 20 files."
+            : ""
+        }`,
+        code: "ERR_DAILY_LIMIT",
       },
       { status: 429 }
     );
@@ -77,7 +85,7 @@ export async function POST(req: NextRequest) {
       typeof body?.uploadId === "string" ? body.uploadId.trim() : "";
     if (!/^[0-9a-f-]{36}$/i.test(uploadId)) {
       return NextResponse.json(
-        { error: "Invalid uploadId supplied." },
+        { error: "Invalid uploadId supplied.", code: "ERR_INVALID_UPLOAD_ID" },
         { status: 400 }
       );
     }
@@ -85,7 +93,7 @@ export async function POST(req: NextRequest) {
     const metaRaw = await getPrivateObject(`chunks/${uploadId}/meta.json`);
     if (!metaRaw) {
       return NextResponse.json(
-        { error: "Upload session expired or not found." },
+        { error: "Upload session expired or not found.", code: "ERR_UPLOAD_EXPIRED" },
         { status: 404 }
       );
     }
@@ -109,7 +117,10 @@ export async function POST(req: NextRequest) {
       const part = await getPrivateObject(`chunks/${uploadId}/${i}.part`);
       if (!part) {
         return NextResponse.json(
-          { error: `Missing upload chunk ${i + 1} of ${meta.totalChunks}. Please retry.` },
+          {
+            error: `Missing upload chunk ${i + 1} of ${meta.totalChunks}. Please retry.`,
+            code: "ERR_MISSING_CHUNK",
+          },
           { status: 400 }
         );
       }
@@ -126,13 +137,16 @@ export async function POST(req: NextRequest) {
     const fd = await req.formData().catch(() => null);
     if (!fd) {
       return NextResponse.json(
-        { error: "Invalid multipart form request." },
+        { error: "Invalid multipart form request.", code: "ERR_INVALID_FORM" },
         { status: 400 }
       );
     }
     const fileField = fd.get("file");
     if (!(fileField instanceof Blob)) {
-      return NextResponse.json({ error: "No media file uploaded." }, { status: 400 });
+      return NextResponse.json(
+        { error: "No media file uploaded.", code: "ERR_NO_FILE" },
+        { status: 400 }
+      );
     }
     fileName =
       fileField instanceof File && fileField.name ? fileField.name : "media-file";
@@ -188,22 +202,55 @@ export async function POST(req: NextRequest) {
       metadata: { code: validation.code, fileName },
     });
 
+    const errMsg =
+      !actor.isAuthenticated && validation.code === "ERR_FILE_TOO_LARGE"
+        ? `${validation.error} Sign up free to upload larger files (up to 25 MB images / 100 MB videos).`
+        : validation.error;
+
     const res = NextResponse.json(
-      { error: validation.error, code: validation.code },
+      { error: errMsg, code: validation.code },
       { status: validation.statusCode }
     );
     return attachPrivacyCookie(res, actor, req);
   }
 
-  try {
+  const uploadStage: ProcessingStageUpdate = {
+    step: 1,
+    key: "uploaded",
+    label: "File uploaded",
+    status: "completed",
+    detail: `${fileBuffer.length} bytes received`,
+    durationMs: Date.now() - startedAt,
+    timestamp: new Date().toISOString(),
+  };
+
+  const executePipeline = async (
+    onStage?: (stage: ProcessingStageUpdate) => void
+  ) => {
+    onStage?.(uploadStage);
+
     const cleaned = await cleanMediaPrivacy({
       buffer: fileBuffer,
       fileName,
       mimeType: validation.mimeType,
       options,
+      onStage,
+      signal: req.signal,
+      initialStages: [uploadStage],
     });
 
-    const ext = getExtension(fileName) || `.${cleaned.beforeMetadata.format.toLowerCase()}`;
+    const stage10Start = Date.now();
+    const prepRunning: ProcessingStageUpdate = {
+      step: 10,
+      key: "download_prepared",
+      label: "Download prepared",
+      status: "running",
+      timestamp: new Date().toISOString(),
+    };
+    onStage?.(prepRunning);
+
+    const ext =
+      getExtension(fileName) || `.${cleaned.beforeMetadata.format.toLowerCase()}`;
     const originalKey = `privacy/${recordId}/original${ext}`;
     const cleanedKey = `privacy/${recordId}/cleaned${ext}`;
 
@@ -219,6 +266,39 @@ export async function POST(req: NextRequest) {
 
     const ttlHours = actor.isAuthenticated ? 7 * 24 : 24;
     const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
+
+    const baseName = fileName.includes(".")
+      ? fileName.slice(0, fileName.lastIndexOf("."))
+      : fileName;
+    const cleanFileName = `${baseName}-privacy-cleaned${ext}`;
+
+    const cleanDownloadUrl = buildPrivacyDownloadUrl({
+      recordId,
+      kind: "cleaned",
+      ownerScope: actor.ownerScope,
+      fileName: cleanFileName,
+      ttlSeconds: 900,
+    });
+    const originalDownloadUrl = buildPrivacyDownloadUrl({
+      recordId,
+      kind: "original",
+      ownerScope: actor.ownerScope,
+      fileName,
+      ttlSeconds: 900,
+    });
+
+    const totalMs = Date.now() - startedAt;
+    const prepDone: ProcessingStageUpdate = {
+      step: 10,
+      key: "download_prepared",
+      label: "Download prepared",
+      status: "completed",
+      detail: `Signed download ready (${ttlHours}h retention)`,
+      durationMs: Date.now() - stage10Start,
+      timestamp: new Date().toISOString(),
+    };
+    const allStages = [...cleaned.stages, prepDone];
+    onStage?.(prepDone);
 
     await db.insert(schema.mediaProcessingRecords).values({
       id: recordId,
@@ -242,12 +322,17 @@ export async function POST(req: NextRequest) {
       c2paStatus: cleaned.c2pa.status,
       c2paResultStatus: cleaned.c2paResultStatus,
       c2paIssuer: cleaned.c2pa.issuer,
+      c2paCredentialStatus: cleaned.c2pa.credentialStatus,
       synthIdStatus: cleaned.synthId.status,
+      synthIdProvider: cleaned.synthId.provider,
+      synthIdDetail: cleaned.synthId.explanation,
       personalMetadataStatus: cleaned.personalMetadataStatus,
       removedFields: cleaned.removedFields,
       beforeMetadata: cleaned.beforeMetadata,
       afterMetadata: cleaned.afterMetadata,
       cleaningOptions: options,
+      processingTimeMs: totalMs,
+      processingStages: allStages,
       originalKey,
       cleanedKey,
       thumbnailDataUrl,
@@ -261,40 +346,22 @@ export async function POST(req: NextRequest) {
       level: "info",
       event: "privacy_clean_completed",
       userId: actor.userId,
-      message: `Processed ${fileName} (${cleaned.mimeType})`,
+      message: `Processed ${fileName} (${cleaned.mimeType}) in ${totalMs}ms`,
       metadata: {
         recordId,
         personalMetadataStatus: cleaned.personalMetadataStatus,
         c2paResultStatus: cleaned.c2paResultStatus,
+        synthIdStatus: cleaned.synthId.status,
         removedCount: cleaned.removedFields.length,
+        processingTimeMs: totalMs,
       },
     });
 
-    // Opportunistic expired-file purge
+    // Opportunistic expired-file and stale chunk purge
     void purgeExpiredPrivacyFiles();
 
-    const baseName = fileName.includes(".")
-      ? fileName.slice(0, fileName.lastIndexOf("."))
-      : fileName;
-    const cleanFileName = `${baseName}-privacy-cleaned${ext}`;
-
-    const cleanDownloadUrl = buildPrivacyDownloadUrl({
-      recordId,
-      kind: "cleaned",
-      ownerScope: actor.ownerScope,
-      fileName: cleanFileName,
-      ttlSeconds: 900,
-    });
-    const originalDownloadUrl = buildPrivacyDownloadUrl({
-      recordId,
-      kind: "original",
-      ownerScope: actor.ownerScope,
-      fileName,
-      ttlSeconds: 900,
-    });
-
-    const res = NextResponse.json({
-      ok: true,
+    return {
+      ok: true as const,
       recordId,
       fileName,
       cleanFileName,
@@ -309,16 +376,47 @@ export async function POST(req: NextRequest) {
       c2paNotice: cleaned.c2paNotice,
       synthId: cleaned.synthId,
       personalMetadataStatus: cleaned.personalMetadataStatus,
+      personalMetadataLabel: cleaned.personalMetadataLabel,
       removedFields: cleaned.removedFields,
       preservedOriginalBytes: cleaned.preservedOriginalBytes,
+      outputVerified: cleaned.outputVerified,
+      dimensionsPreserved: cleaned.dimensionsPreserved,
+      processingTimeMs: totalMs,
+      stages: allStages,
       beforeMetadata: cleaned.beforeMetadata,
       afterMetadata: cleaned.afterMetadata,
       cleanDownloadUrl,
       originalDownloadUrl,
       expiresAt: expiresAt.toISOString(),
-    });
-    return attachPrivacyCookie(res, actor, req);
-  } catch (err) {
+      isAuthenticated: actor.isAuthenticated,
+      recordUrl: actor.isAuthenticated ? `/app/media/${recordId}` : null,
+    };
+  };
+
+  const recordPipelineFailure = async (err: unknown) => {
+    const isAbort =
+      req.signal.aborted ||
+      (err instanceof Error && err.name === "AbortError");
+    if (isAbort) {
+      await recordSystemLog({
+        level: "info",
+        event: "privacy_clean_cancelled",
+        userId: actor.userId,
+        message: `Cancelled processing for ${fileName}`,
+        metadata: { recordId, fileName },
+      });
+      return {
+        isAbort: true,
+        statusCode: 499,
+        code: "ERR_CANCELLED",
+        error: "Processing cancelled.",
+      };
+    }
+
+    const statusCode =
+      err instanceof ImageValidationError ? err.statusCode : 500;
+    const code =
+      err instanceof ImageValidationError ? err.code : "ERR_PROCESSING_FAILED";
     const errMsg =
       err instanceof Error ? err.message : "Failed to process media file.";
 
@@ -344,12 +442,73 @@ export async function POST(req: NextRequest) {
       event: "privacy_clean_failed",
       userId: actor.userId,
       message: errMsg,
-      metadata: { recordId, fileName },
+      metadata: { recordId, fileName, code },
     });
 
+    return { isAbort: false, statusCode, code, error: errMsg };
+  };
+
+  const wantsStream =
+    req.headers.get("accept")?.includes("application/x-ndjson") ?? false;
+
+  if (wantsStream) {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (payload: unknown) => {
+          if (req.signal.aborted) return;
+          try {
+            controller.enqueue(encoder.encode(`${JSON.stringify(payload)}\n`));
+          } catch {
+            // Stream already closed by client abort
+          }
+        };
+
+        try {
+          const resultPayload = await executePipeline((stage) => {
+            send({ type: "stage", stage });
+          });
+          send({ type: "result", data: resultPayload });
+        } catch (err) {
+          const info = await recordPipelineFailure(err);
+          if (!info.isAbort) {
+            send({
+              type: "error",
+              statusCode: info.statusCode,
+              code: info.code,
+              error: info.error,
+            });
+          }
+        } finally {
+          try {
+            controller.close();
+          } catch {
+            // already closed
+          }
+        }
+      },
+    });
+
+    const res = new NextResponse(stream, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-store, no-transform",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+    return attachPrivacyCookie(res, actor, req);
+  }
+
+  try {
+    const resultPayload = await executePipeline();
+    const res = NextResponse.json(resultPayload);
+    return attachPrivacyCookie(res, actor, req);
+  } catch (err) {
+    const info = await recordPipelineFailure(err);
     const res = NextResponse.json(
-      { error: errMsg, code: "ERR_PROCESSING_FAILED" },
-      { status: 500 }
+      { error: info.error, code: info.code },
+      { status: info.statusCode === 499 ? 400 : info.statusCode }
     );
     return attachPrivacyCookie(res, actor, req);
   }

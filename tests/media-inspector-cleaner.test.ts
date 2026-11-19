@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import sharp from "sharp";
@@ -26,7 +27,8 @@ import {
   validateMediaFile,
 } from "@/lib/media-metadata";
 import { getEffectivePlanForWorkspace, listPricingPlans } from "@/lib/plans";
-import { cleanMediaPrivacy } from "@/lib/privacy-cleaner";
+import { ImageValidationError, cleanMediaPrivacy } from "@/lib/privacy-cleaner";
+import { verifySynthId } from "@/lib/synthid-verifier";
 import {
   buildPrivacyDownloadUrl,
   deletePrivateObject,
@@ -691,5 +693,215 @@ describe("Auth, Processing History, Admin & Signed Expiring Downloads (Cases 14â
 
     await fs.rm(tmpStorage, { recursive: true, force: true });
     await deletePrivateObject(cleanKey);
+  });
+});
+
+describe("Corrupt image rejection, SynthID verifier, stages & download records", () => {
+  it("rejects corrupted PNG, JPG, and WEBP buffers with ImageValidationError (ERR_CORRUPTED_IMAGE, 400)", async () => {
+    const validPng = await sharp({
+      create: { width: 16, height: 16, channels: 3, background: { r: 1, g: 2, b: 3 } },
+    })
+      .png()
+      .toBuffer();
+
+    const corruptPng = Buffer.concat([
+      validPng.subarray(0, 33),
+      Buffer.from([0, 0, 0, 10, 0x49, 0x44, 0x41, 0x54, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0]),
+    ]);
+    const corruptJpg = Buffer.from([
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0xff, 0xda, 0x00, 0x02, 0x00,
+    ]);
+    const corruptWebp = Buffer.from(
+      "RIFF\x20\x00\x00\x00WEBPVP8 \x0c\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff",
+      "latin1"
+    );
+
+    for (const [buf, fileName, mimeType] of [
+      [corruptPng, "bad.png", "image/png"],
+      [corruptJpg, "bad.jpg", "image/jpeg"],
+      [corruptWebp, "bad.webp", "image/webp"],
+    ] as const) {
+      let caught: unknown = null;
+      try {
+        await cleanMediaPrivacy({ buffer: buf, fileName, mimeType });
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeInstanceOf(ImageValidationError);
+      expect((caught as ImageValidationError).statusCode).toBe(400);
+      expect((caught as ImageValidationError).code).toBe("ERR_CORRUPTED_IMAGE");
+    }
+  });
+
+  it("verifies SynthID against a live configured HTTP detector (no signal, positive, inconclusive, 503 fallback, unconfigured)", async () => {
+    const sampleBuf = await sharp({
+      create: { width: 20, height: 20, channels: 3, background: { r: 30, g: 60, b: 90 } },
+    })
+      .png()
+      .toBuffer();
+    const sha = crypto.createHash("sha256").update(sampleBuf).digest("hex");
+
+    delete process.env.SYNTHID_VERIFIER_URL;
+    const unconf = await verifySynthId({
+      buffer: sampleBuf,
+      mimeType: "image/png",
+      fileName: "sample.png",
+      sha256: sha,
+    });
+    expect(unconf.status).toBe("verification_unavailable");
+    expect(unconf.available).toBe(false);
+
+    let mode: "no_detectable_signal" | "signal_detected" | "inconclusive" | "err_503" =
+      "no_detectable_signal";
+    const srv = http.createServer((req, res) => {
+      req.resume();
+      req.on("end", () => {
+        if (mode === "err_503") {
+          res.statusCode = 503;
+          res.end("Unavailable");
+          return;
+        }
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            verdict: mode,
+            confidence: 0.96,
+            provider: "Unit Test Detector",
+          })
+        );
+      });
+    });
+
+    await new Promise<void>((resolve) => srv.listen(0, "127.0.0.1", resolve));
+    const port = (srv.address() as { port: number }).port;
+    process.env.SYNTHID_VERIFIER_URL = `http://127.0.0.1:${port}/verify`;
+
+    try {
+      mode = "no_detectable_signal";
+      const rNo = await verifySynthId({
+        buffer: sampleBuf,
+        mimeType: "image/png",
+        fileName: "sample.png",
+        sha256: sha,
+      });
+      expect(rNo.status).toBe("verified_no_signal");
+      expect(rNo.label).toBe("Verified No Detectable SynthID Signal");
+      expect(rNo.explanation).toContain(
+        "Absence of a detected signal does not prove that SynthID is absent."
+      );
+
+      mode = "signal_detected";
+      const rYes = await verifySynthId({
+        buffer: sampleBuf,
+        mimeType: "image/png",
+        fileName: "sample.png",
+        sha256: sha,
+      });
+      expect(rYes.status).toBe("signal_detected");
+      expect(rYes.label).toBe("Signal Detected");
+
+      mode = "inconclusive";
+      const rInc = await verifySynthId({
+        buffer: sampleBuf,
+        mimeType: "image/png",
+        fileName: "sample.png",
+        sha256: sha,
+      });
+      expect(rInc.status).toBe("inconclusive");
+      expect(rInc.label).toBe("Inconclusive");
+
+      mode = "err_503";
+      const rErr = await verifySynthId({
+        buffer: sampleBuf,
+        mimeType: "image/png",
+        fileName: "sample.png",
+        sha256: sha,
+      });
+      expect(rErr.status).toBe("verification_unavailable");
+      expect(rErr.available).toBe(false);
+    } finally {
+      delete process.env.SYNTHID_VERIFIER_URL;
+      await new Promise<void>((resolve) => srv.close(() => resolve()));
+    }
+  });
+
+  it("emits stage updates 2..9, sets accurate personalMetadataLabel & persists media_download_records", async () => {
+    const cleanPng = await sharp({
+      create: { width: 28, height: 22, channels: 3, background: { r: 200, g: 100, b: 50 } },
+    })
+      .png()
+      .toBuffer();
+    const withExif = await createPngWithMetadata();
+
+    const cleanStages: number[] = [];
+    const alreadyCleanRes = await cleanMediaPrivacy({
+      buffer: cleanPng,
+      fileName: "already-clean.png",
+      mimeType: "image/png",
+      onStage: (st) => {
+        if (st.status === "completed" || st.status === "unavailable") {
+          cleanStages.push(st.step);
+        }
+      },
+    });
+    expect(alreadyCleanRes.personalMetadataLabel).toBe("Already Clean");
+    expect(alreadyCleanRes.outputVerified).toBe(true);
+    expect(alreadyCleanRes.dimensionsPreserved).toBe(true);
+    expect(alreadyCleanRes.afterMetadata.width).toBe(28);
+    expect(alreadyCleanRes.afterMetadata.height).toBe(22);
+    expect(cleanStages).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
+
+    const cleanedRes = await cleanMediaPrivacy({
+      buffer: withExif,
+      fileName: "dirty.png",
+      mimeType: "image/png",
+    });
+    expect(cleanedRes.personalMetadataLabel).toBe("Cleaned");
+
+    const skippedRes = await cleanMediaPrivacy({
+      buffer: withExif,
+      fileName: "skip.png",
+      mimeType: "image/png",
+      options: {
+        removeGps: false,
+        removeCameraInfo: false,
+        removeExif: false,
+        removePersonalMetadata: false,
+      },
+    });
+    expect(skippedRes.personalMetadataLabel).toBe("Not Processed");
+
+    const db = await getDb();
+    const recId = crypto.randomUUID();
+    await db.insert(schema.mediaProcessingRecords).values({
+      id: recId,
+      originalName: "dirty.png",
+      mimeType: "image/png",
+      mediaKind: "image",
+      fileSizeBytes: withExif.length,
+      cleanedSizeBytes: cleanedRes.cleanedBuffer.length,
+      status: "done",
+      c2paStatus: cleanedRes.c2pa.status,
+      c2paResultStatus: cleanedRes.c2paResultStatus,
+      synthIdStatus: cleanedRes.synthId.status,
+      personalMetadataStatus: cleanedRes.personalMetadataStatus,
+      processingTimeMs: cleanedRes.processingTimeMs,
+      processingStages: cleanedRes.stages,
+    });
+    const dlId = crypto.randomUUID();
+    await db.insert(schema.mediaDownloadRecords).values({
+      id: dlId,
+      recordId: recId,
+      ownerScope: "anon:test",
+      kind: "cleaned",
+      fileName: "dirty-privacy-cleaned.png",
+      bytesSent: cleanedRes.cleanedBuffer.length,
+    });
+    const dlRows = await db
+      .select()
+      .from(schema.mediaDownloadRecords)
+      .where(and(eq(schema.mediaDownloadRecords.id, dlId), eq(schema.mediaDownloadRecords.recordId, recId)));
+    expect(dlRows.length).toBe(1);
+    expect(dlRows[0].bytesSent).toBe(cleanedRes.cleanedBuffer.length);
   });
 });

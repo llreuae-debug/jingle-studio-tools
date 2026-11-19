@@ -281,7 +281,7 @@ test("Audit Authenticated Workflows, Proof Report/Revoke, Invite Email Isolation
   await page.goto("/tools", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Audit User A/i }).click();
   await page.getByRole("menuitem", { name: "Sign out" }).click();
-  await page.waitForURL(/\/tools/, { timeout: 10000 });
+  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible({ timeout: 10000 });
   await page.goto("/app", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/login/);
 

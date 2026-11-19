@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { isSigningTestMode } from "@/lib/c2pa-server";
+import { isSynthIdVerifierConfigured } from "@/lib/synthid-verifier";
 
 export async function GET() {
   try {
@@ -20,6 +21,7 @@ export async function GET() {
       ok: true,
       db: "connected",
       signingMode: isSigningTestMode() ? "test" : "production",
+      synthIdVerifierConfigured: isSynthIdVerifierConfigured(),
       trustList: snapshots[0] || null,
       timestamp: new Date().toISOString(),
     });
