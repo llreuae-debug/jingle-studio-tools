@@ -1,6 +1,9 @@
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { PGlite } from "@electric-sql/pglite";
 import { describe, expect, it } from "vitest";
+import { getDb, resetDbForTests, schema } from "@/db";
 import { resolvePersistentDataDir } from "@/lib/data-dir";
 
 describe("resolvePersistentDataDir", () => {
@@ -33,5 +36,37 @@ describe("resolvePersistentDataDir", () => {
       {} as NodeJS.ProcessEnv
     );
     expect(dir).toBe("/Users/dev/project");
+  });
+
+  it("recovers automatically when a persistent PGlite directory has corrupted pg_control", async () => {
+    const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), "pg-recover-"));
+    const pgDir = path.join(tmpBase, ".pglite");
+    const prevUrl = process.env.DATABASE_URL;
+
+    try {
+      const seed = new PGlite(pgDir);
+      await seed.waitReady;
+      await seed.close();
+
+      // Corrupt global/pg_control to reproduce WASM abort() on startup
+      fs.writeFileSync(path.join(pgDir, "global", "pg_control"), Buffer.alloc(10));
+
+      process.env.DATABASE_URL = pgDir;
+      resetDbForTests();
+
+      const db = await getDb();
+      const plans = await db.select().from(schema.pricingPlans);
+      expect(plans.length).toBeGreaterThanOrEqual(3);
+
+      const backups = fs
+        .readdirSync(tmpBase)
+        .filter((name) => name.startsWith(".pglite.corrupt-"));
+      expect(backups.length).toBe(1);
+    } finally {
+      resetDbForTests();
+      if (prevUrl === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = prevUrl;
+      fs.rmSync(tmpBase, { recursive: true, force: true });
+    }
   });
 });

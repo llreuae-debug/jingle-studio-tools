@@ -315,6 +315,79 @@ CREATE TABLE IF NOT EXISTS system_logs (
 );
 `;
 
+let hooksRegistered = false;
+
+function ensureShutdownHooks() {
+  if (hooksRegistered || typeof process === "undefined" || !process.once) return;
+  hooksRegistered = true;
+
+  const onSignal = (sig: NodeJS.Signals) => {
+    const client = pgliteClient;
+    pgliteClient = null;
+    Promise.resolve(client?.close())
+      .catch(() => {})
+      .finally(() => {
+        if (process.listenerCount(sig) === 0) {
+          try {
+            process.kill(process.pid, sig);
+          } catch {
+            process.exit(0);
+          }
+        }
+      });
+  };
+
+  process.once("SIGTERM", () => onSignal("SIGTERM"));
+  process.once("SIGINT", () => onSignal("SIGINT"));
+}
+
+async function openPgliteWithRecovery(dataDir?: string): Promise<PGlite> {
+  if (!dataDir) {
+    const mem = new PGlite();
+    await mem.waitReady;
+    return mem;
+  }
+
+  fs.mkdirSync(dataDir, { recursive: true });
+
+  // Attempt 1: normal persistent open
+  try {
+    const client = new PGlite(dataDir);
+    await client.waitReady;
+    return client;
+  } catch {
+    // Attempt 2: remove stale postmaster.pid left after abrupt termination and retry
+    try {
+      fs.rmSync(path.join(dataDir, "postmaster.pid"), { force: true });
+      const client = new PGlite(dataDir);
+      await client.waitReady;
+      return client;
+    } catch {
+      // Attempt 3: isolate corrupted PGlite directory (e.g., overlapping restart WAL/pg_control corruption)
+      const backupDir = `${dataDir}.corrupt-${Date.now()}`;
+      try {
+        fs.renameSync(dataDir, backupDir);
+        fs.mkdirSync(dataDir, { recursive: true });
+        console.warn(
+          "[db] Recovered corrupted PGlite directory; moved previous dir to",
+          path.basename(backupDir)
+        );
+        const client = new PGlite(dataDir);
+        await client.waitReady;
+        return client;
+      } catch {
+        // Attempt 4: in-memory fallback so the process stays online instead of failing HTTP 500
+        console.warn(
+          "[db] Persistent PGlite unavailable; falling back to in-memory PGlite."
+        );
+        const mem = new PGlite();
+        await mem.waitReady;
+        return mem;
+      }
+    }
+  }
+}
+
 async function initDb(): Promise<AppDb> {
   const envUrl = process.env.DATABASE_URL?.trim();
 
@@ -344,14 +417,41 @@ async function initDb(): Promise<AppDb> {
     fs.mkdirSync(path.dirname(dataDir), { recursive: true });
   }
 
-  pgliteClient = new PGlite(dataDir);
-  await pgliteClient.exec(INIT_SQL);
+  ensureShutdownHooks();
+  pgliteClient = await openPgliteWithRecovery(dataDir);
+
+  try {
+    await pgliteClient.exec(INIT_SQL);
+  } catch (err) {
+    if (!dataDir) throw err;
+    await pgliteClient.close().catch(() => {});
+    const backupDir = `${dataDir}.corrupt-${Date.now()}`;
+    try {
+      fs.renameSync(dataDir, backupDir);
+      fs.mkdirSync(dataDir, { recursive: true });
+      console.warn(
+        "[db] Reinitialized PGlite after schema error; moved previous dir to",
+        path.basename(backupDir)
+      );
+      pgliteClient = new PGlite(dataDir);
+      await pgliteClient.waitReady;
+      await pgliteClient.exec(INIT_SQL);
+    } catch {
+      pgliteClient = new PGlite();
+      await pgliteClient.waitReady;
+      await pgliteClient.exec(INIT_SQL);
+    }
+  }
+
   return drizzlePglite(pgliteClient, { schema });
 }
 
 export async function getDb(): Promise<AppDb> {
   if (!dbPromise) {
-    dbPromise = initDb();
+    dbPromise = initDb().catch((err) => {
+      dbPromise = null;
+      throw err;
+    });
   }
   return dbPromise;
 }
