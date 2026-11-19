@@ -87,9 +87,9 @@ export default function AppDevelopersPage() {
       )}
 
       {revealedKey && (
-        <div className="rounded-[12px] border border-[var(--color-brand-line)] bg-[var(--color-brand-soft)] p-4 space-y-1 text-xs text-[var(--color-auth-ink)]">
+        <div className="rounded-[16px] border border-[var(--color-brand-line)] bg-[var(--warm-peach)]/65 p-4 space-y-1 text-xs text-[var(--espresso-black)]">
           <p className="font-bold">Copy your API key now—it will not be shown again:</p>
-          <code className="block break-all rounded-lg bg-white px-3 py-2 font-mono border border-[var(--color-brand-line)]">
+          <code className="block break-all rounded-[12px] bg-white px-3 py-2 font-mono border border-[var(--color-brand-line)]">
             {revealedKey}
           </code>
         </div>

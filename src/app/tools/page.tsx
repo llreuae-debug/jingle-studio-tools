@@ -261,28 +261,28 @@ export default function ToolsHomePage() {
   };
 
   return (
-    <div className="space-y-16 sm:space-y-24">
+    <div className="space-y-20 sm:space-y-24">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
       {/* HERO */}
-      <section className="pt-4 sm:pt-8 space-y-8 text-center">
+      <section className="pt-6 sm:pt-12 space-y-8 text-center">
         <div className="space-y-5">
-          <span className="inline-flex items-center rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-3.5 py-1 text-xs font-semibold text-[var(--color-brand)]">
+          <span className="inline-flex items-center rounded-full bg-[var(--warm-peach)] border border-[var(--color-brand-line)] px-4 py-1.5 text-xs font-bold text-[var(--color-brand)]">
             {c.eyebrow}
           </span>
-          <h1 className="text-4xl sm:text-[56px] font-bold tracking-[-0.029em] leading-[1.08] max-w-3xl mx-auto text-[var(--color-ink)]">
+          <h1 className="text-4xl sm:text-6xl lg:text-[72px] font-bold tracking-[-0.025em] leading-[1.1] max-w-4xl mx-auto text-[var(--espresso-black)] break-words">
             {c.headline}
           </h1>
-          <p className="text-base sm:text-[20px] text-[var(--color-text-muted)] max-w-2xl mx-auto leading-[1.6]">
+          <p className="text-base sm:text-xl text-[var(--color-text-muted)] max-w-2xl mx-auto leading-[1.63]">
             {c.subhead}
           </p>
         </div>
 
-        {/* Elevated White Drop Zone Card */}
-        <div className="rounded-[16px] border border-[var(--border)] bg-white p-4 sm:p-6 shadow-[var(--shadow-5)] text-left space-y-5">
+        {/* Elevated Milky Frosted Drop Zone Card */}
+        <div className="max-w-4xl mx-auto rounded-[24px] border border-[var(--card-border-milky)] bg-white/90 backdrop-blur-[24px] p-4 sm:p-6 shadow-[var(--shadow-5)] text-left space-y-5">
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
@@ -298,12 +298,12 @@ export default function ToolsHomePage() {
                 fileInputRef.current?.click();
               }
             }}
-            className="rounded-[12px] border-2 border-dashed border-[var(--color-brand-line)] bg-[var(--color-brand-soft)]/45 hover:bg-[var(--color-brand-soft)] p-8 sm:p-10 text-center cursor-pointer transition-colors duration-150"
+            className="rounded-[16px] border-2 border-dashed border-[var(--solar-orange)]/35 bg-[var(--warm-peach)]/45 hover:bg-[var(--warm-peach)]/80 p-8 sm:p-10 text-center cursor-pointer transition-colors duration-150"
           >
-            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--color-brand)] text-white shadow-[var(--shadow-3)]">
+            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--solar-orange)] text-[var(--espresso-black)] shadow-[var(--shadow-2)]">
               <Upload aria-hidden="true" className="h-6 w-6" />
             </div>
-            <p className="mt-4 text-base font-semibold text-[var(--color-ink)]">
+            <p className="mt-4 text-base font-semibold text-[var(--espresso-black)]">
               {quickStage === "reading"
                 ? "Reading file…"
                 : quickStage === "checking"
@@ -335,7 +335,7 @@ export default function ToolsHomePage() {
           </Link>
           <Link
             href="/tools/ai-disclosure-signer"
-            className="rounded-[10px] border border-[var(--border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:border-[var(--color-brand-line)] transition-colors duration-150"
+            className="btn-mint px-6 py-3 text-sm font-semibold"
           >
             {c.btnSign}
           </Link>
@@ -344,7 +344,7 @@ export default function ToolsHomePage() {
 
       {/* WHAT YOUR FILE CAN TELL PEOPLE */}
       <section className="space-y-6">
-        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+        <h2 className="text-3xl sm:text-[42px] lg:text-[48px] font-bold tracking-[-0.025em] leading-[1.08] text-[var(--espresso-black)]">
           {c.storyTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -352,9 +352,9 @@ export default function ToolsHomePage() {
             <div
               key={card.title}
               onPointerMove={handleCardPointerMove}
-              className="glass-surface glass-card-interactive p-6 space-y-2"
+              className="glass-surface glass-card-interactive p-6 space-y-2.5"
             >
-              <h3 className="text-[18px] font-bold text-[var(--color-ink)]">{card.title}</h3>
+              <h3 className="text-xl font-bold text-[var(--espresso-black)]">{card.title}</h3>
               <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{card.body}</p>
             </div>
           ))}
@@ -362,17 +362,17 @@ export default function ToolsHomePage() {
       </section>
 
       {/* EXAMPLE REPORT */}
-      <section className="glass-surface p-6 sm:p-8 space-y-5">
+      <section className="card-dark p-6 sm:p-10 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] leading-[1.15] text-[var(--color-ink)]">
+          <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] leading-[1.15] text-white">
             {c.reportTitle}
           </h2>
-          <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-3 py-1 text-xs font-semibold text-[var(--color-brand)]">
+          <span className="rounded-full bg-[var(--solar-orange)] px-3.5 py-1 text-xs font-bold text-[var(--espresso-black)]">
             {exampleReport?.label || "Example file"}
           </span>
         </div>
 
-        <dl className="divide-y divide-[var(--border)] text-sm">
+        <dl className="divide-y divide-white/15 text-sm">
           {[
             ["Credentials status", exampleReport?.credentialsStatus || "Loading…"],
             ["Signer", exampleReport?.signer || "Loading…"],
@@ -383,27 +383,27 @@ export default function ToolsHomePage() {
             ["AI information", exampleReport?.aiInformation || "Loading…"],
           ].map(([k, v]) => (
             <div key={k} className="py-3 flex flex-col sm:flex-row sm:justify-between gap-1">
-              <dt className="font-semibold text-[var(--color-text-muted)]">{k}</dt>
-              <dd className="font-medium text-[var(--color-ink)]">{v}</dd>
+              <dt className="font-semibold text-[#d6cdc5]">{k}</dt>
+              <dd className="font-medium text-white">{v}</dd>
             </div>
           ))}
         </dl>
 
-        <p className="text-xs text-[var(--color-text-muted)]">{c.reportNote}</p>
+        <p className="text-xs text-[#d6cdc5]">{c.reportNote}</p>
       </section>
 
       {/* HOW IT WORKS */}
       <section className="space-y-6">
-        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+        <h2 className="text-3xl sm:text-[42px] lg:text-[48px] font-bold tracking-[-0.025em] leading-[1.08] text-[var(--espresso-black)]">
           {c.howTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.howSteps.map((s) => (
-            <div key={s.n} className="glass-surface p-6 space-y-2.5">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] text-[var(--color-brand)] text-xs font-bold">
+            <div key={s.n} className="glass-surface p-6 space-y-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--solar-orange)] text-[var(--espresso-black)] text-xs font-bold shadow-[var(--shadow-1)]">
                 {s.n}
               </span>
-              <h3 className="font-bold text-base text-[var(--color-ink)]">{s.title}</h3>
+              <h3 className="font-bold text-lg text-[var(--espresso-black)]">{s.title}</h3>
               <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{s.body}</p>
             </div>
           ))}
@@ -412,13 +412,13 @@ export default function ToolsHomePage() {
 
       {/* WHO IT IS FOR */}
       <section className="space-y-6">
-        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+        <h2 className="text-3xl sm:text-[42px] lg:text-[48px] font-bold tracking-[-0.025em] leading-[1.08] text-[var(--espresso-black)]">
           {c.whoTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.whoCards.map((w) => (
-            <div key={w.title} className="glass-surface p-6 space-y-2">
-              <h3 className="font-bold text-base text-[var(--color-ink)]">{w.title}</h3>
+            <div key={w.title} className="glass-surface p-6 space-y-2.5">
+              <h3 className="font-bold text-lg text-[var(--espresso-black)]">{w.title}</h3>
               <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{w.body}</p>
             </div>
           ))}
@@ -427,23 +427,23 @@ export default function ToolsHomePage() {
 
       {/* PRICING */}
       <section className="space-y-6">
-        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+        <h2 className="text-3xl sm:text-[42px] lg:text-[48px] font-bold tracking-[-0.025em] leading-[1.08] text-[var(--espresso-black)]">
           {c.pricingTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.pricingTiers.map((tier) => (
             <div key={tier.name} className="glass-surface p-6 space-y-2.5">
-              <h3 className="font-bold text-base text-[var(--color-ink)]">{tier.name}</h3>
-              <p className="text-2xl font-bold text-[var(--color-ink)]">{tier.price}</p>
+              <h3 className="font-bold text-lg text-[var(--espresso-black)]">{tier.name}</h3>
+              <p className="text-2xl font-bold text-[var(--espresso-black)]">{tier.price}</p>
               <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{tier.body}</p>
             </div>
           ))}
         </div>
         <div className="flex flex-wrap gap-3">
-          <Link href="/login" className="btn-plum px-5 py-2.5 text-sm font-semibold">
+          <Link href="/login" className="btn-plum px-6 py-2.5 text-sm font-semibold">
             {c.startFree}
           </Link>
-          <Link href="/pricing" className="btn-mint px-5 py-2.5 text-sm font-semibold">
+          <Link href="/pricing" className="btn-mint px-6 py-2.5 text-sm font-semibold">
             {c.seePricing}
           </Link>
         </div>
@@ -451,14 +451,17 @@ export default function ToolsHomePage() {
 
       {/* PRIVACY FACTS */}
       <section className="glass-surface p-6 sm:p-8 space-y-5">
-        <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] leading-[1.15] text-[var(--color-ink)]">
+        <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] leading-[1.15] text-[var(--espresso-black)]">
           {c.privacyTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.privacyItems.map((p) => (
-            <div key={p.title} className="rounded-[12px] bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] p-4 space-y-1.5">
-              <h3 className="font-bold text-sm text-[var(--color-auth-ink)]">{p.title}</h3>
-              <p className="text-xs text-[var(--color-ink)] leading-relaxed">{p.body}</p>
+            <div
+              key={p.title}
+              className="rounded-[16px] bg-[var(--warm-peach)]/65 border border-[var(--color-brand-line)] p-5 space-y-1.5"
+            >
+              <h3 className="font-bold text-base text-[var(--espresso-black)]">{p.title}</h3>
+              <p className="text-xs text-[var(--espresso-black)] leading-relaxed">{p.body}</p>
             </div>
           ))}
         </div>
@@ -467,17 +470,17 @@ export default function ToolsHomePage() {
       {/* TOP 5 FAQ */}
       <section className="space-y-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+          <h2 className="text-3xl sm:text-[42px] lg:text-[48px] font-bold tracking-[-0.025em] leading-[1.08] text-[var(--espresso-black)]">
             {c.faqTitle}
           </h2>
-          <Link href="/faq" className="text-sm font-semibold text-[var(--color-brand)] hover:underline">
+          <Link href="/faq" className="text-sm font-semibold text-[var(--color-brand)] hover:underline shrink-0">
             {c.seeAllFaq}
           </Link>
         </div>
         <div className="space-y-3">
           {faqs.map((item, idx) => (
-            <details key={idx} className="glass-surface p-5">
-              <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)]">
+            <details key={idx} className="glass-surface p-5 sm:p-6">
+              <summary className="cursor-pointer font-semibold text-sm text-[var(--espresso-black)]">
                 {item.q[locale]}
               </summary>
               <p className="mt-2.5 text-sm text-[var(--color-text-muted)] leading-relaxed">
@@ -490,20 +493,20 @@ export default function ToolsHomePage() {
 
       {/* FINAL CALL TO ACTION */}
       <section
-        className="rounded-[16px] p-8 sm:p-10 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-[var(--shadow-5)]"
+        className="rounded-[28px] p-8 sm:p-12 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-[var(--shadow-dark-card)]"
         style={{
-          background: "linear-gradient(150deg, #5a40b8, #6c47ff 60%, #9e7aff)",
+          background: "linear-gradient(135deg, #141312 0%, #c93700 58%, #ff5500 100%)",
         }}
       >
         <div className="space-y-1.5">
           <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] text-white">
             {c.ctaHeadline}
           </h2>
-          <p className="text-sm text-[var(--color-brand-soft)]">{c.ctaSubhead}</p>
+          <p className="text-sm text-[#fae6da]">{c.ctaSubhead}</p>
         </div>
         <Link
           href="/tools/content-credentials-check"
-          className="rounded-[10px] bg-white text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] px-5 py-2.5 text-sm font-semibold shadow-[var(--shadow-2)] shrink-0 transition-colors duration-150"
+          className="rounded-full bg-white text-[var(--espresso-black)] hover:bg-[var(--warm-peach)] px-6 py-3 text-sm font-bold shadow-[var(--shadow-2)] shrink-0 transition-colors duration-150"
         >
           {c.btnCheck}
         </Link>

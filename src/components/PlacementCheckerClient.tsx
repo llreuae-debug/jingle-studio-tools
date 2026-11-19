@@ -146,10 +146,10 @@ function IngredientTreeItem({
         type="button"
         onClick={() => onSelect(node)}
         style={{ paddingInlineStart: `${depth * 14 + 10}px` }}
-        className={`w-full text-left rounded-lg border px-2.5 py-2 flex items-center gap-2.5 transition-colors ${
+        className={`w-full text-left rounded-[16px] border px-3 py-2 flex items-center gap-2.5 transition-colors ${
           isSelected
-            ? "border-[var(--color-blue)] bg-blue-50/70"
-            : "border-[var(--color-border)] bg-white hover:bg-slate-50"
+            ? "border-[var(--color-brand)] bg-[var(--warm-peach)]/65"
+            : "border-[var(--color-border)] bg-white hover:bg-[var(--warm-surface)]"
         }`}
       >
         {node.thumbnailUrl ? (
@@ -158,12 +158,12 @@ function IngredientTreeItem({
             alt=""
             width={36}
             height={36}
-            className="h-9 w-9 shrink-0 rounded object-cover border border-[var(--color-border)]"
+            className="h-9 w-9 shrink-0 rounded-[10px] object-cover border border-[var(--color-border)]"
           />
         ) : (
           <span
             aria-hidden="true"
-            className="h-9 w-9 shrink-0 rounded bg-slate-100 flex items-center justify-center text-xs font-medium text-[var(--color-muted)]"
+            className="h-9 w-9 shrink-0 rounded-[10px] bg-[var(--warm-divider)] flex items-center justify-center text-xs font-medium text-[var(--color-muted)]"
           >
             File
           </span>
@@ -175,7 +175,7 @@ function IngredientTreeItem({
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--color-muted)]">
             {node.hasCredentials ? (
-              <span className="inline-flex items-center gap-1 text-[var(--color-blue)] font-medium">
+              <span className="inline-flex items-center gap-1 text-[var(--color-brand)] font-medium">
                 <FileCheck2 aria-hidden="true" className="h-3 w-3" />
                 Credentials
               </span>
@@ -343,11 +343,13 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
             className="glass-surface p-4 sm:p-6"
           >
             <div
-              className={`rounded-[12px] border-2 border-dashed border-[var(--color-brand-line)] p-8 sm:p-10 text-center transition-colors duration-150 ${
-                isDragging ? "bg-[var(--color-brand-soft)] border-[var(--color-brand)]" : "bg-[var(--color-brand-soft)]/45"
+              className={`rounded-[16px] border-2 border-dashed p-8 sm:p-10 text-center transition-colors duration-150 ${
+                isDragging
+                  ? "bg-[var(--warm-peach)]/80 border-[var(--solar-orange)]"
+                  : "bg-[var(--warm-peach)]/45 border-[var(--solar-orange)]/35"
               }`}
             >
-              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--color-brand)] text-white shadow-[var(--shadow-3)]">
+              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--solar-orange)] text-[var(--espresso-black)] shadow-[var(--shadow-2)]">
                 <Upload aria-hidden="true" className="h-6 w-6" />
               </div>
               <h2 className="mt-4 text-lg font-semibold text-[var(--color-ink)]">
@@ -405,7 +407,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             {/* Format fit */}
-            <div className="glass-surface rounded-[28px] p-5 space-y-2.5 text-xs">
+            <div className="glass-surface rounded-[24px] p-5 space-y-2.5 text-xs">
               <h2 className="font-semibold text-sm text-[var(--plum)]">
                 {t.check.formatFit}
               </h2>
@@ -442,7 +444,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
             </div>
 
             {/* Recommended honest caption */}
-            <div className="glass-surface rounded-[28px] p-5 space-y-2.5">
+            <div className="glass-surface rounded-[24px] p-5 space-y-2.5">
               <h2 className="font-semibold text-sm text-[var(--plum)]">
                 {t.check.captionTitle}
               </h2>
@@ -452,7 +454,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
               <button
                 type="button"
                 onClick={copyCaption}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--plum)]/20 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--plum)]/20 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--warm-peach)]"
               >
                 {copied ? (
                   <>
@@ -469,7 +471,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
             </div>
 
             {/* Platform AI label steps */}
-            <details open className="glass-surface rounded-[28px] p-5">
+            <details open className="glass-surface rounded-[24px] p-5">
               <summary className="cursor-pointer font-semibold text-sm text-[var(--plum)]">
                 {t.check.platformStepsTitle}
               </summary>
@@ -481,7 +483,7 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
             </details>
 
             {/* Labelled by mistake? */}
-            <details open className="glass-surface rounded-[28px] p-5">
+            <details open className="glass-surface rounded-[24px] p-5">
               <summary className="cursor-pointer font-semibold text-sm text-[var(--plum)] flex items-center gap-2">
                 <Info aria-hidden="true" className="h-4 w-4 text-[var(--plum)]" />
                 {t.check.labelledByMistakeTitle}

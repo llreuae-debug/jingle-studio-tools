@@ -231,13 +231,13 @@ export function SignerClient({
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Files */}
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-4">
-          <h2 className="text-base font-semibold text-[var(--color-ink)]">
+        <div className="glass-surface p-6 space-y-4">
+          <h2 className="text-base font-semibold text-[var(--espresso-black)]">
             1. Select up to 50 JPG or PNG files
           </h2>
 
-          <div className="rounded-xl border-2 border-dashed border-[var(--color-border)] p-6 text-center space-y-3">
-            <Upload aria-hidden="true" className="mx-auto h-8 w-8 text-[var(--color-blue)]" />
+          <div className="rounded-[16px] border-2 border-dashed border-[var(--solar-orange)]/35 bg-[var(--warm-peach)]/40 p-6 text-center space-y-3">
+            <Upload aria-hidden="true" className="mx-auto h-8 w-8 text-[var(--color-brand)]" />
             <label htmlFor={fileInputId} className="visually-hidden">
               Select JPG or PNG files
             </label>
@@ -253,7 +253,7 @@ export function SignerClient({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] hover:bg-slate-100"
+              className="btn-mint px-4 py-2 text-sm font-semibold"
             >
               {checkingFiles ? "Checking files…" : "Choose JPG / PNG files"}
             </button>
@@ -267,7 +267,7 @@ export function SignerClient({
           {invalidExistingFile && (
             <div
               role="alert"
-              className="rounded-xl border border-[#C83C4D]/30 bg-rose-50 p-3 text-xs text-rose-950 flex items-center gap-2"
+              className="rounded-[16px] border border-[#C83C4D]/30 bg-rose-50 p-3 text-xs text-rose-950 flex items-center gap-2"
             >
               <ShieldAlert aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C83C4D]" />
               <span>{invalidExistingFile}</span>
@@ -276,12 +276,12 @@ export function SignerClient({
         </div>
 
         {/* Step 2: Attribution */}
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-4">
+        <div className="glass-surface p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-[var(--color-ink)]">
+            <h2 className="text-base font-semibold text-[var(--espresso-black)]">
               2. Attribution details
             </h2>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-muted)]">
+            <span className="rounded-full bg-[var(--warm-divider)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--warm-stone)]">
               {t.signer.selfDeclaredNote}
             </span>
           </div>
@@ -297,7 +297,7 @@ export function SignerClient({
                     setCreatorWebsite(p.website || "");
                     setDoNotTrain(p.defaultTrainingPreference);
                   }}
-                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] hover:border-[var(--color-blue)]"
+                  className="rounded-full border border-[var(--border)] bg-white/85 px-3.5 py-1.5 text-xs font-medium text-[var(--espresso-black)] hover:bg-[var(--warm-peach)] hover:border-[var(--color-brand-line)] transition-colors duration-150"
                 >
                   Use profile: {p.displayName}
                 </button>
@@ -307,7 +307,7 @@ export function SignerClient({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label htmlFor={creatorId} className="block text-xs font-medium text-[var(--color-ink)]">
+              <label htmlFor={creatorId} className="block text-xs font-medium text-[var(--espresso-black)]">
                 {t.signer.creatorName} *
               </label>
               <input
@@ -316,12 +316,12 @@ export function SignerClient({
                 required
                 value={creatorName}
                 onChange={(e) => setCreatorName(e.target.value)}
-                className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                className="w-full glass-input px-3.5 py-2 text-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <label htmlFor={websiteId} className="block text-xs font-medium text-[var(--color-ink)]">
+              <label htmlFor={websiteId} className="block text-xs font-medium text-[var(--espresso-black)]">
                 {t.signer.website}
               </label>
               <input
@@ -330,35 +330,35 @@ export function SignerClient({
                 placeholder="https://example.com"
                 value={creatorWebsite}
                 onChange={(e) => setCreatorWebsite(e.target.value)}
-                className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                className="w-full glass-input px-3.5 py-2 text-sm"
               />
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-xs text-[var(--color-ink)]">
+          <label className="flex items-center gap-2 text-xs text-[var(--espresso-black)]">
             <input
               type="checkbox"
               checked={doNotTrain}
               onChange={(e) => setDoNotTrain(e.target.checked)}
-              className="h-4 w-4 accent-[var(--color-blue)]"
+              className="h-4 w-4 accent-[var(--color-brand)]"
             />
             Signal &ldquo;Do not train generative AI&rdquo; preference (advisory only)
           </label>
         </div>
 
         {/* Step 3: AI Disclosure */}
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-4">
+        <div className="glass-surface p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-[var(--color-ink)]">
+            <h2 className="text-base font-semibold text-[var(--espresso-black)]">
               3. {t.signer.aiDisclosureHeading}
             </h2>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-muted)]">
+            <span className="rounded-full bg-[var(--warm-divider)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--warm-stone)]">
               {t.signer.selfDeclaredNote}
             </span>
           </div>
 
           {hasAiIngredient && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+            <div className="rounded-[16px] border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
               An uploaded file contains an AI-labelled ingredient. &ldquo;Made by people, no generative
               AI&rdquo; is disabled (Guardrail G4).
             </div>
@@ -370,12 +370,12 @@ export function SignerClient({
               return (
                 <label
                   key={opt.value}
-                  className={`rounded-xl border p-3.5 flex items-start gap-3 cursor-pointer ${
+                  className={`rounded-[16px] border p-3.5 flex items-start gap-3 cursor-pointer transition-colors duration-150 ${
                     disabledByG4
-                      ? "opacity-50 cursor-not-allowed bg-slate-50 border-[var(--color-border)]"
+                      ? "opacity-50 cursor-not-allowed bg-[var(--warm-surface)] border-[var(--border)]"
                       : aiUse === opt.value
-                      ? "border-[var(--color-blue)] bg-blue-50/50"
-                      : "border-[var(--color-border)] hover:bg-slate-50"
+                      ? "border-[var(--color-brand)] bg-[var(--warm-peach)]/55"
+                      : "border-[var(--border)] bg-white/60 hover:bg-[var(--warm-surface)]"
                   }`}
                 >
                   <input
@@ -385,10 +385,10 @@ export function SignerClient({
                     disabled={disabledByG4}
                     checked={aiUse === opt.value}
                     onChange={() => setAiUse(opt.value)}
-                    className="mt-1 accent-[var(--color-blue)]"
+                    className="mt-1 accent-[var(--color-brand)]"
                   />
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-ink)]">{opt.label}</div>
+                    <div className="text-sm font-medium text-[var(--espresso-black)]">{opt.label}</div>
                     <div className="text-[11px] text-[var(--color-muted)]">{opt.specHint}</div>
                   </div>
                 </label>
@@ -399,7 +399,7 @@ export function SignerClient({
           {selectedOption.requiresModelType && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1">
-                <label htmlFor={modelTypeId} className="block text-xs font-medium text-[var(--color-ink)]">
+                <label htmlFor={modelTypeId} className="block text-xs font-medium text-[var(--espresso-black)]">
                   {t.signer.modelType} *
                 </label>
                 <select
@@ -407,7 +407,7 @@ export function SignerClient({
                   required
                   value={modelType}
                   onChange={(e) => setModelType(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                  className="w-full glass-input px-3.5 py-2 text-sm"
                 >
                   <option value="imageGeneration">imageGeneration</option>
                   <option value="imageEditing">imageEditing</option>
@@ -416,7 +416,7 @@ export function SignerClient({
                 </select>
               </div>
               <div className="space-y-1">
-                <label htmlFor={modelNameId} className="block text-xs font-medium text-[var(--color-ink)]">
+                <label htmlFor={modelNameId} className="block text-xs font-medium text-[var(--espresso-black)]">
                   {t.signer.modelName}
                 </label>
                 <input
@@ -425,7 +425,7 @@ export function SignerClient({
                   placeholder="e.g. Imagen, Flux, Firefly"
                   value={modelName}
                   onChange={(e) => setModelName(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                  className="w-full glass-input px-3.5 py-2 text-sm"
                 />
               </div>
             </div>

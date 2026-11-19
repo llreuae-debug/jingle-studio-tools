@@ -91,19 +91,19 @@ export default function WorkspaceSettingsPage() {
       </div>
 
       {message && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-[var(--color-ink)]">
+        <div className="rounded-[16px] border border-[var(--color-brand-line)] bg-[var(--warm-peach)]/60 px-4 py-2.5 text-xs text-[var(--espresso-black)]">
           {message}
         </div>
       )}
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-4">
-        <h2 className="text-base font-semibold text-[var(--color-ink)]">Brand Signing Profiles</h2>
+      <section className="glass-surface p-6 space-y-4">
+        <h2 className="text-base font-semibold text-[var(--espresso-black)]">Brand Signing Profiles</h2>
         {data.profiles.length > 0 ? (
           <ul className="space-y-2 text-xs">
             {data.profiles.map((p) => (
               <li
                 key={p.id}
-                className="rounded-lg border border-[var(--color-border)] px-3 py-2 flex justify-between"
+                className="rounded-[12px] border border-[var(--border)] bg-white/75 px-3 py-2 flex justify-between"
               >
                 <span className="font-medium">{p.displayName}</span>
                 <span className="text-[var(--color-muted)]">{p.website || "No website"}</span>
@@ -122,18 +122,18 @@ export default function WorkspaceSettingsPage() {
               placeholder="Brand or creator name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs"
+              className="glass-input px-3 py-2 text-xs"
             />
             <input
               type="url"
               placeholder="https://brand.com"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs"
+              className="glass-input px-3 py-2 text-xs"
             />
             <button
               type="submit"
-              className="rounded-lg bg-[var(--color-blue)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-electric)]"
+              className="btn-plum px-4 py-2 text-xs font-semibold"
             >
               Save profile
             </button>
@@ -141,7 +141,7 @@ export default function WorkspaceSettingsPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-4">
+      <section className="glass-surface p-6 space-y-4">
         <h2 className="text-base font-semibold text-[var(--color-ink)]">Team Members</h2>
         <ul className="divide-y divide-[var(--color-border)] text-xs">
           {data.members.map((m) => (
@@ -160,11 +160,11 @@ export default function WorkspaceSettingsPage() {
               placeholder="teammate@company.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs"
+              className="flex-1 glass-input px-3 py-2 text-xs"
             />
             <button
               type="submit"
-              className="rounded-lg bg-[var(--color-navy)] px-4 py-2 text-xs font-semibold text-white"
+              className="btn-plum px-4 py-2 text-xs font-semibold"
             >
               Create invite
             </button>

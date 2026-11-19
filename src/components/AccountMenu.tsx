@@ -31,7 +31,7 @@ export function AccountMenu({
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-white pl-1.5 pr-3 py-1 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] transition-colors duration-150"
+        className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/85 pl-1.5 pr-3 py-1 text-xs font-semibold text-[var(--espresso-black)] hover:bg-[var(--warm-peach)] transition-colors duration-150"
       >
         {user.image && !imgFailed ? (
           <img
@@ -46,7 +46,7 @@ export function AccountMenu({
         ) : (
           <span
             aria-hidden="true"
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand)] text-[10px] font-bold text-white"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--espresso-black)] text-[10px] font-bold text-white"
           >
             {initials}
           </span>
@@ -60,11 +60,11 @@ export function AccountMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-60 rounded-[12px] border border-[var(--border)] bg-white shadow-[var(--shadow-4)] p-1.5 z-50 space-y-1 text-xs"
+          className="absolute right-0 mt-2 w-60 rounded-[20px] border border-[var(--card-border-milky)] bg-white/95 backdrop-blur-xl shadow-[var(--shadow-4)] p-2 z-50 space-y-1 text-xs"
         >
           <div className="px-3 py-2 border-b border-[var(--border)]">
             {user.name && (
-              <p className="font-semibold text-[var(--color-ink)] truncate">{user.name}</p>
+              <p className="font-semibold text-[var(--espresso-black)] truncate">{user.name}</p>
             )}
             <p className="text-[var(--color-text-muted)] truncate">{user.email}</p>
           </div>
@@ -72,7 +72,7 @@ export function AccountMenu({
             role="menuitem"
             href="/app"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 rounded-[8px] px-3 py-2 font-medium text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)]"
+            className="flex items-center gap-2 rounded-[12px] px-3 py-2 font-medium text-[var(--espresso-black)] hover:bg-[var(--warm-peach)]"
           >
             <LayoutDashboard aria-hidden="true" className="h-3.5 w-3.5" />
             Dashboard
@@ -81,7 +81,7 @@ export function AccountMenu({
             role="menuitem"
             href="/app/settings"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 rounded-[8px] px-3 py-2 font-medium text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)]"
+            className="flex items-center gap-2 rounded-[12px] px-3 py-2 font-medium text-[var(--espresso-black)] hover:bg-[var(--warm-peach)]"
           >
             <Settings aria-hidden="true" className="h-3.5 w-3.5" />
             Settings

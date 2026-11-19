@@ -74,7 +74,7 @@ export default function BillingPage() {
       </div>
 
       {instructions && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 space-y-2 text-xs text-[var(--color-ink)]">
+        <div className="rounded-[20px] border border-[var(--color-brand-line)] bg-[var(--warm-peach)]/60 p-5 space-y-2 text-xs text-[var(--espresso-black)]">
           <p className="font-bold text-sm">Manual Bank Transfer Instructions</p>
           <p>Bank: {instructions.bankName}</p>
           <p>Account Title: {instructions.accountTitle}</p>
@@ -94,10 +94,10 @@ export default function BillingPage() {
         {data.packs.map((pack) => (
           <div
             key={pack.id}
-            className="rounded-2xl border border-[var(--color-border)] bg-white p-5 space-y-3"
+            className="glass-surface p-5 space-y-3"
           >
-            <h2 className="font-bold text-[var(--color-ink)]">{pack.name}</h2>
-            <p className="text-2xl font-bold text-[var(--color-midnight)]">
+            <h2 className="font-bold text-[var(--espresso-black)]">{pack.name}</h2>
+            <p className="text-2xl font-bold text-[var(--espresso-black)]">
               ${(pack.amountCents / 100).toFixed(0)} • {pack.credits} credits
             </p>
             <p className="text-xs text-[var(--color-muted)]">{pack.description}</p>
@@ -105,14 +105,14 @@ export default function BillingPage() {
               <button
                 type="button"
                 onClick={() => void buyPack(pack.id, "manual_bank")}
-                className="rounded-lg bg-[var(--color-blue)] px-3 py-2 text-xs font-semibold text-white hover:bg-[var(--color-electric)]"
+                className="btn-plum px-3 py-2 text-xs font-semibold"
               >
                 Request Manual Bank Transfer
               </button>
               <button
                 type="button"
                 onClick={() => void buyPack(pack.id, "hosted")}
-                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-ink)]"
+                className="btn-mint px-3 py-2 text-xs font-semibold"
               >
                 Hosted Checkout
               </button>
@@ -121,7 +121,7 @@ export default function BillingPage() {
         ))}
       </section>
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-3">
+      <section className="glass-surface p-6 space-y-3">
         <h2 className="text-base font-semibold text-[var(--color-ink)]">Purchases</h2>
         {data.purchases.length === 0 ? (
           <p className="text-xs text-[var(--color-muted)]">No purchases yet.</p>
@@ -149,8 +149,8 @@ export default function BillingPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-3">
-        <h2 className="text-base font-semibold text-[var(--color-ink)]">Credit Ledger (Append-Only)</h2>
+      <section className="glass-surface p-6 space-y-3">
+        <h2 className="text-base font-semibold text-[var(--espresso-black)]">Credit Ledger (Append-Only)</h2>
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">

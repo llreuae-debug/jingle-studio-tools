@@ -106,7 +106,7 @@ function StatusBanner({
 
 function SelfDeclaredBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--warm-divider)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--warm-stone)]">
       <Info aria-hidden="true" className="h-3 w-3" />
       Self-declared
     </span>
@@ -133,10 +133,10 @@ function IngredientTreeItem({
         type="button"
         onClick={() => onSelect(node)}
         style={{ paddingInlineStart: `${depth * 14 + 10}px` }}
-        className={`w-full text-left rounded-lg border px-2.5 py-2 flex items-center gap-2.5 transition-colors ${
+        className={`w-full text-left rounded-[16px] border px-2.5 py-2 flex items-center gap-2.5 transition-colors ${
           isSelected
-            ? "border-indigo-500 bg-indigo-50/80 dark:border-indigo-400 dark:bg-indigo-950/50"
-            : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/70"
+            ? "border-[var(--color-brand)] bg-[var(--warm-peach)]/65"
+            : "border-[var(--border)] bg-white hover:bg-[var(--warm-surface)]"
         }`}
       >
         {node.thumbnailUrl ? (
@@ -145,24 +145,24 @@ function IngredientTreeItem({
             alt=""
             width={36}
             height={36}
-            className="h-9 w-9 shrink-0 rounded object-cover border border-slate-200 dark:border-slate-700"
+            className="h-9 w-9 shrink-0 rounded-[10px] object-cover border border-[var(--border)]"
           />
         ) : (
           <span
             aria-hidden="true"
-            className="h-9 w-9 shrink-0 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-medium text-slate-500"
+            className="h-9 w-9 shrink-0 rounded-[10px] bg-[var(--warm-divider)] flex items-center justify-center text-xs font-medium text-[var(--color-text-muted)]"
           >
             File
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <div className="filename text-xs font-medium text-slate-900 dark:text-slate-100">
+          <div className="filename text-xs font-medium text-[var(--espresso-black)]">
             <span>{stem}</span>
             {ext}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)]">
             {node.hasCredentials ? (
-              <span className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium">
+              <span className="inline-flex items-center gap-1 text-[var(--color-brand)] font-medium">
                 <FileCheck2 aria-hidden="true" className="h-3 w-3" />
                 Credentials
               </span>
@@ -307,10 +307,10 @@ export function VerifyClient() {
       </div>
 
       <section className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--espresso-black)]">
           Verify Content Credentials
         </h1>
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl">
+        <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-2xl">
           Inspect who signed a file, what tools or AI were declared, and its editing history.
           Local checks run in your browser—files never leave your device.
         </p>
@@ -318,75 +318,76 @@ export function VerifyClient() {
 
       {!result && (
         <section aria-label="Choose a file to inspect" className="space-y-6">
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsDragging(false);
-              handleFile(e.dataTransfer.files?.[0]);
-            }}
-            className={`rounded-2xl border-2 border-dashed p-8 sm:p-12 text-center transition-colors ${
-              isDragging
-                ? "border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30"
-                : "border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900/70"
-            }`}
-          >
-            <Upload
-              aria-hidden="true"
-              className="mx-auto h-10 w-10 text-indigo-600 dark:text-indigo-400"
-            />
-            <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
-              Drop a file here to check its Content Credentials
-            </h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Your file stays on your device and is read locally with WebAssembly.
-            </p>
+          <div className="glass-surface p-4 sm:p-6">
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                handleFile(e.dataTransfer.files?.[0]);
+              }}
+              className={`rounded-[16px] border-2 border-dashed p-8 sm:p-12 text-center transition-colors ${
+                isDragging
+                  ? "border-[var(--solar-orange)] bg-[var(--warm-peach)]/80"
+                  : "border-[var(--solar-orange)]/35 bg-[var(--warm-peach)]/45"
+              }`}
+            >
+              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--solar-orange)] text-[var(--espresso-black)] shadow-[var(--shadow-2)]">
+                <Upload aria-hidden="true" className="h-6 w-6" />
+              </div>
+              <h2 className="mt-4 text-lg font-semibold text-[var(--espresso-black)]">
+                Drop a file here to check its Content Credentials
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                Your file stays on your device and is read locally with WebAssembly.
+              </p>
 
-            <div className="mt-6">
-              <label htmlFor={fileInputId} className="visually-hidden">
-                Choose a file to verify
-              </label>
-              <input
-                ref={fileInputRef}
-                id={fileInputId}
-                type="file"
-                className="visually-hidden"
-                accept="image/*,video/mp4,video/quicktime,application/pdf"
-                onChange={(e) => handleFile(e.target.files?.[0])}
-              />
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
-              >
-                {isLoading ? "Reading file…" : "Choose a file"}
-              </button>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
-              {SUPPORTED_FORMATS.map((fmt) => (
-                <span
-                  key={fmt}
-                  className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300"
+              <div className="mt-6">
+                <label htmlFor={fileInputId} className="visually-hidden">
+                  Choose a file to verify
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id={fileInputId}
+                  type="file"
+                  className="visually-hidden"
+                  accept="image/*,video/mp4,video/quicktime,application/pdf"
+                  onChange={(e) => handleFile(e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                 >
-                  {fmt}
-                </span>
-              ))}
+                  {isLoading ? "Reading file…" : "Choose a file"}
+                </button>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
+                {SUPPORTED_FORMATS.map((fmt) => (
+                  <span
+                    key={fmt}
+                    className="rounded-full bg-white/80 border border-[var(--border)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-muted)]"
+                  >
+                    {fmt}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
           <form
             onSubmit={handleUrlSubmit}
-            className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-3"
+            className="glass-surface p-4 sm:p-5 space-y-3"
           >
             <label
               htmlFor={urlInputId}
-              className="block text-sm font-medium text-slate-900 dark:text-slate-100"
+              className="block text-sm font-medium text-[var(--espresso-black)]"
             >
               Or check a public asset by URL
             </label>
@@ -394,7 +395,7 @@ export function VerifyClient() {
               <div className="relative flex-1">
                 <Link2
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--stone-taupe)]"
                 />
                 <input
                   id={urlInputId}
@@ -402,18 +403,18 @@ export function VerifyClient() {
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none"
+                  className="w-full glass-input pl-9 pr-3 py-2 text-sm focus:border-[var(--solar-orange)] focus:outline-none"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isLoading || !urlInput.trim()}
-                className="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+                className="btn-mint px-4 py-2 text-sm font-semibold disabled:opacity-50"
               >
                 Check URL
               </button>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[var(--color-text-muted)]">
               Note: The asset host must allow cross-origin (CORS) requests from the browser.
             </p>
           </form>
@@ -434,18 +435,18 @@ export function VerifyClient() {
         <section aria-label="Verification result" className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="filename text-base font-semibold text-slate-900 dark:text-white">
+              <div className="filename text-base font-semibold text-[var(--espresso-black)]">
                 <span>{splitFileName(result.fileName).stem}</span>
                 {splitFileName(result.fileName).ext}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {(result.fileSize / 1024).toFixed(1)} KB • {result.mimeType}
               </p>
             </div>
             <button
               type="button"
               onClick={resetView}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="btn-mint px-4 py-2 text-sm font-semibold"
             >
               Check another file
             </button>
@@ -454,15 +455,15 @@ export function VerifyClient() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left panel: preview + status + G5 caveat */}
             <div className="lg:col-span-4 space-y-4">
-              <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="overflow-hidden glass-surface">
                 {result.mimeType.startsWith("image/") ? (
                   <img
                     src={result.previewUrl}
                     alt={`Preview of ${result.fileName}`}
-                    className="w-full max-h-72 object-contain bg-slate-100 dark:bg-slate-950"
+                    className="w-full max-h-72 object-contain bg-[var(--warm-surface)]"
                   />
                 ) : (
-                  <div className="h-44 flex items-center justify-center bg-slate-100 dark:bg-slate-950 text-sm text-slate-500">
+                  <div className="h-44 flex items-center justify-center bg-[var(--warm-surface)] text-sm text-[var(--color-text-muted)]">
                     Preview unavailable for {result.mimeType}
                   </div>
                 )}
@@ -474,8 +475,8 @@ export function VerifyClient() {
                 detail={result.statusDetail}
               />
 
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-xs text-slate-600 dark:text-slate-400 space-y-2">
-                <p className="font-semibold text-slate-800 dark:text-slate-200">
+              <div className="glass-surface p-4 text-xs text-[var(--color-text-muted)] space-y-2">
+                <p className="font-semibold text-[var(--espresso-black)]">
                   What this check cannot prove
                 </p>
                 <p>
@@ -489,7 +490,7 @@ export function VerifyClient() {
                     href="https://support.google.com/gemini/answer/16722517?hl=en"
                     target="_blank"
                     rel="noreferrer"
-                    className="underline text-indigo-600 dark:text-indigo-400"
+                    className="underline font-semibold text-[var(--color-brand)]"
                   >
                     Gemini app
                   </a>
@@ -499,8 +500,8 @@ export function VerifyClient() {
             </div>
 
             {/* Centre panel: Ingredient tree (S02 / S04) */}
-            <div className="lg:col-span-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="lg:col-span-4 glass-surface p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-[var(--espresso-black)]">
                 History &amp; Ingredients
               </h2>
               {result.rootNode ? (
@@ -512,7 +513,7 @@ export function VerifyClient() {
                   />
                 </ul>
               ) : (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-[var(--color-text-muted)]">
                   No manifest history found in this file.
                 </p>
               )}
@@ -524,34 +525,34 @@ export function VerifyClient() {
                 <>
                   <details
                     open
-                    className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
+                    className="glass-surface p-4"
                   >
-                    <summary className="cursor-pointer font-semibold text-sm text-slate-900 dark:text-white">
+                    <summary className="cursor-pointer font-semibold text-sm text-[var(--espresso-black)]">
                       Signing info
                     </summary>
                     <dl className="mt-3 space-y-2 text-xs">
                       <div>
-                        <dt className="text-slate-500 dark:text-slate-400">Issued by</dt>
-                        <dd className="font-medium text-slate-900 dark:text-slate-100">
+                        <dt className="text-[var(--color-text-muted)]">Issued by</dt>
+                        <dd className="font-medium text-[var(--espresso-black)]">
                           {activeNode.issuer || "Unknown / Unrecognized"}
                         </dd>
                       </div>
                       {activeNode.signingTimeLocal && (
                         <div>
-                          <dt className="text-slate-500 dark:text-slate-400">
+                          <dt className="text-[var(--color-text-muted)]">
                             Signed (local time)
                           </dt>
-                          <dd className="font-medium text-slate-900 dark:text-slate-100">
+                          <dd className="font-medium text-[var(--espresso-black)]">
                             {activeNode.signingTimeLocal}
                           </dd>
                         </div>
                       )}
                       {result.validationErrors.length > 0 && (
                         <div>
-                          <dt className="text-rose-600 dark:text-rose-400 font-medium">
+                          <dt className="text-rose-700 font-medium">
                             Validation notices
                           </dt>
-                          <dd className="mt-1 space-y-1 text-rose-700 dark:text-rose-300">
+                          <dd className="mt-1 space-y-1 text-rose-800">
                             {result.validationErrors.map((err, i) => (
                               <div key={i}>• {err}</div>
                             ))}
@@ -564,21 +565,21 @@ export function VerifyClient() {
                   {activeNode.aiInfo.isAiGeneratedOrModified && (
                     <details
                       open
-                      className="rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/50 dark:bg-indigo-950/30 p-4"
+                      className="rounded-[24px] border border-[var(--color-brand-line)] bg-[var(--warm-peach)]/55 p-4"
                     >
-                      <summary className="cursor-pointer font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                        <Sparkles aria-hidden="true" className="h-4 w-4 text-indigo-600" />
+                      <summary className="cursor-pointer font-semibold text-sm text-[var(--espresso-black)] flex items-center gap-2">
+                        <Sparkles aria-hidden="true" className="h-4 w-4 text-[var(--color-brand)]" />
                         AI-generated or modified content
                       </summary>
                       <div className="mt-3 space-y-2 text-xs">
                         <SelfDeclaredBadge />
                         {activeNode.aiInfo.digitalSourceTypes.length > 0 && (
-                          <p className="text-slate-700 dark:text-slate-300">
+                          <p className="text-[var(--espresso-black)]">
                             Type: {activeNode.aiInfo.digitalSourceTypes.join(", ")}
                           </p>
                         )}
                         {activeNode.aiInfo.tools.length > 0 && (
-                          <p className="text-slate-700 dark:text-slate-300">
+                          <p className="text-[var(--espresso-black)]">
                             Tools / Models: {activeNode.aiInfo.tools.join(", ")}
                           </p>
                         )}
@@ -588,19 +589,19 @@ export function VerifyClient() {
 
                   <details
                     open
-                    className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
+                    className="glass-surface p-4"
                   >
-                    <summary className="cursor-pointer font-semibold text-sm text-slate-900 dark:text-white">
+                    <summary className="cursor-pointer font-semibold text-sm text-[var(--espresso-black)]">
                       Credit and usage
                     </summary>
                     <div className="mt-3 space-y-2 text-xs">
                       <SelfDeclaredBadge />
                       {activeNode.creditInfo.author ? (
-                        <p className="text-slate-800 dark:text-slate-200">
+                        <p className="text-[var(--espresso-black)]">
                           Produced by: <span className="font-medium">{activeNode.creditInfo.author}</span>
                         </p>
                       ) : (
-                        <p className="text-slate-500 dark:text-slate-400">
+                        <p className="text-[var(--color-text-muted)]">
                           No author name declared.
                         </p>
                       )}
@@ -611,14 +612,14 @@ export function VerifyClient() {
                             href={activeNode.creditInfo.website}
                             target="_blank"
                             rel="noreferrer"
-                            className="underline text-indigo-600 dark:text-indigo-400"
+                            className="underline font-semibold text-[var(--color-brand)]"
                           >
                             {activeNode.creditInfo.website}
                           </a>
                         </p>
                       )}
                       {activeNode.creditInfo.doNotTrain && (
-                        <p className="inline-block rounded-md bg-amber-100 dark:bg-amber-950/60 px-2 py-1 font-medium text-amber-900 dark:text-amber-200">
+                        <p className="inline-block rounded-full bg-amber-100 px-2.5 py-1 font-medium text-amber-900">
                           Do-not-train preference signaled
                         </p>
                       )}
@@ -627,14 +628,14 @@ export function VerifyClient() {
 
                   <details
                     open
-                    className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
+                    className="glass-surface p-4"
                   >
-                    <summary className="cursor-pointer font-semibold text-sm text-slate-900 dark:text-white">
+                    <summary className="cursor-pointer font-semibold text-sm text-[var(--espresso-black)]">
                       Process &amp; actions
                     </summary>
                     <div className="mt-3 space-y-2 text-xs">
                       {activeNode.claimGenerator && (
-                        <p className="text-slate-700 dark:text-slate-300">
+                        <p className="text-[var(--espresso-black)]">
                           App / device: <span className="font-medium">{activeNode.claimGenerator}</span>
                         </p>
                       )}
@@ -643,13 +644,13 @@ export function VerifyClient() {
                           {activeNode.actions.map((act, idx) => (
                             <li
                               key={idx}
-                              className="rounded-lg bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1.5"
+                              className="rounded-[12px] bg-[var(--warm-surface)] px-2.5 py-1.5"
                             >
-                              <div className="font-medium text-slate-900 dark:text-slate-100">
+                              <div className="font-medium text-[var(--espresso-black)]">
                                 {act.action}
                               </div>
                               {(act.softwareAgent || act.digitalSourceType) && (
-                                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                <div className="text-[11px] text-[var(--color-text-muted)]">
                                   {[act.softwareAgent, act.digitalSourceType]
                                     .filter(Boolean)
                                     .join(" • ")}
@@ -659,21 +660,21 @@ export function VerifyClient() {
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-slate-500 dark:text-slate-400">No actions recorded.</p>
+                        <p className="text-[var(--color-text-muted)]">No actions recorded.</p>
                       )}
                     </div>
                   </details>
 
                   {Object.keys(activeNode.exifDetails).length > 0 && (
-                    <details className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                      <summary className="cursor-pointer font-semibold text-sm text-slate-900 dark:text-white">
+                    <details className="glass-surface p-4">
+                      <summary className="cursor-pointer font-semibold text-sm text-[var(--espresso-black)]">
                         Camera capture details
                       </summary>
                       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         {Object.entries(activeNode.exifDetails).map(([k, v]) => (
                           <div key={k}>
-                            <dt className="text-slate-500 dark:text-slate-400">{k}</dt>
-                            <dd className="font-medium text-slate-900 dark:text-slate-100">{v}</dd>
+                            <dt className="text-[var(--color-text-muted)]">{k}</dt>
+                            <dd className="font-medium text-[var(--espresso-black)]">{v}</dd>
                           </div>
                         ))}
                       </dl>
@@ -681,7 +682,7 @@ export function VerifyClient() {
                   )}
                 </>
               ) : (
-                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-xs text-slate-600 dark:text-slate-400">
+                <div className="glass-surface p-4 text-xs text-[var(--color-text-muted)]">
                   {activeNode
                     ? "This source ingredient does not have attached Content Credentials."
                     : "Select an item or drop a credentialed file to inspect details."}
