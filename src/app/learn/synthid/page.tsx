@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "What is SynthID?",
   description: "What Google SynthID is, how it differs from C2PA, and where to check it.",
+  alternates: { canonical: "/learn/synthid" },
 };
 
 export default function LearnSynthIdPage() {

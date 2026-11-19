@@ -144,8 +144,8 @@ export const BLOG_POSTS: BlogPost[] = [
       ],
     },
     sources: [
-      { label: "Content Authenticity Initiative — Verify Docs", url: "https://opensource.contentauthenticity.org/docs/verify" },
-      { label: "C2PA Known Certificate List", url: "https://opensource.contentauthenticity.org/docs/verify-known-cert-list" },
+      { label: "Content Authenticity Initiative — Open-Source Docs", url: "https://opensource.contentauthenticity.org/docs/" },
+      { label: "C2PA Trust & Conformance Program", url: "https://c2pa.org/" },
     ],
   },
   {

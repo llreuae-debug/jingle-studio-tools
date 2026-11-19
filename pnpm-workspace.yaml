@@ -5,3 +5,5 @@ onlyBuiltDependencies:
   - "@contentauth/c2pa-node"
   - "esbuild"
   - "sharp"
+overrides:
+  postcss: ">=8.5.23"

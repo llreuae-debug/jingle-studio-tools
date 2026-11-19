@@ -187,7 +187,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
   const db = await getDb();
 
   if (body.action === "approve_purchase" && typeof body.purchaseId === "string") {
@@ -260,6 +263,12 @@ export async function POST(req: NextRequest) {
 
   if (body.action === "toggle_user_disabled" && typeof body.userId === "string") {
     const disabled = Boolean(body.disabled);
+    if (body.userId === ctx.user.id && disabled) {
+      return NextResponse.json(
+        { error: "Cannot disable your own active admin account." },
+        { status: 400 }
+      );
+    }
     await db
       .update(schema.users)
       .set({ disabled })
@@ -277,6 +286,12 @@ export async function POST(req: NextRequest) {
 
   if (body.action === "update_user_role" && typeof body.userId === "string") {
     const role = body.role === "admin" ? "admin" : "user";
+    if (body.userId === ctx.user.id && role !== "admin") {
+      return NextResponse.json(
+        { error: "Cannot demote your own active admin account." },
+        { status: 400 }
+      );
+    }
     await db
       .update(schema.users)
       .set({ role })
@@ -364,11 +379,28 @@ export async function POST(req: NextRequest) {
     if (!["free", "pro", "business"].includes(planId)) {
       return NextResponse.json({ error: "Invalid plan ID" }, { status: 400 });
     }
-    const monthlyPriceCents = Math.max(0, Number(body.monthlyPriceCents ?? 0));
-    const dailyLimit = Math.max(1, Number(body.dailyLimit ?? 20));
-    const maxImageMb = Math.max(1, Number(body.maxImageMb ?? 25));
-    const maxVideoMb = Math.max(1, Number(body.maxVideoMb ?? 100));
-    const includedCredits = Math.max(0, Number(body.includedCredits ?? 10));
+    const rawPrice = Number(body.monthlyPriceCents ?? 0);
+    const rawDaily = Number(body.dailyLimit ?? 20);
+    const rawImg = Number(body.maxImageMb ?? 25);
+    const rawVid = Number(body.maxVideoMb ?? 100);
+    const rawCredits = Number(body.includedCredits ?? 10);
+    if (
+      !Number.isFinite(rawPrice) ||
+      !Number.isFinite(rawDaily) ||
+      !Number.isFinite(rawImg) ||
+      !Number.isFinite(rawVid) ||
+      !Number.isFinite(rawCredits)
+    ) {
+      return NextResponse.json(
+        { error: "Plan numeric fields must be valid numbers." },
+        { status: 400 }
+      );
+    }
+    const monthlyPriceCents = Math.max(0, Math.round(rawPrice));
+    const dailyLimit = Math.max(1, Math.round(rawDaily));
+    const maxImageMb = Math.max(1, Math.round(rawImg));
+    const maxVideoMb = Math.max(1, Math.round(rawVid));
+    const includedCredits = Math.max(0, Math.round(rawCredits));
     const active = body.active !== false;
 
     await db

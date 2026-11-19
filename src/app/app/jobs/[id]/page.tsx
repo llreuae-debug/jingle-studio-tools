@@ -34,17 +34,25 @@ export default function JobDetailPage() {
 
   const [data, setData] = useState<JobDetailView | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [unauthorized, setUnauthorized] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const loadJob = useCallback(async () => {
     try {
       const res = await fetch(`/api/jobs/${jobId}`);
+      if (res.status === 401) {
+        setUnauthorized(true);
+        setError("Sign in to inspect this signing job.");
+        return;
+      }
       if (!res.ok) {
-        const body = await res.json();
+        const body = await res.json().catch(() => ({}));
         setError(body.error || "Could not load job.");
         return;
       }
       const json = (await res.json()) as JobDetailView;
+      setUnauthorized(false);
       setData(json);
     } catch {
       setError("Network error loading job.");
@@ -67,6 +75,7 @@ export default function JobDetailPage() {
 
   const publishProof = async (itemId: string) => {
     setPublishingId(itemId);
+    setActionError(null);
     try {
       const res = await fetch("/api/proof", {
         method: "POST",
@@ -75,7 +84,12 @@ export default function JobDetailPage() {
       });
       if (res.ok) {
         await loadJob();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setActionError(body.error || "Could not publish proof page.");
       }
+    } catch {
+      setActionError("Network error publishing proof page.");
     } finally {
       setPublishingId(null);
     }
@@ -83,8 +97,16 @@ export default function JobDetailPage() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-[#C83C4D]/30 bg-rose-50 p-4 text-sm text-rose-950">
-        {error}
+      <div className="rounded-xl border border-[#C83C4D]/30 bg-rose-50 p-4 text-sm text-rose-950 flex flex-wrap items-center justify-between gap-3">
+        <span>{error}</span>
+        {unauthorized && (
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent(`/app/jobs/${jobId}`)}`}
+            className="btn-plum px-3.5 py-1.5 text-xs font-semibold"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     );
   }
@@ -139,6 +161,12 @@ export default function JobDetailPage() {
         </div>
         <progress value={doneCount} max={Math.max(1, data.items.length)} className="w-full h-2" />
       </div>
+
+      {actionError && (
+        <div role="alert" className="rounded-xl border border-[#C83C4D]/30 bg-rose-50 p-3 text-xs text-rose-950">
+          {actionError}
+        </div>
+      )}
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 space-y-3">
         <h2 className="text-base font-semibold text-[var(--color-ink)]">Files</h2>

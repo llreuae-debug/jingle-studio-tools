@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "AI Disclosure Signer",
   description: "Batch-sign up to 50 JPG or PNG files with C2PA Content Credentials and honest AI disclosures.",
+  alternates: { canonical: "/tools/ai-disclosure-signer" },
 };
 
 export default async function PublicSignerPage() {

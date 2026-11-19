@@ -68,6 +68,44 @@ interface LocalPreviewMeta {
 const CHUNK_THRESHOLD_BYTES = 3.5 * 1024 * 1024;
 const ALLOWED_EXT_RX = /\.(png|jpe?g|webp|mp4|mov|webm)$/i;
 
+const FILTER_ACCEPT: Record<"all" | "image" | "video", string> = {
+  all: ".png,.jpg,.jpeg,.webp,.mp4,.mov,.webm,image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm",
+  image: ".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp",
+  video: ".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm",
+};
+
+const FILTER_FORMATS_LABEL: Record<"all" | "image" | "video", string> = {
+  all: "PNG · JPG · JPEG · WEBP (images) | MP4 · MOV · WEBM (videos)",
+  image: "PNG · JPG · JPEG · WEBP (images up to plan limit)",
+  video: "MP4 · MOV · WEBM (videos up to plan limit)",
+};
+
+function hasValidMediaSignature(bytes: Uint8Array): boolean {
+  if (bytes.length < 12) return false;
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true;
+  if (
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return true;
+  }
+  const ascii = (start: number, end: number) =>
+    String.fromCharCode(...bytes.slice(start, end));
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return true;
+  if (ascii(4, 8) === "ftyp") return true;
+  if (
+    bytes[0] === 0x1a &&
+    bytes[1] === 0x45 &&
+    bytes[2] === 0xdf &&
+    bytes[3] === 0xa3
+  ) {
+    return true;
+  }
+  return false;
+}
+
 const PROCESSING_STEPS = [
   "Uploading file",
   "Validating media",
@@ -323,6 +361,21 @@ export function MediaInspectorWorkbench() {
       return;
     }
 
+    const headBytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    if (!hasValidMediaSignature(headBytes)) {
+      setValidationError(
+        `File "${file.name}" does not have a valid PNG, JPG, WEBP, MP4, MOV, or WEBM file header.`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (mediaFilter === "image" && isVideo) {
+      setMediaFilter("video");
+    } else if (mediaFilter === "video" && !isVideo) {
+      setMediaFilter("image");
+    }
+
     cleanupResources();
     setSelectedFile(file);
     setLocalReadingStage("reading");
@@ -335,13 +388,16 @@ export function MediaInspectorWorkbench() {
       setPreviewMeta(measured);
       setLocalC2pa(inspection);
     } catch (err) {
+      cleanupResources();
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       setValidationError(
         err instanceof Error ? err.message : "Could not read file in browser."
       );
     } finally {
       setLocalReadingStage("idle");
     }
-  }, [cleanupResources]);
+  }, [cleanupResources, mediaFilter]);
 
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
@@ -440,7 +496,7 @@ export function MediaInspectorWorkbench() {
         id={fileInputId}
         type="file"
         className="visually-hidden"
-        accept=".png,.jpg,.jpeg,.webp,.mp4,.mov,.webm,image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm"
+        accept={FILTER_ACCEPT[mediaFilter]}
         onChange={(e) => void handleFileSelect(e.target.files?.[0])}
       />
 
@@ -512,7 +568,9 @@ export function MediaInspectorWorkbench() {
               <p className="mt-4 text-base sm:text-lg font-bold text-[var(--color-ink)]">
                 {mediaFilter === "video"
                   ? "Drop AI videos or browse files"
-                  : "Drop images or videos"}
+                  : mediaFilter === "image"
+                    ? "Drop images or browse files"
+                    : "Drop images or videos"}
               </p>
               <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-muted)]">
                 Inspect C2PA Content Credentials &amp; embedded metadata, then remove personal GPS &amp; EXIF tags safely.
@@ -523,7 +581,7 @@ export function MediaInspectorWorkbench() {
                 </span>
               </div>
               <p className="mt-4 text-[11px] text-[var(--color-text-muted)]">
-                PNG · JPG · JPEG · WEBP (images) &nbsp;|&nbsp; MP4 · MOV · WEBM (videos)
+                {FILTER_FORMATS_LABEL[mediaFilter]}
               </p>
             </div>
 

@@ -1,5 +1,8 @@
 export const metadata = {
   title: "Terms of Service (Draft)",
+  description:
+    "Terms covering Jingle Studio Tools C2PA Content Credentials verification, privacy cleaning, and credit billing.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

@@ -1,3 +1,4 @@
+import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import JSZip from "jszip";
@@ -44,7 +45,10 @@ export async function GET(
     if (item.expiresAt && item.expiresAt.getTime() < Date.now()) continue;
     const buf = await getPrivateObject(item.outputKey);
     if (buf) {
-      zip.file(`signed-${item.originalName}`, buf);
+      const safeName =
+        path.basename(item.originalName).replace(/[^a-zA-Z0-9._-]/g, "_") ||
+        `file-${added + 1}`;
+      zip.file(`signed-${safeName}`, buf);
       added++;
     }
   }

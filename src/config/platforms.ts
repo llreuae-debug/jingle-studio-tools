@@ -248,7 +248,7 @@ export const PLACEMENT_SPECS: Record<PlacementId, PlacementSpec> = {
         "Tinjau sertifikat penanda tangan, pohon bahan, dan pengungkapan AI yang dideklarasikan sendiri.",
       ],
     },
-    officialHelpUrl: "https://opensource.contentauthenticity.org/docs/verify",
+    officialHelpUrl: "https://opensource.contentauthenticity.org/docs/",
     officialHelpLabel: {
       en: "C2PA Content Credentials Documentation",
       id: "Dokumentasi Kredensial Konten C2PA",

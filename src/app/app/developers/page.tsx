@@ -18,16 +18,24 @@ export default function AppDevelopersPage() {
   const [label, setLabel] = useState("");
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/keys");
-    if (res.status === 401) {
-      setError("Sign in to manage workspace API keys.");
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
-      setKeys(data.keys || []);
+    try {
+      const res = await fetch("/api/keys");
+      if (res.status === 401) {
+        setError("Sign in to manage workspace API keys.");
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setKeys(data.keys || []);
+      } else {
+        setError("Could not load API keys.");
+      }
+    } catch {
+      setError("Network error loading API keys.");
     }
   }, []);
 
@@ -37,30 +45,52 @@ export default function AppDevelopersPage() {
 
   const createKey = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creating) return;
+    setCreating(true);
     setError(null);
     setRevealedKey(null);
-    const res = await fetch("/api/keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label: label || "API Key" }),
-    });
-    const body = await res.json();
-    if (!res.ok) {
-      setError(body.error || "Could not create API key.");
-      return;
+    try {
+      const res = await fetch("/api/keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: label || "API Key" }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error || "Could not create API key.");
+        return;
+      }
+      setRevealedKey(body.rawKey);
+      setLabel("");
+      await load();
+    } catch {
+      setError("Network error creating API key.");
+    } finally {
+      setCreating(false);
     }
-    setRevealedKey(body.rawKey);
-    setLabel("");
-    await load();
   };
 
   const revokeKey = async (id: string) => {
-    const res = await fetch("/api/keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "revoke", id }),
-    });
-    if (res.ok) await load();
+    if (revokingId) return;
+    setRevokingId(id);
+    setError(null);
+    try {
+      const res = await fetch("/api/keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "revoke", id }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Could not revoke API key.");
+        return;
+      }
+      await load();
+    } catch {
+      setError("Network error revoking API key.");
+    } finally {
+      setRevokingId(null);
+    }
   };
 
   return (
@@ -107,10 +137,11 @@ export default function AppDevelopersPage() {
           />
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 btn-plum px-5 py-2 text-xs font-semibold"
+            disabled={creating}
+            className="inline-flex items-center justify-center gap-2 btn-plum px-5 py-2 text-xs font-semibold disabled:opacity-60"
           >
             <KeyRound aria-hidden="true" className="h-4 w-4" />
-            Generate key
+            {creating ? "Generating…" : "Generate key"}
           </button>
         </form>
       </section>
@@ -140,11 +171,12 @@ export default function AppDevelopersPage() {
                       {!k.revokedAt && (
                         <button
                           type="button"
+                          disabled={revokingId === k.id}
                           onClick={() => void revokeKey(k.id)}
-                          className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 font-medium text-[#a32032]"
+                          className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 font-medium text-[#a32032] disabled:opacity-50"
                         >
                           <Trash2 aria-hidden="true" className="h-3 w-3" />
-                          Revoke
+                          {revokingId === k.id ? "Revoking…" : "Revoke"}
                         </button>
                       )}
                     </td>

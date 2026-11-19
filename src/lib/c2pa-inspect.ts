@@ -200,7 +200,16 @@ function extractManifestDetails(manifest: any): Omit<
           }
         }
       }
-      if (data.url) website = String(data.url);
+      if (data.url) {
+        try {
+          const parsed = new URL(String(data.url));
+          if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+            website = parsed.toString();
+          }
+        } catch {
+          // ignore malformed or unsafe URLs
+        }
+      }
     } else if (label === "c2pa.training-mining" && data) {
       hasTrainingMiningDeclaration = true;
       const entries = data.entries || {};

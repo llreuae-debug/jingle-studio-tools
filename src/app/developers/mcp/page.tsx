@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "MCP Server",
   description: "Model Context Protocol server at /api/mcp for Content Credentials.",
+  alternates: { canonical: "/developers/mcp" },
 };
 
 export default function DevelopersMcpPage() {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, MessageCircle, X } from "lucide-react";
@@ -43,6 +43,35 @@ export function AppHeader({
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [optimisticTabId, setOptimisticTabId] = useState<string | null>(null);
+  const toolsMenuRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    if (toolsMenuRef.current) toolsMenuRef.current.open = false;
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (
+        toolsMenuRef.current?.open &&
+        !toolsMenuRef.current.contains(e.target as Node)
+      ) {
+        toolsMenuRef.current.open = false;
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (toolsMenuRef.current) toolsMenuRef.current.open = false;
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   const routeTabId = useMemo(() => {
     if (!pathname) return "check";
@@ -75,14 +104,14 @@ export function AppHeader({
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[var(--border)] shadow-[var(--shadow-1)]">
       <div className="mx-auto max-w-[1120px] min-h-[64px] px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/"
+          href="/tools"
           className="flex items-center gap-2 font-semibold text-[var(--color-ink)] tracking-tight"
         >
           <Logo variant="horizontal" size="sm" theme="light" />
         </Link>
 
         <nav aria-label="Primary" className="hidden lg:flex items-center gap-6 text-sm font-medium">
-          <details className="relative group">
+          <details ref={toolsMenuRef} className="relative group">
             <summary className="list-none cursor-pointer inline-flex items-center gap-1 rounded-[10px] px-2.5 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] transition-colors duration-150">
               <span>{t.nav.tools}</span>
               <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
@@ -92,6 +121,9 @@ export function AppHeader({
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => {
+                    if (toolsMenuRef.current) toolsMenuRef.current.open = false;
+                  }}
                   className="block rounded-[10px] px-3 py-2 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)] transition-colors duration-150"
                 >
                   {item.label}
@@ -210,10 +242,16 @@ export function AppHeader({
           </div>
           {[
             { href: "/tools", label: "Tools" },
+            { href: "/tools/content-credentials-check", label: "Content Credentials Check" },
+            { href: "/tools/ai-disclosure-signer", label: "AI Disclosure Signer" },
+            { href: "/verify", label: "Verify File or URL" },
             { href: "/how-it-works", label: "How it works" },
             { href: "/pricing", label: "Pricing" },
             { href: "/learn", label: "Learn" },
+            { href: "/blog", label: "Blog" },
+            { href: "/faq", label: "FAQ" },
             { href: "/developers", label: "Developers" },
+            ...(userRole === "admin" ? [{ href: "/admin", label: t.nav.admin }] : []),
             { href: userEmail ? "/app" : "/login", label: userEmail ? userEmail : "Log in" },
             { href: userEmail ? "/app/sign" : "/signup", label: userEmail ? "Sign files" : "Sign up free" },
           ].map((item) => (
@@ -360,7 +398,7 @@ export function AppFooter() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/"
+                  href="/tools"
                   className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
                 >
                   Home

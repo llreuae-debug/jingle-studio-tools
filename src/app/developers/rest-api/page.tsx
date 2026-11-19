@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "REST API",
   description: "REST API endpoints for Content Credentials verification and signing.",
+  alternates: { canonical: "/developers/rest-api" },
 };
 
 export default function DevelopersRestApiPage() {

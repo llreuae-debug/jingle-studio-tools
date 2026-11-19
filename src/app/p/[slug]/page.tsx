@@ -1,10 +1,41 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { ProofActionsClient } from "@/components/ProofActionsClient";
 import { getDb, schema } from "@/db";
 import { getSessionContext } from "@/lib/auth";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const db = await getDb();
+  const rows = await db
+    .select()
+    .from(schema.publicCredentials)
+    .where(eq(schema.publicCredentials.slug, slug));
+
+  const record = rows[0];
+  if (!record) {
+    notFound();
+  }
+
+  return {
+    title: `${record.title} — Public Content Credential Record`,
+    description: `Content Credential record signed by ${record.signer}. ${record.disclosureSummary}`,
+    alternates: {
+      canonical: `/p/${record.slug}`,
+    },
+    ...(record.status !== "live"
+      ? { robots: { index: false, follow: false } }
+      : {}),
+  };
+}
 
 export default async function PublicProofPage({
   params,
@@ -20,20 +51,7 @@ export default async function PublicProofPage({
     .where(eq(schema.publicCredentials.slug, slug));
 
   if (rows.length === 0) {
-    return (
-      <div className="mx-auto max-w-xl rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center space-y-3">
-        <h1 className="text-xl font-bold text-[var(--color-ink)]">Proof record not found</h1>
-        <p className="text-xs text-[var(--color-muted)]">
-          This public verification link does not exist.
-        </p>
-        <Link
-          href="/tools/content-credentials-check"
-          className="inline-block rounded-lg bg-[var(--color-blue)] px-4 py-2 text-xs font-semibold text-white"
-        >
-          Open Content Credentials Check
-        </Link>
-      </div>
-    );
+    notFound();
   }
 
   const record = rows[0];

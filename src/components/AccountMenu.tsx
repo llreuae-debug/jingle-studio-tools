@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
 import { ChevronDown, LayoutDashboard, LogOut, Settings } from "lucide-react";
 
 function getInitials(name?: string | null, email?: string | null): string {
@@ -21,11 +20,30 @@ export function AccountMenu({
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const initials = getInitials(user.name, user.email);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         aria-expanded={open}
@@ -91,7 +109,7 @@ export function AccountMenu({
             role="menuitem"
             onClick={async () => {
               await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-              await signOut({ callbackUrl: "/tools" });
+              window.location.href = "/tools";
             }}
             className="w-full flex items-center gap-2 rounded-full px-3 py-2 font-medium text-[#a32032] hover:bg-rose-100/70"
           >

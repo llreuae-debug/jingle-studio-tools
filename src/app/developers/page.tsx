@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Developers",
   description: "Automate C2PA Content Credentials verification and signing via REST API and MCP.",
+  alternates: { canonical: "/developers" },
 };
 
 export default function DevelopersOverviewPage() {

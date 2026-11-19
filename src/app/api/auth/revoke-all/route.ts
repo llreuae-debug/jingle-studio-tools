@@ -13,5 +13,20 @@ export async function POST(req: NextRequest) {
   }
 
   await revokeAllUserSessions(ctx.user.id);
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set("__Secure-authjs.session-token", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: true,
+    maxAge: 0,
+  });
+  res.cookies.set("authjs.session-token", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: false,
+    maxAge: 0,
+  });
+  return res;
 }

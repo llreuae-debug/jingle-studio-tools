@@ -5,6 +5,7 @@ import { isGoogleSignInConfigured } from "@/lib/auth";
 export const metadata = {
   title: "Sign in",
   description: "Sign in with Google or email to manage Content Credentials and batch signing.",
+  robots: { index: false, follow: false },
 };
 
 export default function LoginPage() {

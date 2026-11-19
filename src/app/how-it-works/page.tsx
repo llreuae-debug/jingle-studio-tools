@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "How it works",
   description: "Three steps to check, disclose AI use honestly, and share Content Credentials.",
+  alternates: { canonical: "/how-it-works" },
 };
 
 export default function HowItWorksPage() {

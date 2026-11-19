@@ -3,4 +3,7 @@ Allow: /
 Allow: /favicon.ico
 Allow: /favicon.svg
 Allow: /brand/
+Disallow: /app/
+Disallow: /admin
+Disallow: /api/
 Sitemap: https://jinglestudio.io/sitemap.xml

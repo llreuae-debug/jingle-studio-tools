@@ -2,13 +2,32 @@ import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { verifySameOrigin } from "@/lib/security";
 
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ slug: string }> }
 ) {
+  if (!verifySameOrigin(req)) {
+    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const rl = checkRateLimit(`report:${ip}`, 10, 10 * 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many reports submitted. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
+
   const { slug } = await context.params;
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
   const reason = String(body.reason || "").trim();
   const details = typeof body.details === "string" ? body.details.trim() : null;
   const reporterEmail =

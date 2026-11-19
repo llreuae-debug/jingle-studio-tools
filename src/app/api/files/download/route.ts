@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": items[0].mimeType || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${payload.fileName.replace(/"/g, "")}"`,
+      "Content-Disposition": `attachment; filename="${payload.fileName.replace(/["\r\n]/g, "")}"`,
       "Cache-Control": "private, no-store",
     },
   });

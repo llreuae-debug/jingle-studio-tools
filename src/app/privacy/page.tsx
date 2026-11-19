@@ -1,5 +1,8 @@
 export const metadata = {
   title: "Privacy Policy (Draft)",
+  description:
+    "How Jingle Studio Tools handles browser-local checks, privacy cleaning, batch signing uploads, and public proof pages.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

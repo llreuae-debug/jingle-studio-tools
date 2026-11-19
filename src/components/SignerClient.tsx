@@ -88,7 +88,7 @@ export function SignerClient({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     if (hasAiIngredient && aiUse === "no_ai") {
@@ -100,6 +100,7 @@ export function SignerClient({
     if (!incoming) return;
     const list = Array.from(incoming).slice(0, 50);
     setFiles(list);
+    setIdempotencyKey(crypto.randomUUID());
     setErrorMsg(null);
     setHasAiIngredient(false);
     setInvalidExistingFile(null);

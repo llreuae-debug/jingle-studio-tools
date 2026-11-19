@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Activity, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 
 interface AdminPricingPlan {
@@ -84,14 +85,19 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin");
-    if (!res.ok) {
-      setError("Admin access required.");
-      return;
+    try {
+      const res = await fetch("/api/admin");
+      if (!res.ok) {
+        setError("Admin access required.");
+        return;
+      }
+      setData(await res.json());
+    } catch {
+      setError("Network error loading admin console.");
     }
-    setData(await res.json());
   }, []);
 
   useEffect(() => {
@@ -99,25 +105,36 @@ export default function AdminDashboardPage() {
   }, [load]);
 
   const act = async (payload: Record<string, unknown>, label?: string) => {
+    if (busy) return;
+    setBusy(true);
     setStatusMsg(null);
-    const res = await fetch("/api/admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      if (label) setStatusMsg(label);
-      await load();
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setStatusMsg(err.error || "Action failed.");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        if (label) setStatusMsg(label);
+        await load();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setStatusMsg(err.error || "Action failed.");
+      }
+    } catch {
+      setStatusMsg("Network error performing admin action.");
+    } finally {
+      setBusy(false);
     }
   };
 
   if (error) {
     return (
-      <div className="rounded-[16px] border border-rose-200 bg-rose-50 p-6 text-sm text-rose-950">
-        {error}
+      <div className="rounded-[16px] border border-rose-200 bg-rose-50 p-6 text-sm text-rose-950 flex flex-wrap items-center justify-between gap-3">
+        <span>{error}</span>
+        <Link href="/login?callbackUrl=/admin" className="btn-plum px-4 py-2 text-xs font-semibold">
+          Sign in with admin account
+        </Link>
       </div>
     );
   }

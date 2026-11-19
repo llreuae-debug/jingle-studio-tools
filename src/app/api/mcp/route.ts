@@ -135,18 +135,29 @@ export async function POST(req: NextRequest) {
     }
 
     if (toolName === "check_credentials") {
+      const MAX_MCP_CHECK_BYTES = 25 * 1024 * 1024;
       const b64 = typeof args.base64 === "string" ? args.base64 : "";
-      const buf = Buffer.from(b64, "base64");
-      const mimeType =
-        detectRealMimeType(buf) ||
-        (typeof args.mimeType === "string" ? args.mimeType : null);
-      if (!buf.length || !mimeType) {
+      if (b64.length > Math.ceil(MAX_MCP_CHECK_BYTES * 1.4)) {
         return NextResponse.json({
           jsonrpc: "2.0",
           id,
           result: {
             isError: true,
-            content: [{ type: "text", text: "Invalid or unsupported file bytes." }],
+            content: [{ type: "text", text: "File exceeds 25 MB maximum size limit." }],
+          },
+        });
+      }
+      const buf = Buffer.from(b64, "base64");
+      const mimeType =
+        detectRealMimeType(buf) ||
+        (typeof args.mimeType === "string" ? args.mimeType : null);
+      if (!buf.length || buf.length > MAX_MCP_CHECK_BYTES || !mimeType) {
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            isError: true,
+            content: [{ type: "text", text: "Invalid, oversized, or unsupported file bytes." }],
           },
         });
       }
@@ -175,6 +186,17 @@ export async function POST(req: NextRequest) {
         .select({ ownerId: schema.workspaces.ownerId })
         .from(schema.workspaces)
         .where(eq(schema.workspaces.id, auth.workspaceId));
+
+      if (wsRows.length === 0) {
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            isError: true,
+            content: [{ type: "text", text: JSON.stringify({ error: "Workspace not found." }) }],
+          },
+        });
+      }
 
       const rawFiles = Array.isArray(args.files) ? args.files : [];
       const files = rawFiles

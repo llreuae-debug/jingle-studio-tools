@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { AppFooter, AppHeader } from "@/components/AppChrome";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { SITE_CONFIG } from "@/config/site";
-import { auth } from "@/lib/auth";
+import { auth, getSessionContext } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import "./globals.css";
 
@@ -77,11 +77,12 @@ export default async function RootLayout({
   const langCookie = cookieStore.get("jingle_lang")?.value;
   const initialLocale: Locale = langCookie === "id" ? "id" : "en";
 
-  const session = await auth();
-  const userEmail = session?.user?.email || null;
-  const userName = session?.user?.name || null;
-  const userImage = session?.user?.image || null;
-  const userRole = (session?.user as { role?: string } | undefined)?.role || null;
+  const [ctx, session] = await Promise.all([getSessionContext(), auth()]);
+  const userEmail = ctx?.user.email || session?.user?.email || null;
+  const userName = ctx?.user.name || session?.user?.name || null;
+  const userImage = ctx?.user.avatarUrl || session?.user?.image || null;
+  const userRole =
+    ctx?.user.role || (session?.user as { role?: string } | undefined)?.role || null;
 
   const orgJsonLd = {
     "@context": "https://schema.org",

@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "What are Content Credentials?",
   description: "A plain-language overview of C2PA Content Credentials.",
+  alternates: { canonical: "/learn/content-credentials" },
 };
 
 export default function LearnContentCredentialsPage() {
@@ -26,7 +27,7 @@ export default function LearnContentCredentialsPage() {
           Check a file
         </Link>
         <a
-          href="https://opensource.contentauthenticity.org/docs/verify"
+          href="https://opensource.contentauthenticity.org/docs/"
           target="_blank"
           rel="noreferrer"
           className="btn-mint px-5 py-2.5 text-xs font-semibold"

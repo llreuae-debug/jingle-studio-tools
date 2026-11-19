@@ -1,5 +1,8 @@
 export const metadata = {
   title: "Acceptable Use Policy (Draft)",
+  description:
+    "Permitted uses of Jingle Studio Tools, provenance preservation commitments, and restrictions on misrepresentation.",
+  alternates: { canonical: "/acceptable-use" },
 };
 
 export default function AcceptableUsePage() {

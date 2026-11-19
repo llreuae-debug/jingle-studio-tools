@@ -10,6 +10,7 @@ export const metadata = {
   title: "Pricing",
   description:
     "Subscription tiers for AI media inspection & privacy cleaning, plus credit packs for C2PA batch signing.",
+  alternates: { canonical: "/pricing" },
 };
 
 export default async function PricingPage() {

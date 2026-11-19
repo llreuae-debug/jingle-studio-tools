@@ -42,7 +42,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
 
   if (body.action === "revoke" && typeof body.id === "string") {
     const db = await getDb();

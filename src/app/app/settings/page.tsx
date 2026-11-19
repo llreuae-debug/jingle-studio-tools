@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface SettingsPayload {
   user?: { email: string; name: string | null; emailVerified: string | null };
@@ -25,19 +27,34 @@ interface SettingsPayload {
 }
 
 export default function WorkspaceSettingsPage() {
+  const router = useRouter();
   const [data, setData] = useState<SettingsPayload | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [website, setWebsite] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [revokingAll, setRevokingAll] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/workspaces");
-    if (res.ok) {
+    try {
+      const res = await fetch("/api/workspaces");
+      if (res.status === 401) {
+        router.replace("/login?callbackUrl=/app/settings");
+        return;
+      }
+      if (!res.ok) {
+        setLoadError("Could not load workspace settings.");
+        return;
+      }
       setData(await res.json());
+    } catch {
+      setLoadError("Network error loading workspace settings.");
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     void load();
@@ -45,44 +62,68 @@ export default function WorkspaceSettingsPage() {
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingProfile) return;
+    setSavingProfile(true);
     setMessage(null);
-    const res = await fetch("/api/workspaces", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "save_profile",
-        displayName,
-        website,
-        defaultTrainingPreference: true,
-      }),
-    });
-    if (res.ok) {
-      setDisplayName("");
-      setWebsite("");
-      setMessage("Brand signing profile saved.");
-      await load();
-    } else {
-      const err = await res.json();
-      setMessage(err.error || "Could not save profile.");
+    try {
+      const res = await fetch("/api/workspaces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_profile",
+          displayName,
+          website,
+          defaultTrainingPreference: true,
+        }),
+      });
+      if (res.ok) {
+        setDisplayName("");
+        setWebsite("");
+        setMessage("Brand signing profile saved.");
+        await load();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setMessage(err.error || "Could not save profile.");
+      }
+    } catch {
+      setMessage("Network error saving profile.");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
   const sendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (inviting) return;
+    setInviting(true);
     setMessage(null);
-    const res = await fetch("/api/workspaces/invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: inviteEmail, role: "member" }),
-    });
-    const body = await res.json();
-    if (res.ok) {
-      setInviteToken(body.token);
-      setInviteEmail("");
-    } else {
-      setMessage(body.error || "Could not create invite.");
+    try {
+      const res = await fetch("/api/workspaces/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail, role: "member" }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setInviteToken(body.token);
+        setInviteEmail("");
+      } else {
+        setMessage(body.error || "Could not create invite.");
+      }
+    } catch {
+      setMessage("Network error creating invite.");
+    } finally {
+      setInviting(false);
     }
   };
+
+  if (loadError) {
+    return (
+      <div role="alert" className="rounded-[14px] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">
+        {loadError}
+      </div>
+    );
+  }
 
   if (!data) {
     return <div className="py-12 text-center text-sm text-[var(--color-muted)]">Loading settings…</div>;
@@ -127,9 +168,9 @@ export default function WorkspaceSettingsPage() {
           <div>
             <p className="text-[var(--color-text-muted)]">Credits &amp; Billing</p>
             <p className="font-semibold text-[var(--color-ink)]">{data.balance ?? 0} credits remaining</p>
-            <a href="/app/billing" className="text-[var(--color-brand)] font-semibold underline">
+            <Link href="/app/billing" className="text-[var(--color-brand)] font-semibold underline">
               Manage credits &amp; invoices
-            </a>
+            </Link>
           </div>
         </section>
       )}
@@ -177,9 +218,10 @@ export default function WorkspaceSettingsPage() {
             />
             <button
               type="submit"
-              className="btn-plum px-4 py-2 text-xs font-semibold"
+              disabled={savingProfile}
+              className="btn-plum px-4 py-2 text-xs font-semibold disabled:opacity-60"
             >
-              Save profile
+              {savingProfile ? "Saving…" : "Save profile"}
             </button>
           </form>
         )}
@@ -208,9 +250,10 @@ export default function WorkspaceSettingsPage() {
             />
             <button
               type="submit"
-              className="btn-plum px-4 py-2 text-xs font-semibold"
+              disabled={inviting}
+              className="btn-plum px-4 py-2 text-xs font-semibold disabled:opacity-60"
             >
-              Create invite
+              {inviting ? "Creating invite…" : "Create invite"}
             </button>
           </form>
         )}
@@ -229,15 +272,25 @@ export default function WorkspaceSettingsPage() {
         </p>
         <button
           type="button"
+          disabled={revokingAll}
           onClick={async () => {
-            const res = await fetch("/api/auth/revoke-all", { method: "POST" });
-            if (res.ok) {
-              window.location.href = "/login";
+            setRevokingAll(true);
+            try {
+              const res = await fetch("/api/auth/revoke-all", { method: "POST" });
+              if (res.ok) {
+                window.location.href = "/login";
+              } else {
+                setMessage("Could not sign out all sessions.");
+                setRevokingAll(false);
+              }
+            } catch {
+              setMessage("Network error signing out sessions.");
+              setRevokingAll(false);
             }
           }}
-          className="rounded-full bg-[#a32032] px-4 py-2 text-xs font-semibold text-white hover:opacity-90"
+          className="rounded-full bg-[#a32032] px-4 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
         >
-          Sign out of all devices
+          {revokingAll ? "Signing out…" : "Sign out of all devices"}
         </button>
       </section>
     </div>

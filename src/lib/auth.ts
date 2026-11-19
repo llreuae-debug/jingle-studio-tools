@@ -31,7 +31,10 @@ export function verifyPassword(password: string, stored: string): boolean {
   const [salt, expected] = stored.split(":");
   if (!salt || !expected) return false;
   const derived = crypto.scryptSync(password, salt, 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(derived), Buffer.from(expected));
+  const a = Buffer.from(derived);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
 }
 
 export async function createDbSessionForUser(userId: string): Promise<{

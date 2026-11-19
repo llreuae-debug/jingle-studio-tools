@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
 
   if (body.action === "accept" && typeof body.token === "string") {
     const db = await getDb();
@@ -31,6 +34,12 @@ export async function POST(req: NextRequest) {
     const invite = invites[0];
     if (invite.acceptedAt || invite.expiresAt.getTime() < Date.now()) {
       return NextResponse.json({ error: "Invite expired or already used" }, { status: 400 });
+    }
+    if (ctx.user.email.toLowerCase() !== invite.email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "This invite was issued for a different email address." },
+        { status: 403 }
+      );
     }
 
     const existing = await db

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  htmlLimitedBots: /.*/,
   serverExternalPackages: ["@contentauth/c2pa-node", "@electric-sql/pglite"],
   images: {
     remotePatterns: [

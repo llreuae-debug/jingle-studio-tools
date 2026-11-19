@@ -3,6 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Learn",
   description: "Guides on C2PA Content Credentials, SynthID, and honest AI disclosure.",
+  alternates: { canonical: "/learn" },
 };
 
 export default function LearnIndexPage() {

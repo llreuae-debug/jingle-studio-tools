@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { CreditPack } from "@/config/pricing";
 
 interface BillingPayload {
@@ -25,7 +26,10 @@ interface BillingPayload {
 }
 
 export default function BillingPage() {
+  const router = useRouter();
   const [data, setData] = useState<BillingPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
   const [instructions, setInstructions] = useState<{
     bankName: string;
     accountTitle: string;
@@ -35,30 +39,62 @@ export default function BillingPage() {
   } | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/billing");
-    if (res.ok) setData(await res.json());
-  }, []);
+    try {
+      const res = await fetch("/api/billing");
+      if (res.status === 401) {
+        router.replace("/login?callbackUrl=/app/billing");
+        return;
+      }
+      if (!res.ok) {
+        setError("Could not load billing information.");
+        return;
+      }
+      setData(await res.json());
+    } catch {
+      setError("Network error loading billing information.");
+    }
+  }, [router]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const buyPack = async (packId: string, method: "manual_bank" | "hosted") => {
-    const res = await fetch("/api/billing", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packId, method }),
-    });
-    const body = await res.json();
-    if (res.ok) {
+    const key = `${packId}:${method}`;
+    if (busyKey) return;
+    setBusyKey(key);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packId, method }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error || "Could not start purchase request.");
+        return;
+      }
       if (body.bankInstructions) {
         setInstructions(body.bankInstructions);
       } else if (body.checkoutUrl) {
         window.location.href = body.checkoutUrl;
       }
       await load();
+    } catch {
+      setError("Network error starting purchase request.");
+    } finally {
+      setBusyKey(null);
     }
   };
+
+  if (error && !data) {
+    return (
+      <div role="alert" className="rounded-[14px] border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">
+        {error}
+      </div>
+    );
+  }
 
   if (!data) {
     return <div className="py-12 text-center text-sm text-[var(--color-muted)]">Loading billing…</div>;
@@ -66,12 +102,18 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-[var(--color-ink)]">Credits &amp; Billing</h1>
         <span className="rounded-full bg-[var(--color-navy)] px-4 py-1.5 text-sm font-semibold text-white">
           Balance: {data.balance} credits
         </span>
       </div>
+
+      {error && (
+        <div role="alert" className="rounded-[14px] border border-rose-200 bg-rose-50 p-4 text-xs text-rose-900">
+          {error}
+        </div>
+      )}
 
       {instructions && (
         <div className="rounded-[20px] border border-[var(--color-brand-line)] bg-[var(--warm-peach)]/60 p-5 space-y-2 text-xs text-[var(--espresso-black)]">
@@ -104,17 +146,23 @@ export default function BillingPage() {
             <div className="flex flex-col gap-2 pt-2">
               <button
                 type="button"
+                disabled={busyKey !== null}
                 onClick={() => void buyPack(pack.id, "manual_bank")}
-                className="btn-plum px-3 py-2 text-xs font-semibold"
+                className="btn-plum px-3 py-2 text-xs font-semibold disabled:opacity-60"
               >
-                Request Manual Bank Transfer
+                {busyKey === `${pack.id}:manual_bank`
+                  ? "Creating instructions…"
+                  : "Request Manual Bank Transfer"}
               </button>
               <button
                 type="button"
+                disabled={busyKey !== null}
                 onClick={() => void buyPack(pack.id, "hosted")}
-                className="btn-mint px-3 py-2 text-xs font-semibold"
+                className="btn-mint px-3 py-2 text-xs font-semibold disabled:opacity-60"
               >
-                Hosted Checkout
+                {busyKey === `${pack.id}:hosted`
+                  ? "Starting checkout…"
+                  : "Hosted Checkout"}
               </button>
             </div>
           </div>
@@ -126,57 +174,61 @@ export default function BillingPage() {
         {data.purchases.length === 0 ? (
           <p className="text-xs text-[var(--color-muted)]">No purchases yet.</p>
         ) : (
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">
-                <th scope="col" className="py-2 pr-4">Reference</th>
-                <th scope="col" className="py-2 pr-4">Credits</th>
-                <th scope="col" className="py-2 pr-4">Method</th>
-                <th scope="col" className="py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.purchases.map((p) => (
-                <tr key={p.id} className="border-b border-[var(--color-border)] last:border-0">
-                  <td className="py-2 pr-4 font-mono">{p.providerRef}</td>
-                  <td className="py-2 pr-4">{p.credits}</td>
-                  <td className="py-2 pr-4">{p.provider}</td>
-                  <td className="py-2 font-medium">{p.status}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">
+                  <th scope="col" className="py-2 pr-4">Reference</th>
+                  <th scope="col" className="py-2 pr-4">Credits</th>
+                  <th scope="col" className="py-2 pr-4">Method</th>
+                  <th scope="col" className="py-2">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.purchases.map((p) => (
+                  <tr key={p.id} className="border-b border-[var(--color-border)] last:border-0">
+                    <td className="py-2 pr-4 font-mono">{p.providerRef}</td>
+                    <td className="py-2 pr-4">{p.credits}</td>
+                    <td className="py-2 pr-4">{p.provider}</td>
+                    <td className="py-2 font-medium">{p.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
       <section className="glass-surface p-6 space-y-3">
         <h2 className="text-base font-semibold text-[var(--espresso-black)]">Credit Ledger (Append-Only)</h2>
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">
-              <th scope="col" className="py-2 pr-4">Reason</th>
-              <th scope="col" className="py-2 pr-4">Delta</th>
-              <th scope="col" className="py-2">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.ledger.map((entry) => (
-              <tr key={entry.id} className="border-b border-[var(--color-border)] last:border-0">
-                <td className="py-2 pr-4">{entry.reason}</td>
-                <td
-                  className={`py-2 pr-4 font-semibold ${
-                    entry.delta >= 0 ? "text-[#16865B]" : "text-[#C83C4D]"
-                  }`}
-                >
-                  {entry.delta >= 0 ? `+${entry.delta}` : entry.delta}
-                </td>
-                <td className="py-2 text-[var(--color-muted)]">
-                  {new Date(entry.createdAt).toISOString().slice(0, 16).replace("T", " ")}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">
+                <th scope="col" className="py-2 pr-4">Reason</th>
+                <th scope="col" className="py-2 pr-4">Delta</th>
+                <th scope="col" className="py-2">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.ledger.map((entry) => (
+                <tr key={entry.id} className="border-b border-[var(--color-border)] last:border-0">
+                  <td className="py-2 pr-4">{entry.reason}</td>
+                  <td
+                    className={`py-2 pr-4 font-semibold ${
+                      entry.delta >= 0 ? "text-[#16865B]" : "text-[#C83C4D]"
+                    }`}
+                  >
+                    {entry.delta >= 0 ? `+${entry.delta}` : entry.delta}
+                  </td>
+                  <td className="py-2 text-[var(--color-muted)] whitespace-nowrap">
+                    {new Date(entry.createdAt).toISOString().slice(0, 16).replace("T", " ")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

@@ -3,6 +3,7 @@ import { MessageCircle } from "lucide-react";
 export const metadata = {
   title: "Contact",
   description: "Contact Jingle Studio Tools via email or WhatsApp.",
+  alternates: { canonical: "/contact" },
 };
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923138654411";

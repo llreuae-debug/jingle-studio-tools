@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+  }
   const db = await getDb();
 
   if (body.action === "revoke" && typeof body.slug === "string") {
@@ -98,6 +101,16 @@ export async function POST(req: NextRequest) {
     ? `${disc.aiUse} (${disc.digitalSourceType})${disc.modelName ? ` — ${disc.modelName}` : ""} [Self-declared]`
     : "Self-declared";
 
+  const rawThumb =
+    typeof body.thumbnailDataUrl === "string"
+      ? body.thumbnailDataUrl.slice(0, 60000)
+      : "";
+  const safeThumb = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(
+    rawThumb
+  )
+    ? rawThumb
+    : null;
+
   await db.insert(schema.publicCredentials).values({
     id: crypto.randomUUID(),
     jobItemId: item.itemId,
@@ -105,7 +118,7 @@ export async function POST(req: NextRequest) {
     slug,
     status: "live",
     title: item.originalName,
-    thumbnailDataUrl: typeof body.thumbnailDataUrl === "string" ? body.thumbnailDataUrl.slice(0, 60000) : null,
+    thumbnailDataUrl: safeThumb,
     signer,
     creatorName: item.creatorName,
     disclosureSummary,

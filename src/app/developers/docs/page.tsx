@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { SITE_CONFIG } from "@/config/site";
 
 export const metadata = {
   title: "API Documentation",
   description: "Authentication, errors, rate limits, curl, and JavaScript examples.",
+  alternates: { canonical: "/developers/docs" },
 };
 
 export default function DevelopersDocsPage() {
+  const baseUrl = SITE_CONFIG.siteUrl;
   return (
     <div className="space-y-8 max-w-4xl">
       <div className="space-y-2">
@@ -45,16 +48,16 @@ export default function DevelopersDocsPage() {
           className="overflow-x-auto rounded-[20px] bg-[var(--plum)] text-[var(--cream)] p-4 font-mono"
         >
           <code>{`# 1. Check workspace credit balance
-curl -s https://jingle-studio-tools.vercel.app/api/v1/credits \\
+curl -s ${baseUrl}/api/v1/credits \\
   -H "Authorization: Bearer jst_YOUR_KEY"
 
 # 2. Check a file's Content Credentials (without storing it)
-curl -s -X POST https://jingle-studio-tools.vercel.app/api/v1/check \\
+curl -s -X POST ${baseUrl}/api/v1/check \\
   -H "Authorization: Bearer jst_YOUR_KEY" \\
   -F "file=@photo.png"
 
 # 3. Create a signing job
-curl -s -X POST https://jingle-studio-tools.vercel.app/api/v1/sign-jobs \\
+curl -s -X POST ${baseUrl}/api/v1/sign-jobs \\
   -H "Authorization: Bearer jst_YOUR_KEY" \\
   -F "files=@photo.png" \\
   -F "creatorName=Studio Team" \\
@@ -71,7 +74,7 @@ curl -s -X POST https://jingle-studio-tools.vercel.app/api/v1/sign-jobs \\
           tabIndex={0}
           className="overflow-x-auto rounded-[20px] bg-[var(--plum)] text-[var(--cream)] p-4 font-mono"
         >
-          <code>{`const res = await fetch("https://jingle-studio-tools.vercel.app/api/v1/credits", {
+          <code>{`const res = await fetch("${baseUrl}/api/v1/credits", {
   headers: { Authorization: "Bearer jst_YOUR_KEY" },
 });
 const { balance } = await res.json();
