@@ -162,7 +162,7 @@ export function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
       {isInApp && (
         <div
           role="alert"
-          className="rounded-[20px] border border-[rgba(63,17,61,0.2)] bg-[var(--lime)]/75 p-4 text-xs text-[var(--plum)] space-y-3"
+          className="rounded-[12px] border border-[var(--color-brand-line)] bg-[var(--color-brand-soft)] p-4 text-xs text-[var(--color-auth-ink)] space-y-3"
         >
           <p className="font-semibold">{c.inAppTitle}</p>
           <div className="flex flex-wrap gap-2">
@@ -190,9 +190,9 @@ export function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
       {error && (
         <div
           role="alert"
-          className="rounded-[20px] border border-[#a32032]/30 bg-rose-100/90 p-3 text-xs text-[var(--plum)] flex items-center gap-2"
+          className="rounded-[12px] border border-[#fb2c36]/30 bg-rose-50 p-3 text-xs text-[#b91c1c] flex items-center gap-2"
         >
-          <AlertTriangle aria-hidden="true" className="h-4 w-4 shrink-0 text-[#a32032]" />
+          <AlertTriangle aria-hidden="true" className="h-4 w-4 shrink-0 text-[#fb2c36]" />
           <span>{error}</span>
         </div>
       )}
@@ -203,7 +203,7 @@ export function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
           type="button"
           disabled={!googleEnabled || googleLoading || submitting || isInApp}
           onClick={() => void handleGoogleSignIn()}
-          className="w-full min-h-[44px] inline-flex items-center justify-center gap-3 rounded-full border border-[#747775] bg-white px-4 py-2.5 text-sm font-medium text-[#1F1F1F] shadow-sm hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-transform"
+          className="w-full min-h-[44px] inline-flex items-center justify-center gap-3 rounded-[10px] border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--color-ink)] shadow-[var(--shadow-2)] hover:bg-[var(--color-brand-soft)] hover:border-[var(--color-brand-line)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
         >
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18">
             <path
@@ -233,9 +233,9 @@ export function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
       </div>
 
       <div className="relative flex items-center py-1">
-        <div className="flex-grow border-t border-[rgba(63,17,61,0.14)]" />
-        <span className="mx-3 text-[11px] font-medium text-[var(--plum-muted)]">{c.orEmail}</span>
-        <div className="flex-grow border-t border-[rgba(63,17,61,0.14)]" />
+        <div className="flex-grow border-t border-[var(--border)]" />
+        <span className="mx-3 text-[11px] font-medium text-[var(--color-text-muted)]">{c.orEmail}</span>
+        <div className="flex-grow border-t border-[var(--border)]" />
       </div>
 
       <form onSubmit={handleEmailSubmit} className="space-y-4">

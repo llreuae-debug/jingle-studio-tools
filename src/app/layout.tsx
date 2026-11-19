@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppFooter, AppHeader } from "@/components/AppChrome";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { MeshFlow } from "@/components/MeshFlow";
 import { SITE_CONFIG } from "@/config/site";
 import { auth } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
@@ -99,8 +98,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
       </head>
-      <body className="relative min-h-screen flex flex-col bg-[var(--cream)] text-[var(--plum)] antialiased">
-        <MeshFlow />
+      <body className="relative min-h-screen flex flex-col bg-[var(--background)] text-[var(--color-ink)] antialiased">
         <LanguageProvider initialLocale={initialLocale}>
           <a href="#main-content" className="skip-link">
             Skip to main content
@@ -111,7 +109,7 @@ export default async function RootLayout({
             userImage={userImage}
             userRole={userRole}
           />
-          <main id="main-content" className="relative z-10 flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+          <main id="main-content" className="relative z-10 flex-1 mx-auto w-full max-w-[896px] px-4 sm:px-6 py-10 sm:py-16">
             {children}
           </main>
           <AppFooter />

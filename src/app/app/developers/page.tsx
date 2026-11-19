@@ -87,16 +87,16 @@ export default function AppDevelopersPage() {
       )}
 
       {revealedKey && (
-        <div className="rounded-[20px] border border-[rgba(63,17,61,0.2)] bg-[var(--lime)]/70 p-4 space-y-1 text-xs text-[var(--plum)]">
+        <div className="rounded-[12px] border border-[var(--color-brand-line)] bg-[var(--color-brand-soft)] p-4 space-y-1 text-xs text-[var(--color-auth-ink)]">
           <p className="font-bold">Copy your API key now—it will not be shown again:</p>
-          <code className="block break-all rounded-lg bg-white/80 px-3 py-2 font-mono">
+          <code className="block break-all rounded-lg bg-white px-3 py-2 font-mono border border-[var(--color-brand-line)]">
             {revealedKey}
           </code>
         </div>
       )}
 
       <section className="glass-surface p-6 space-y-4">
-        <h2 className="text-base font-semibold text-[var(--plum)]">Create API Key</h2>
+        <h2 className="text-base font-semibold text-[var(--color-ink)]">Create API Key</h2>
         <form onSubmit={createKey} className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
@@ -116,14 +116,14 @@ export default function AppDevelopersPage() {
       </section>
 
       <section className="glass-surface p-6 space-y-3">
-        <h2 className="text-base font-semibold text-[var(--plum)]">Active &amp; Revoked Keys</h2>
+        <h2 className="text-base font-semibold text-[var(--color-ink)]">Active &amp; Revoked Keys</h2>
         {keys.length === 0 ? (
-          <p className="text-xs text-[var(--plum-muted)]">No API keys created yet.</p>
+          <p className="text-xs text-[var(--color-text-muted)]">No API keys created yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[rgba(63,17,61,0.12)] text-[var(--plum-muted)]">
+                <tr className="border-b border-[var(--border)] text-[var(--color-text-muted)]">
                   <th scope="col" className="py-2 pr-4">Label</th>
                   <th scope="col" className="py-2 pr-4">Prefix</th>
                   <th scope="col" className="py-2 pr-4">Status</th>
@@ -132,7 +132,7 @@ export default function AppDevelopersPage() {
               </thead>
               <tbody>
                 {keys.map((k) => (
-                  <tr key={k.id} className="border-b border-[rgba(63,17,61,0.08)] last:border-0">
+                  <tr key={k.id} className="border-b border-[var(--border)] last:border-0">
                     <td className="py-2.5 pr-4 font-medium">{k.label}</td>
                     <td className="py-2.5 pr-4 font-mono">{k.keyPrefix}…</td>
                     <td className="py-2.5 pr-4">{k.revokedAt ? "Revoked" : "Active"}</td>

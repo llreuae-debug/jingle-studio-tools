@@ -8,22 +8,30 @@ export const metadata = {
 export default function DevelopersOverviewPage() {
   return (
     <div className="space-y-8">
-      <section className="rounded-[28px] bg-[var(--plum)] text-[var(--cream)] p-8 space-y-4 shadow-[var(--glass-shadow)]">
-        <span className="inline-block rounded-full bg-[var(--lime)] px-3 py-1 text-xs font-semibold text-[var(--plum)]">
+      <section
+        className="rounded-[16px] p-8 sm:p-10 text-white space-y-4 shadow-[var(--shadow-5)]"
+        style={{ background: "linear-gradient(150deg, #5a40b8, #6c47ff 60%, #9e7aff)" }}
+      >
+        <span className="inline-block rounded-full bg-white/15 border border-white/25 px-3 py-1 text-xs font-semibold text-white">
           Developers
         </span>
-        <h1 className="text-3xl font-bold">Automate Content Credentials</h1>
-        <p className="text-sm text-[var(--mint)] max-w-2xl">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-white">
+          Automate Content Credentials
+        </h1>
+        <p className="text-sm sm:text-base text-[var(--color-brand-soft)] max-w-2xl leading-relaxed">
           Inspect C2PA manifests, create batch signing jobs with honest AI disclosures, and check
           workspace credits over our REST API or MCP server.
         </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/developers/docs" className="btn-lime px-5 py-2.5 text-xs font-semibold">
+        <div className="flex flex-wrap gap-3 pt-1">
+          <Link
+            href="/developers/docs"
+            className="rounded-[10px] bg-white text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] px-5 py-2.5 text-xs font-semibold shadow-[var(--shadow-2)] transition-colors duration-150"
+          >
             API documentation
           </Link>
           <Link
             href="/app/developers"
-            className="rounded-full border border-[var(--lime)]/50 px-5 py-2.5 text-xs font-semibold text-[var(--cream)]"
+            className="rounded-[10px] border border-white/35 px-5 py-2.5 text-xs font-semibold text-white hover:bg-white/10 transition-colors duration-150"
           >
             Manage API keys
           </Link>

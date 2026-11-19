@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 export interface GlassTabItem {
   id: string;
@@ -12,50 +12,12 @@ export interface GlassTabItem {
 const STIFFNESS = 420;
 const DAMPING = 30;
 
-function generateLensDisplacementMap(w: number, h: number): string {
-  if (typeof document === "undefined") return "";
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(2, Math.round(w));
-  canvas.height = Math.max(2, Math.round(h));
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return "";
-
-  const img = ctx.createImageData(canvas.width, canvas.height);
-  const data = img.data;
-  const r = canvas.height / 2;
-
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      // Signed distance inside pill
-      const cx = Math.max(r, Math.min(canvas.width - r, x));
-      const dx = x - cx;
-      const dy = y - r;
-      const dist = Math.hypot(dx, dy);
-      const norm = Math.min(1, dist / r);
-
-      // Flat in centre (128, 128), strongest near rim (norm > 0.55)
-      const rim = norm > 0.55 ? Math.pow((norm - 0.55) / 0.45, 1.6) : 0;
-      const nx = dist > 0.001 ? dx / dist : 0;
-      const ny = dist > 0.001 ? dy / dist : 0;
-
-      const idx = (y * canvas.width + x) * 4;
-      data[idx] = Math.round(128 - nx * rim * 115);
-      data[idx + 1] = Math.round(128 - ny * rim * 115);
-      data[idx + 2] = 128;
-      data[idx + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(img, 0, 0);
-  return canvas.toDataURL("image/png");
-}
-
 function lerpColor(t: number): string {
-  // --plum-muted (#72536A -> 114, 83, 106) to --plum (#3F113D -> 63, 17, 61)
+  // --color-text-muted (#6B6B73 -> 107, 107, 115) to --color-brand (#6C47FF -> 108, 71, 255)
   const clamped = Math.max(0, Math.min(1, t));
-  const r = Math.round(114 + (63 - 114) * clamped);
-  const g = Math.round(83 + (17 - 83) * clamped);
-  const b = Math.round(106 + (61 - 106) * clamped);
+  const r = Math.round(107 + (108 - 107) * clamped);
+  const g = Math.round(107 + (71 - 107) * clamped);
+  const b = Math.round(115 + (255 - 115) * clamped);
   return `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -70,15 +32,11 @@ export function GlassTabs({
   onSelect: (tab: GlassTabItem) => void;
   ariaLabel?: string;
 }) {
-  const filterId = useId().replace(/:/g, "");
   const trackRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const charRefs = useRef<Array<Array<HTMLSpanElement | null>>>([]);
 
-  const [dispUrl, setDispUrl] = useState<string>("");
-  const [supportsSvgBackdrop, setSupportsSvgBackdrop] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
   const [focusedIdx, setFocusedIdx] = useState(() =>
     Math.max(0, tabs.findIndex((t) => t.id === activeId))
   );
@@ -111,14 +69,6 @@ export function GlassTabs({
     };
     rm.addEventListener("change", onChange);
 
-    // Feature-detect SVG filter inside backdrop-filter (supported in Chromium)
-    const isChromium = /Chrome|Chromium|Edg/.test(navigator.userAgent) && !/Firefox/.test(navigator.userAgent);
-    const hasSupport =
-      isChromium &&
-      (CSS.supports("backdrop-filter", "url(#x)") ||
-        CSS.supports("-webkit-backdrop-filter", "url(#x)"));
-    setSupportsSvgBackdrop(hasSupport);
-
     return () => rm.removeEventListener("change", onChange);
   }, []);
 
@@ -141,11 +91,6 @@ export function GlassTabs({
         );
         const ratio = rect.width > 0 ? overlap / rect.width : 0;
         span.style.color = lerpColor(ratio);
-        // Subtle weight gain via text-shadow without changing layout metrics
-        span.style.textShadow =
-          ratio > 0.35
-            ? `0 0 0.4px rgba(63, 17, 61, ${(ratio * 0.65).toFixed(2)})`
-            : "none";
       }
     }
   }, []);
@@ -185,7 +130,6 @@ export function GlassTabs({
         s.scaleX = 1;
         s.scaleY = 1;
         applyLensTransform(s.x, s.w, 1, 1);
-        setIsMoving(false);
         return;
       }
 
@@ -225,7 +169,6 @@ export function GlassTabs({
         s.scaleX = 1;
         s.scaleY = 1;
         applyLensTransform(s.x, s.w, 1, 1);
-        setIsMoving(false);
       } else {
         s.rafId = requestAnimationFrame(stepSpring);
       }
@@ -237,7 +180,6 @@ export function GlassTabs({
     const s = springRef.current;
     if (s.rafId === null) {
       s.lastTime = performance.now();
-      setIsMoving(true);
       s.rafId = requestAnimationFrame(stepSpring);
     }
   }, [stepSpring]);
@@ -267,9 +209,6 @@ export function GlassTabs({
       startLoop();
     }
 
-    // Generate displacement map for lens dimensions
-    setDispUrl(generateLensDisplacementMap(Math.max(80, w), 48));
-
     // Keep active tab scrolled into view on narrow screens
     const btn = tabRefs.current[idx];
     btn?.scrollIntoView({ behavior: s.reducedMotion ? "auto" : "smooth", inline: "nearest", block: "nearest" });
@@ -285,7 +224,6 @@ export function GlassTabs({
       s.targetX = x;
       s.targetW = w;
       applyLensTransform(x, w, 1, 1);
-      setDispUrl(generateLensDisplacementMap(Math.max(80, w), 48));
     };
     window.addEventListener("resize", onResize);
     return () => {
@@ -379,66 +317,33 @@ export function GlassTabs({
 
   return (
     <div className="relative max-w-full overflow-x-auto no-scrollbar">
-      {supportsSvgBackdrop && dispUrl && (
-        <svg aria-hidden="true" className="absolute h-0 w-0 pointer-events-none">
-          <defs>
-            <filter id={filterId} x="-10%" y="-10%" width="120%" height="120%">
-              <feImage href={dispUrl} result="disp" preserveAspectRatio="none" />
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="disp"
-                scale="18"
-                xChannelSelector="R"
-                yChannelSelector="G"
-              />
-            </filter>
-          </defs>
-        </svg>
-      )}
-
       <div
         ref={trackRef}
         role="tablist"
         aria-label={ariaLabel}
-        className="relative inline-flex items-center gap-1 rounded-full p-1.5 min-h-[52px]"
+        className="relative inline-flex items-center gap-1 p-1 min-h-[44px]"
         style={{
-          background: "rgba(221, 238, 194, 0.48)",
-          border: "1px solid rgba(255, 255, 255, 0.72)",
-          boxShadow:
-            "inset 0 2px 6px rgba(63, 17, 61, 0.14), 0 1px 0 rgba(255, 255, 255, 0.85)",
-          WebkitBackdropFilter: "blur(18px) saturate(150%)",
-          backdropFilter: "blur(18px) saturate(150%)",
+          background: "#f4f4f6",
+          border: "1px solid #ebebeb",
+          borderRadius: "12px",
         }}
       >
-        {/* Liquid glass lens */}
+        {/* Elevated sliding active pill */}
         <div
           ref={lensRef}
           onPointerDown={onLensPointerDown}
           onPointerMove={onLensPointerMove}
           onPointerUp={onLensPointerUp}
           onPointerCancel={onLensPointerUp}
-          className="absolute left-0 top-1/2 h-[46px] rounded-full cursor-grab active:cursor-grabbing touch-pan-y select-none z-10"
+          className="absolute left-0 top-1/2 h-[36px] cursor-grab active:cursor-grabbing touch-pan-y select-none z-10"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(246,251,221,0.16) 50%, rgba(221,238,194,0.28) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.88)",
-            boxShadow:
-              "inset 0 1.5px 2px rgba(255,255,255,0.9), inset 0 -2px 4px rgba(63,17,61,0.12), 0 6px 16px rgba(63, 17, 61, 0.16)",
-            WebkitBackdropFilter: supportsSvgBackdrop
-              ? `url(#${filterId}) saturate(165%)`
-              : "blur(16px) saturate(165%)",
-            backdropFilter: supportsSvgBackdrop
-              ? `url(#${filterId}) saturate(165%)`
-              : "blur(16px) saturate(165%)",
+            background: "#ffffff",
+            border: "1px solid #ebebeb",
+            borderRadius: "9px",
+            boxShadow: "var(--shadow-2)",
             transformOrigin: "center center",
           }}
-        >
-          {/* Spectral rainbow glints */}
-          <span
-            aria-hidden="true"
-            className={`glass-glint-ring absolute inset-0 rounded-full ${isMoving ? "is-moving" : ""}`}
-          />
-        </div>
+        />
 
         {/* Tab buttons */}
         {tabs.map((tab, ti) => {
@@ -456,7 +361,7 @@ export function GlassTabs({
               tabIndex={focusedIdx === ti ? 0 : -1}
               onClick={() => onSelect(tab)}
               onKeyDown={(e) => handleKeyDown(e, ti)}
-              className="relative z-20 min-h-[44px] px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap select-none cursor-pointer"
+              className="relative z-20 min-h-[36px] px-4 py-1.5 rounded-[9px] text-sm font-semibold whitespace-nowrap select-none cursor-pointer"
             >
               {tab.label.split("").map((ch, ci) => (
                 <span
@@ -465,7 +370,7 @@ export function GlassTabs({
                     if (!charRefs.current[ti]) charRefs.current[ti] = [];
                     charRefs.current[ti][ci] = el;
                   }}
-                  style={{ color: isSelected ? "#3F113D" : "#72536A" }}
+                  style={{ color: isSelected ? "#6C47FF" : "#6B6B73" }}
                 >
                   {ch}
                 </span>

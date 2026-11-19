@@ -95,21 +95,21 @@ function StatusBanner({
   detail: string;
 }) {
   const styles: Record<VerificationStatusKind, { wrap: string; icon: React.ReactNode }> = {
-    verified: {
-      wrap: "border-[rgba(63,17,61,0.18)] bg-[var(--mint)] text-[var(--plum)]",
-      icon: <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--plum)]" />,
+      verified: {
+      wrap: "border-[#bbf7d0] bg-[#ecfdf3] text-[#15803d]",
+      icon: <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-[#15803d]" />,
     },
     unrecognized: {
-      wrap: "border-[rgba(63,17,61,0.18)] bg-[var(--lime)]/70 text-[var(--plum)]",
-      icon: <ShieldQuestion aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--plum)]" />,
+      wrap: "border-[var(--color-brand-line)] bg-[var(--color-brand-soft)] text-[var(--color-auth-ink)]",
+      icon: <ShieldQuestion aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--color-brand)]" />,
     },
     warning: {
-      wrap: "border-[#a32032]/35 bg-rose-100/90 text-[var(--plum)]",
-      icon: <ShieldAlert aria-hidden="true" className="h-5 w-5 shrink-0 text-[#a32032]" />,
+      wrap: "border-[#fecaca] bg-rose-50 text-[#b91c1c]",
+      icon: <ShieldAlert aria-hidden="true" className="h-5 w-5 shrink-0 text-[#fb2c36]" />,
     },
     none: {
-      wrap: "border-[var(--glass-border)] bg-[var(--glass-fill)] text-[var(--plum)]",
-      icon: <HelpCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--plum-muted)]" />,
+      wrap: "border-[var(--border)] bg-white text-[var(--color-ink)]",
+      icon: <HelpCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--color-text-muted)]" />,
     },
   };
 
@@ -310,19 +310,19 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
         {announcement}
       </div>
 
-      <section className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--plum-muted)]">
-          <span className="rounded-full bg-[var(--plum)] px-3 py-0.5 font-semibold text-[var(--lime)]">
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)]">
+          <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-3 py-0.5 font-semibold text-[var(--color-brand)]">
             {spec.platformName}
           </span>
           <span>
             {t.check.lastChecked}: {spec.lastChecked}
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--plum)]">
+        <h1 className="text-3xl sm:text-[42px] font-bold tracking-[-0.02em] leading-[1.12] text-[var(--color-ink)]">
           {spec.title[locale]}
         </h1>
-        <p className="text-sm sm:text-base text-[var(--plum-muted)] max-w-2xl">
+        <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-2xl leading-relaxed">
           {spec.subtitle[locale]}
         </p>
       </section>
@@ -340,45 +340,51 @@ export function PlacementCheckerClient({ placementId }: { placementId: Placement
               setIsDragging(false);
               handleFile(e.dataTransfer.files?.[0]);
             }}
-            className={`glass-surface p-8 sm:p-12 text-center transition-colors ${
-              isDragging ? "ring-2 ring-[var(--plum)] bg-[var(--mint)]/70" : ""
-            }`}
+            className="glass-surface p-4 sm:p-6"
           >
-            <Upload aria-hidden="true" className="mx-auto h-10 w-10 text-[var(--plum)]" />
-            <h2 className="mt-4 text-lg font-semibold text-[var(--plum)]">
-              {t.check.dropTitle}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--plum-muted)]">{t.check.dropSubtitle}</p>
+            <div
+              className={`rounded-[12px] border-2 border-dashed border-[var(--color-brand-line)] p-8 sm:p-10 text-center transition-colors duration-150 ${
+                isDragging ? "bg-[var(--color-brand-soft)] border-[var(--color-brand)]" : "bg-[var(--color-brand-soft)]/45"
+              }`}
+            >
+              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--color-brand)] text-white shadow-[var(--shadow-3)]">
+                <Upload aria-hidden="true" className="h-6 w-6" />
+              </div>
+              <h2 className="mt-4 text-lg font-semibold text-[var(--color-ink)]">
+                {t.check.dropTitle}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">{t.check.dropSubtitle}</p>
 
-            <div className="mt-6">
-              <label htmlFor={fileInputId} className="visually-hidden">
-                {t.check.chooseFile}
-              </label>
-              <input
-                ref={fileInputRef}
-                id={fileInputId}
-                type="file"
-                className="visually-hidden"
-                accept={spec.acceptedExtensions.join(",")}
-                onChange={(e) => handleFile(e.target.files?.[0])}
-              />
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
-              >
-                {stage === "reading"
-                  ? "Reading file…"
-                  : stage === "checking"
-                    ? "Checking credentials…"
-                    : t.check.chooseFile}
-              </button>
+              <div className="mt-6">
+                <label htmlFor={fileInputId} className="visually-hidden">
+                  {t.check.chooseFile}
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id={fileInputId}
+                  type="file"
+                  className="visually-hidden"
+                  accept={spec.acceptedExtensions.join(",")}
+                  onChange={(e) => handleFile(e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
+                >
+                  {stage === "reading"
+                    ? "Reading file…"
+                    : stage === "checking"
+                      ? "Checking credentials…"
+                      : t.check.chooseFile}
+                </button>
+              </div>
+
+              <p className="mt-5 text-xs text-[var(--color-text-muted)]">
+                Supported: {spec.recommendedFormatsLabel}
+              </p>
             </div>
-
-            <p className="mt-5 text-xs text-[var(--plum-muted)]">
-              Supported: {spec.recommendedFormatsLabel}
-            </p>
           </div>
 
           {errorMsg && (

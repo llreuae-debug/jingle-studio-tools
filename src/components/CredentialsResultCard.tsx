@@ -28,27 +28,27 @@ const BADGE_STYLES: Record<
   { bg: string; text: string; border: string; Icon: React.ComponentType<{ className?: string }> }
 > = {
   verified: {
-    bg: "bg-[var(--mint)]",
-    text: "text-[var(--plum)]",
-    border: "border-[#16865B]/35",
+    bg: "bg-[#ecfdf3]",
+    text: "text-[#15803d]",
+    border: "border-[#bbf7d0]",
     Icon: ShieldCheck,
   },
   unrecognized: {
-    bg: "bg-amber-100/90",
-    text: "text-[var(--plum)]",
-    border: "border-[#9A5D07]/35",
+    bg: "bg-[var(--color-brand-soft)]",
+    text: "text-[var(--color-auth-ink)]",
+    border: "border-[var(--color-brand-line)]",
     Icon: ShieldAlert,
   },
   warning: {
-    bg: "bg-rose-100/90",
-    text: "text-[#7A1422]",
-    border: "border-[#A32032]/35",
+    bg: "bg-rose-50",
+    text: "text-[#b91c1c]",
+    border: "border-[#fecaca]",
     Icon: AlertTriangle,
   },
   none: {
-    bg: "bg-white/75",
-    text: "text-[var(--plum)]",
-    border: "border-[var(--plum)]/20",
+    bg: "bg-[var(--color-surface-muted)]",
+    text: "text-[var(--color-text-muted)]",
+    border: "border-[var(--border)]",
     Icon: Info,
   },
 };
@@ -104,7 +104,7 @@ export function CredentialsResultCard({
   return (
     <article
       aria-label="Credentials check result"
-      className="glass-surface rounded-[28px] p-5 sm:p-8 text-[var(--plum)] space-y-6 overflow-hidden min-w-0"
+      className="glass-surface rounded-[16px] p-5 sm:p-8 text-[var(--color-ink)] space-y-6 overflow-hidden min-w-0"
     >
       <div aria-live="polite" className="visually-hidden">
         {model.ariaAnnouncement}
@@ -112,7 +112,7 @@ export function CredentialsResultCard({
 
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5 min-w-0">
-        <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-[20px] border border-[var(--plum)]/15 bg-white/75 flex items-center justify-center">
+        <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--color-surface-muted)] flex items-center justify-center">
           {model.mimeType.startsWith("image/") ? (
             <img
               src={model.previewUrl}
@@ -175,7 +175,7 @@ export function CredentialsResultCard({
       )}
 
       {/* Result Rows */}
-      <dl className="divide-y divide-[var(--plum)]/12 border-y border-[var(--plum)]/12">
+      <dl className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
         {model.rows.map((row, index) => {
           const canExpandActions =
             row.id === "editHistory" &&
@@ -192,15 +192,15 @@ export function CredentialsResultCard({
               style={{ animationDelay: `${index * 45}ms` }}
               className="credential-row-stagger py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5 sm:gap-4 min-w-0"
             >
-              <dt className="text-xs sm:text-sm font-semibold text-[var(--plum-muted)] sm:w-48 shrink-0">
+              <dt className="text-xs sm:text-sm font-semibold text-[var(--color-text-muted)] sm:w-48 shrink-0">
                 {row.label}
               </dt>
-              <dd className="min-w-0 flex-1 space-y-1.5 text-sm text-[var(--plum)]">
+              <dd className="min-w-0 flex-1 space-y-1.5 text-sm text-[var(--color-ink)]">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2 min-w-0">
                     <span className="font-semibold break-words">{row.value}</span>
                     {row.unverified && (
-                      <span className="rounded-full bg-rose-100 border border-[#A32032]/30 px-2 py-0.5 text-[11px] font-bold text-[#7A1422]">
+                      <span className="rounded-full bg-rose-50 border border-[#fecaca] px-2 py-0.5 text-[11px] font-bold text-[#b91c1c]">
                         Unverified
                       </span>
                     )}
@@ -211,7 +211,7 @@ export function CredentialsResultCard({
                       type="button"
                       onClick={() => setActionsOpen((v) => !v)}
                       aria-expanded={actionsOpen}
-                      className="inline-flex items-center gap-1 rounded-full border border-[var(--plum)]/20 bg-white/70 px-2.5 py-1 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--mint)]/70"
+                      className="inline-flex items-center gap-1 rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
                     >
                       <span>{actionsOpen ? "Hide list" : "Show list"}</span>
                       {actionsOpen ? (
@@ -227,7 +227,7 @@ export function CredentialsResultCard({
                       type="button"
                       onClick={() => setIngredientsOpen((v) => !v)}
                       aria-expanded={ingredientsOpen}
-                      className="inline-flex items-center gap-1 rounded-full border border-[var(--plum)]/20 bg-white/70 px-2.5 py-1 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--mint)]/70"
+                      className="inline-flex items-center gap-1 rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
                     >
                       <span>{ingredientsOpen ? "Hide files" : "Show files"}</span>
                       {ingredientsOpen ? (
@@ -240,13 +240,13 @@ export function CredentialsResultCard({
                 </div>
 
                 {row.disclosureDetail && (
-                  <p className="text-xs font-medium text-[var(--plum)]">
+                  <p className="text-xs font-medium text-[var(--color-ink)]">
                     {row.disclosureDetail}
                   </p>
                 )}
 
                 {row.helper && (
-                  <p className="text-xs text-[var(--plum-muted)]">{row.helper}</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">{row.helper}</p>
                 )}
 
                 {row.link && (
@@ -254,7 +254,7 @@ export function CredentialsResultCard({
                     href={row.link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--plum)] underline decoration-[var(--plum)]/40 hover:decoration-[var(--plum)]"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-brand)] underline decoration-[var(--color-brand-line)] hover:decoration-[var(--color-brand)]"
                   >
                     <span>{row.link.label}</span>
                     <ExternalLink aria-hidden="true" className="h-3 w-3" />
@@ -262,12 +262,12 @@ export function CredentialsResultCard({
                 )}
 
                 {canExpandActions && actionsOpen && (
-                  <ul className="mt-2 space-y-1.5 rounded-[16px] bg-white/65 border border-[var(--plum)]/10 p-3 text-xs">
+                  <ul className="mt-2 space-y-1.5 rounded-[12px] bg-[var(--color-surface-muted)] border border-[var(--border)] p-3 text-xs">
                     {row.expandableActions!.map((act, idx) => (
                       <li key={idx} className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span className="font-semibold text-[var(--plum)]">{act.label}</span>
+                        <span className="font-semibold text-[var(--color-ink)]">{act.label}</span>
                         {act.detail && (
-                          <span className="text-[var(--plum-muted)]">{act.detail}</span>
+                          <span className="text-[var(--color-text-muted)]">{act.detail}</span>
                         )}
                       </li>
                     ))}
@@ -275,10 +275,10 @@ export function CredentialsResultCard({
                 )}
 
                 {canExpandIngredients && ingredientsOpen && (
-                  <ul className="mt-2 space-y-2 rounded-[16px] bg-white/65 border border-[var(--plum)]/10 p-3 text-xs">
+                  <ul className="mt-2 space-y-2 rounded-[12px] bg-[var(--color-surface-muted)] border border-[var(--border)] p-3 text-xs">
                     {row.expandableIngredients!.map((ing) => (
                       <li key={ing.id} className="flex items-center gap-3 min-w-0">
-                        <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border border-[var(--plum)]/15 bg-white flex items-center justify-center">
+                        <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border border-[var(--border)] bg-white flex items-center justify-center">
                           {ing.thumbnailUrl ? (
                             <img
                               src={ing.thumbnailUrl}
@@ -288,15 +288,15 @@ export function CredentialsResultCard({
                           ) : (
                             <FileIcon
                               aria-hidden="true"
-                              className="h-4 w-4 text-[var(--plum-muted)]"
+                              className="h-4 w-4 text-[var(--color-text-muted)]"
                             />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-[var(--plum)] truncate">
+                          <p className="font-semibold text-[var(--color-ink)] truncate">
                             {ing.title}
                           </p>
-                          <p className="text-[var(--plum-muted)] break-words">
+                          <p className="text-[var(--color-text-muted)] break-words">
                             {ing.credentialStatus}
                             {ing.format ? ` • ${ing.format}` : ""}
                             {ing.hasAiHistory ? " • AI-labelled" : ""}
@@ -318,7 +318,7 @@ export function CredentialsResultCard({
           type="button"
           onClick={() => setTechOpen((v) => !v)}
           aria-expanded={techOpen}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--plum)] underline decoration-[var(--plum)]/40"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-brand)] underline decoration-[var(--color-brand-line)]"
         >
           <span>Technical details</span>
           {techOpen ? (
@@ -329,15 +329,15 @@ export function CredentialsResultCard({
         </button>
 
         {techOpen && (
-          <div className="rounded-[20px] border border-[var(--plum)]/15 bg-white/65 p-4 space-y-4 text-xs">
+          <div className="rounded-[12px] border border-[var(--border)] bg-white p-4 space-y-4 text-xs">
             {model.technicalDetails.unverifiedSignerName && (
               <div className="space-y-1">
-                <p className="font-semibold text-[var(--plum-muted)]">
+                <p className="font-semibold text-[var(--color-text-muted)]">
                   Certificate signer
                 </p>
-                <p className="font-semibold text-[var(--plum)] flex flex-wrap items-center gap-2">
+                <p className="font-semibold text-[var(--color-ink)] flex flex-wrap items-center gap-2">
                   <span>{model.technicalDetails.unverifiedSignerName}</span>
-                  <span className="rounded-full bg-amber-100 border border-[#9A5D07]/30 px-2 py-0.5 text-[11px] font-bold text-[var(--plum)]">
+                  <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-2 py-0.5 text-[11px] font-bold text-[var(--color-auth-ink)]">
                     Not verified
                   </span>
                 </p>
@@ -345,17 +345,17 @@ export function CredentialsResultCard({
             )}
 
             <div className="space-y-1">
-              <p className="font-semibold text-[var(--plum-muted)]">
+              <p className="font-semibold text-[var(--color-text-muted)]">
                 File SHA-256 fingerprint
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <code className="rounded-lg bg-[var(--cream)] px-2.5 py-1.5 font-mono text-[11px] text-[var(--plum)] break-all">
+                <code className="rounded-lg bg-[var(--color-surface-muted)] px-2.5 py-1.5 font-mono text-[11px] text-[var(--color-ink)] break-all">
                   {model.technicalDetails.sha256}
                 </code>
                 <button
                   type="button"
                   onClick={handleCopySha}
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--plum)]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+                  className="inline-flex items-center gap-1 rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
                 >
                   {copiedSha ? (
                     <>
@@ -374,17 +374,17 @@ export function CredentialsResultCard({
 
             {model.technicalDetails.earlierManifests.length > 0 && (
               <div className="space-y-1.5">
-                <p className="font-semibold text-[var(--plum-muted)]">
+                <p className="font-semibold text-[var(--color-text-muted)]">
                   Earlier manifests in history
                 </p>
                 <ul className="space-y-1.5">
                   {model.technicalDetails.earlierManifests.map((m) => (
                     <li
                       key={m.id}
-                      className="rounded-xl border border-[var(--plum)]/10 bg-[var(--cream)]/70 p-2.5"
+                      className="rounded-xl border border-[var(--border)] bg-[var(--color-surface-muted)] p-2.5"
                     >
-                      <p className="font-semibold text-[var(--plum)]">{m.title}</p>
-                      <p className="text-[var(--plum-muted)]">
+                      <p className="font-semibold text-[var(--color-ink)]">{m.title}</p>
+                      <p className="text-[var(--color-text-muted)]">
                         {[m.issuer, m.claimGenerator, m.signingTimeLocal]
                           .filter(Boolean)
                           .join(" • ") || "Manifest record"}
@@ -397,14 +397,14 @@ export function CredentialsResultCard({
 
             {exifEntries.length > 0 && (
               <div className="space-y-1">
-                <p className="font-semibold text-[var(--plum-muted)]">
+                <p className="font-semibold text-[var(--color-text-muted)]">
                   Camera settings
                 </p>
                 <dl className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {exifEntries.map(([k, v]) => (
-                    <div key={k} className="rounded-lg bg-[var(--cream)]/70 px-2.5 py-1.5">
-                      <dt className="text-[11px] text-[var(--plum-muted)]">{k}</dt>
-                      <dd className="font-semibold text-[var(--plum)] break-words">{v}</dd>
+                    <div key={k} className="rounded-lg bg-[var(--color-surface-muted)] px-2.5 py-1.5">
+                      <dt className="text-[11px] text-[var(--color-text-muted)]">{k}</dt>
+                      <dd className="font-semibold text-[var(--color-ink)] break-words">{v}</dd>
                     </div>
                   ))}
                 </dl>
@@ -412,12 +412,12 @@ export function CredentialsResultCard({
             )}
 
             {captureEntries.length > 0 && (
-              <div className="space-y-2 pt-1 border-t border-[var(--plum)]/10">
+              <div className="space-y-2 pt-1 border-t border-[var(--border)]">
                 <button
                   type="button"
                   onClick={() => setCaptureOpen((v) => !v)}
                   aria-expanded={captureOpen}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--plum)]/25 bg-white px-3 py-1.5 text-xs font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+                  className="inline-flex items-center gap-1.5 rounded-[8px] border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
                 >
                   <span>
                     {captureOpen ? "Hide capture details" : "Show capture details"}
@@ -426,9 +426,9 @@ export function CredentialsResultCard({
                 {captureOpen && (
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {captureEntries.map(([k, v]) => (
-                      <div key={k} className="rounded-lg bg-[var(--cream)]/70 px-2.5 py-1.5">
-                        <dt className="text-[11px] text-[var(--plum-muted)]">{k}</dt>
-                        <dd className="font-semibold text-[var(--plum)] break-words">{v}</dd>
+                      <div key={k} className="rounded-lg bg-[var(--color-surface-muted)] px-2.5 py-1.5">
+                        <dt className="text-[11px] text-[var(--color-text-muted)]">{k}</dt>
+                        <dd className="font-semibold text-[var(--color-ink)] break-words">{v}</dd>
                       </div>
                     ))}
                   </dl>
@@ -440,7 +440,7 @@ export function CredentialsResultCard({
       </div>
 
       {/* Actions */}
-      <footer className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[var(--plum)]/12">
+      <footer className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--border)]">
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
@@ -452,7 +452,7 @@ export function CredentialsResultCard({
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--plum)]/25 bg-white/80 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
           >
             <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
             <span>Check another file</span>
@@ -460,7 +460,7 @@ export function CredentialsResultCard({
           <button
             type="button"
             onClick={handleCopySummary}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--plum)]/25 bg-white/80 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[var(--plum)] hover:bg-[var(--mint)]"
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
           >
             {copiedSummary ? (
               <>
@@ -478,7 +478,7 @@ export function CredentialsResultCard({
 
         <Link
           href="/tools/ai-disclosure-signer"
-          className="inline-flex items-center rounded-full bg-[var(--lime)] px-4 py-2.5 text-xs sm:text-sm font-bold text-[var(--plum)] hover:opacity-90"
+          className="inline-flex items-center rounded-[10px] bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-4 py-2.5 text-xs sm:text-sm font-bold text-[var(--color-brand)] hover:bg-[var(--color-brand-line)] transition-colors duration-150"
         >
           Sign your own work
         </Link>

@@ -196,25 +196,25 @@ export function SignerClient({
       {isTestMode && (
         <div
           role="status"
-          className="rounded-[20px] border border-[rgba(63,17,61,0.18)] bg-[var(--lime)]/75 px-4 py-3 text-xs font-semibold text-[var(--plum)] flex items-center gap-2.5"
+          className="rounded-[12px] border border-[var(--color-brand-line)] bg-[var(--color-brand-soft)] px-4 py-3 text-xs font-semibold text-[var(--color-auth-ink)] flex items-center gap-2.5"
         >
-          <Info aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--plum)]" />
+          <Info aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--color-brand)]" />
           <span>{t.signer.testBanner}</span>
         </div>
       )}
 
       <section className="space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--plum)]">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-ink)]">
             {t.signer.title}
           </h1>
           {isAuthenticated && (
-            <span className="rounded-full bg-[var(--plum)] px-3.5 py-1 text-xs font-semibold text-[var(--lime)]">
+            <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-3.5 py-1 text-xs font-semibold text-[var(--color-brand)]">
               Balance: {creditBalance} credits
             </span>
           )}
         </div>
-        <p className="text-sm text-[var(--plum-muted)]">{t.signer.subtitle}</p>
+        <p className="text-sm text-[var(--color-text-muted)]">{t.signer.subtitle}</p>
       </section>
 
       {!isAuthenticated && (

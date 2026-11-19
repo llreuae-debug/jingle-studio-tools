@@ -35,7 +35,7 @@ export default function BlogPostPage() {
         ))}
       </div>
 
-      <section className="pt-4 border-t border-[rgba(63,17,61,0.12)] space-y-2">
+      <section className="pt-4 border-t border-[var(--border)] space-y-2">
         <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--plum-muted)]">
           Official sources
         </h2>

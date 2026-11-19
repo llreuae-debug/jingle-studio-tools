@@ -261,75 +261,81 @@ export default function ToolsHomePage() {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-16 sm:space-y-24">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
       {/* HERO */}
-      <section className="rounded-[28px] bg-[var(--plum)] text-[var(--cream)] p-8 sm:p-12 space-y-6 shadow-[var(--glass-shadow)]">
-        <span className="inline-block rounded-full bg-[var(--lime)] px-3.5 py-1 text-xs font-semibold text-[var(--plum)]">
-          {c.eyebrow}
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-3xl text-[var(--cream)]">
-          {c.headline}
-        </h1>
-        <p className="text-sm sm:text-base text-[var(--mint)] max-w-2xl leading-relaxed">
-          {c.subhead}
-        </p>
-
-        {/* Functional Hero Drop Zone */}
-        <div
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            void inspectFile(e.dataTransfer.files?.[0]);
-          }}
-          onClick={() => fileInputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              fileInputRef.current?.click();
-            }
-          }}
-          className="rounded-[20px] border border-dashed border-[var(--lime)]/70 bg-white/10 p-6 text-center cursor-pointer hover:bg-white/15 transition-colors"
-        >
-          <Upload aria-hidden="true" className="mx-auto h-7 w-7 text-[var(--lime)]" />
-          <p className="mt-2 text-sm font-semibold text-[var(--cream)]">
-            {quickStage === "reading"
-              ? "Reading file…"
-              : quickStage === "checking"
-                ? "Checking credentials…"
-                : c.dropTitle}
+      <section className="pt-4 sm:pt-8 space-y-8 text-center">
+        <div className="space-y-5">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-3.5 py-1 text-xs font-semibold text-[var(--color-brand)]">
+            {c.eyebrow}
+          </span>
+          <h1 className="text-4xl sm:text-[56px] font-bold tracking-[-0.029em] leading-[1.08] max-w-3xl mx-auto text-[var(--color-ink)]">
+            {c.headline}
+          </h1>
+          <p className="text-base sm:text-[20px] text-[var(--color-text-muted)] max-w-2xl mx-auto leading-[1.6]">
+            {c.subhead}
           </p>
-          <p className="mt-1 text-xs text-[var(--mint)]">{c.dropHint}</p>
-          <label htmlFor={fileInputId} className="visually-hidden">
-            {c.dropTitle}
-          </label>
-          <input
-            ref={fileInputRef}
-            id={fileInputId}
-            type="file"
-            className="visually-hidden"
-            accept="image/*,video/mp4,video/quicktime,application/pdf"
-            onChange={(e) => void inspectFile(e.target.files?.[0])}
-          />
         </div>
 
-        {quickResult && (
-          <CredentialsResultCard result={quickResult} onReset={resetQuickResult} />
-        )}
+        {/* Elevated White Drop Zone Card */}
+        <div className="rounded-[16px] border border-[var(--border)] bg-white p-4 sm:p-6 shadow-[var(--shadow-5)] text-left space-y-5">
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              void inspectFile(e.dataTransfer.files?.[0]);
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            className="rounded-[12px] border-2 border-dashed border-[var(--color-brand-line)] bg-[var(--color-brand-soft)]/45 hover:bg-[var(--color-brand-soft)] p-8 sm:p-10 text-center cursor-pointer transition-colors duration-150"
+          >
+            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-[12px] bg-[var(--color-brand)] text-white shadow-[var(--shadow-3)]">
+              <Upload aria-hidden="true" className="h-6 w-6" />
+            </div>
+            <p className="mt-4 text-base font-semibold text-[var(--color-ink)]">
+              {quickStage === "reading"
+                ? "Reading file…"
+                : quickStage === "checking"
+                  ? "Checking credentials…"
+                  : c.dropTitle}
+            </p>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">{c.dropHint}</p>
+            <label htmlFor={fileInputId} className="visually-hidden">
+              {c.dropTitle}
+            </label>
+            <input
+              ref={fileInputRef}
+              id={fileInputId}
+              type="file"
+              className="visually-hidden"
+              accept="image/*,video/mp4,video/quicktime,application/pdf"
+              onChange={(e) => void inspectFile(e.target.files?.[0])}
+            />
+          </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Link href="/tools/content-credentials-check" className="btn-lime px-5 py-2.5 text-sm font-semibold">
+          {quickResult && (
+            <CredentialsResultCard result={quickResult} onReset={resetQuickResult} />
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+          <Link href="/tools/content-credentials-check" className="btn-plum px-6 py-3 text-sm font-semibold">
             {c.btnCheck}
           </Link>
           <Link
             href="/tools/ai-disclosure-signer"
-            className="rounded-full border border-[var(--lime)]/60 px-5 py-2.5 text-sm font-semibold text-[var(--cream)] hover:bg-white/10"
+            className="rounded-[10px] border border-[var(--border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:border-[var(--color-brand-line)] transition-colors duration-150"
           >
             {c.btnSign}
           </Link>
@@ -337,8 +343,10 @@ export default function ToolsHomePage() {
       </section>
 
       {/* WHAT YOUR FILE CAN TELL PEOPLE */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--plum)]">{c.storyTitle}</h2>
+      <section className="space-y-6">
+        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+          {c.storyTitle}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.storyCards.map((card) => (
             <div
@@ -346,23 +354,25 @@ export default function ToolsHomePage() {
               onPointerMove={handleCardPointerMove}
               className="glass-surface glass-card-interactive p-6 space-y-2"
             >
-              <h3 className="font-bold text-[var(--plum)]">{card.title}</h3>
-              <p className="text-xs text-[var(--plum-muted)] leading-relaxed">{card.body}</p>
+              <h3 className="text-[18px] font-bold text-[var(--color-ink)]">{card.title}</h3>
+              <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{card.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* EXAMPLE REPORT */}
-      <section className="glass-surface p-6 sm:p-8 space-y-4">
+      <section className="glass-surface p-6 sm:p-8 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xl font-bold text-[var(--plum)]">{c.reportTitle}</h2>
-          <span className="rounded-full bg-[var(--lime)] px-3 py-0.5 text-xs font-semibold text-[var(--plum)]">
+          <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] leading-[1.15] text-[var(--color-ink)]">
+            {c.reportTitle}
+          </h2>
+          <span className="rounded-full bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] px-3 py-1 text-xs font-semibold text-[var(--color-brand)]">
             {exampleReport?.label || "Example file"}
           </span>
         </div>
 
-        <dl className="divide-y divide-[rgba(63,17,61,0.12)] text-xs">
+        <dl className="divide-y divide-[var(--border)] text-sm">
           {[
             ["Credentials status", exampleReport?.credentialsStatus || "Loading…"],
             ["Signer", exampleReport?.signer || "Loading…"],
@@ -372,95 +382,105 @@ export default function ToolsHomePage() {
             ["Ingredients", exampleReport?.ingredients || "Loading…"],
             ["AI information", exampleReport?.aiInformation || "Loading…"],
           ].map(([k, v]) => (
-            <div key={k} className="py-2.5 flex flex-col sm:flex-row sm:justify-between gap-1">
-              <dt className="font-semibold text-[var(--plum-muted)]">{k}</dt>
-              <dd className="font-medium text-[var(--plum)]">{v}</dd>
+            <div key={k} className="py-3 flex flex-col sm:flex-row sm:justify-between gap-1">
+              <dt className="font-semibold text-[var(--color-text-muted)]">{k}</dt>
+              <dd className="font-medium text-[var(--color-ink)]">{v}</dd>
             </div>
           ))}
         </dl>
 
-        <p className="text-xs text-[var(--plum-muted)]">{c.reportNote}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">{c.reportNote}</p>
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--plum)]">{c.howTitle}</h2>
+      <section className="space-y-6">
+        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+          {c.howTitle}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.howSteps.map((s) => (
-            <div key={s.n} className="glass-surface p-6 space-y-2">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--plum)] text-[var(--lime)] text-xs font-bold">
+            <div key={s.n} className="glass-surface p-6 space-y-2.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] text-[var(--color-brand)] text-xs font-bold">
                 {s.n}
               </span>
-              <h3 className="font-bold text-sm text-[var(--plum)]">{s.title}</h3>
-              <p className="text-xs text-[var(--plum-muted)]">{s.body}</p>
+              <h3 className="font-bold text-base text-[var(--color-ink)]">{s.title}</h3>
+              <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{s.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* WHO IT IS FOR */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--plum)]">{c.whoTitle}</h2>
+      <section className="space-y-6">
+        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+          {c.whoTitle}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.whoCards.map((w) => (
             <div key={w.title} className="glass-surface p-6 space-y-2">
-              <h3 className="font-bold text-sm text-[var(--plum)]">{w.title}</h3>
-              <p className="text-xs text-[var(--plum-muted)]">{w.body}</p>
+              <h3 className="font-bold text-base text-[var(--color-ink)]">{w.title}</h3>
+              <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{w.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* PRICING */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--plum)]">{c.pricingTitle}</h2>
+      <section className="space-y-6">
+        <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+          {c.pricingTitle}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.pricingTiers.map((tier) => (
-            <div key={tier.name} className="glass-surface p-6 space-y-2">
-              <h3 className="font-bold text-[var(--plum)]">{tier.name}</h3>
-              <p className="text-2xl font-bold text-[var(--plum)]">{tier.price}</p>
-              <p className="text-xs text-[var(--plum-muted)]">{tier.body}</p>
+            <div key={tier.name} className="glass-surface p-6 space-y-2.5">
+              <h3 className="font-bold text-base text-[var(--color-ink)]">{tier.name}</h3>
+              <p className="text-2xl font-bold text-[var(--color-ink)]">{tier.price}</p>
+              <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{tier.body}</p>
             </div>
           ))}
         </div>
         <div className="flex flex-wrap gap-3">
-          <Link href="/login" className="btn-plum px-5 py-2.5 text-xs font-semibold">
+          <Link href="/login" className="btn-plum px-5 py-2.5 text-sm font-semibold">
             {c.startFree}
           </Link>
-          <Link href="/pricing" className="btn-mint px-5 py-2.5 text-xs font-semibold">
+          <Link href="/pricing" className="btn-mint px-5 py-2.5 text-sm font-semibold">
             {c.seePricing}
           </Link>
         </div>
       </section>
 
       {/* PRIVACY FACTS */}
-      <section className="glass-surface p-6 sm:p-8 space-y-4">
-        <h2 className="text-xl font-bold text-[var(--plum)]">{c.privacyTitle}</h2>
+      <section className="glass-surface p-6 sm:p-8 space-y-5">
+        <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] leading-[1.15] text-[var(--color-ink)]">
+          {c.privacyTitle}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {c.privacyItems.map((p) => (
-            <div key={p.title} className="rounded-[20px] bg-[var(--mint)]/60 p-4 space-y-1">
-              <h3 className="font-bold text-xs text-[var(--plum)]">{p.title}</h3>
-              <p className="text-xs text-[var(--plum)]">{p.body}</p>
+            <div key={p.title} className="rounded-[12px] bg-[var(--color-brand-soft)] border border-[var(--color-brand-line)] p-4 space-y-1.5">
+              <h3 className="font-bold text-sm text-[var(--color-auth-ink)]">{p.title}</h3>
+              <p className="text-xs text-[var(--color-ink)] leading-relaxed">{p.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* TOP 5 FAQ */}
-      <section className="space-y-4">
+      <section className="space-y-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-[var(--plum)]">{c.faqTitle}</h2>
-          <Link href="/faq" className="text-xs font-semibold text-[var(--plum)] underline">
+          <h2 className="text-2xl sm:text-[38px] font-bold tracking-[-0.015em] leading-[1.1] text-[var(--color-ink)]">
+            {c.faqTitle}
+          </h2>
+          <Link href="/faq" className="text-sm font-semibold text-[var(--color-brand)] hover:underline">
             {c.seeAllFaq}
           </Link>
         </div>
         <div className="space-y-3">
           {faqs.map((item, idx) => (
             <details key={idx} className="glass-surface p-5">
-              <summary className="cursor-pointer font-semibold text-sm text-[var(--plum)]">
+              <summary className="cursor-pointer font-semibold text-sm text-[var(--color-ink)]">
                 {item.q[locale]}
               </summary>
-              <p className="mt-2 text-xs text-[var(--plum-muted)] leading-relaxed">
+              <p className="mt-2.5 text-sm text-[var(--color-text-muted)] leading-relaxed">
                 {item.a[locale]}
               </p>
             </details>
@@ -469,12 +489,22 @@ export default function ToolsHomePage() {
       </section>
 
       {/* FINAL CALL TO ACTION */}
-      <section className="rounded-[28px] bg-[var(--plum)] text-[var(--cream)] p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[var(--glass-shadow)]">
-        <div className="space-y-1">
-          <h2 className="text-xl font-bold">{c.ctaHeadline}</h2>
-          <p className="text-xs text-[var(--mint)]">{c.ctaSubhead}</p>
+      <section
+        className="rounded-[16px] p-8 sm:p-10 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-[var(--shadow-5)]"
+        style={{
+          background: "linear-gradient(150deg, #5a40b8, #6c47ff 60%, #9e7aff)",
+        }}
+      >
+        <div className="space-y-1.5">
+          <h2 className="text-2xl sm:text-[32px] font-bold tracking-[-0.015em] text-white">
+            {c.ctaHeadline}
+          </h2>
+          <p className="text-sm text-[var(--color-brand-soft)]">{c.ctaSubhead}</p>
         </div>
-        <Link href="/tools/content-credentials-check" className="btn-lime px-5 py-2.5 text-sm font-semibold">
+        <Link
+          href="/tools/content-credentials-check"
+          className="rounded-[10px] bg-white text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] px-5 py-2.5 text-sm font-semibold shadow-[var(--shadow-2)] shrink-0 transition-colors duration-150"
+        >
           {c.btnCheck}
         </Link>
       </section>
