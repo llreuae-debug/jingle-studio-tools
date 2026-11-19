@@ -48,11 +48,12 @@ export function detectRealMimeType(buf: Buffer): string | null {
 export function verifySameOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
   if (!origin) return true; // non-browser / curl / server-to-server without Origin
-  const host = req.headers.get("host");
-  if (!host) return false;
+  const forwardedHost = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = req.headers.get("host")?.trim();
+  if (!forwardedHost && !host) return false;
   try {
     const originHost = new URL(origin).host;
-    return originHost === host;
+    return originHost === host || (Boolean(forwardedHost) && originHost === forwardedHost);
   } catch {
     return false;
   }

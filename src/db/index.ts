@@ -1,7 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle as drizzlePglite, type PgliteDatabase } from "drizzle-orm/pglite";
 import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { resolvePersistentDataDir } from "@/lib/data-dir";
 import * as schema from "./schema";
 
 export type AppDb = NodePgDatabase<typeof schema> | PgliteDatabase<typeof schema>;
@@ -216,19 +219,35 @@ CREATE TABLE IF NOT EXISTS trust_list_snapshots (
 `;
 
 async function initDb(): Promise<AppDb> {
-  const url = process.env.DATABASE_URL || "pglite://.pglite";
+  const envUrl = process.env.DATABASE_URL?.trim();
 
-  if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
-    const pool = new Pool({ connectionString: url });
+  if (envUrl && (envUrl.startsWith("postgres://") || envUrl.startsWith("postgresql://"))) {
+    const pool = new Pool({ connectionString: envUrl });
     await pool.query(INIT_SQL);
     return drizzlePg(pool, { schema });
   }
 
-  const dataDir = url.startsWith("pglite://")
-    ? url.slice("pglite://".length) || ".pglite"
-    : ".pglite";
+  let dataDir: string | undefined;
+  if (!envUrl) {
+    dataDir = path.join(resolvePersistentDataDir(), ".pglite");
+  } else {
+    const raw = envUrl.startsWith("pglite://")
+      ? envUrl.slice("pglite://".length) || ".pglite"
+      : envUrl;
+    if (raw === ":memory:") {
+      dataDir = undefined;
+    } else if (path.isAbsolute(raw)) {
+      dataDir = raw;
+    } else {
+      dataDir = path.join(resolvePersistentDataDir(), raw);
+    }
+  }
 
-  pgliteClient = new PGlite(dataDir === ":memory:" ? undefined : dataDir);
+  if (dataDir) {
+    fs.mkdirSync(path.dirname(dataDir), { recursive: true });
+  }
+
+  pgliteClient = new PGlite(dataDir);
   await pgliteClient.exec(INIT_SQL);
   return drizzlePglite(pgliteClient, { schema });
 }

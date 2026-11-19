@@ -262,13 +262,39 @@ export interface SessionContext {
 
 export async function getSessionContext(): Promise<SessionContext | null> {
   const session = await auth();
-  if (!session?.user?.id) return null;
-
   const db = await getDb();
+
+  let userId: string | null = session?.user?.id || null;
+  if (!userId) {
+    const cookieStore = await cookies();
+    const token =
+      cookieStore.get("__Secure-authjs.session-token")?.value ||
+      cookieStore.get("authjs.session-token")?.value;
+
+    if (token) {
+      const sessionRows = await db
+        .select({
+          userId: schema.sessions.userId,
+          expires: schema.sessions.expires,
+        })
+        .from(schema.sessions)
+        .where(eq(schema.sessions.sessionToken, token));
+
+      if (
+        sessionRows.length > 0 &&
+        new Date(sessionRows[0].expires).getTime() > Date.now()
+      ) {
+        userId = sessionRows[0].userId;
+      }
+    }
+  }
+
+  if (!userId) return null;
+
   const userRows = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.id, session.user.id));
+    .where(eq(schema.users.id, userId));
 
   if (userRows.length === 0 || userRows[0].disabled) return null;
   const user = userRows[0];

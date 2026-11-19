@@ -5,6 +5,8 @@ import { getSessionContext } from "@/lib/auth";
 import { isSigningTestMode } from "@/lib/c2pa-server";
 import { getWorkspaceBalance } from "@/lib/credits";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "AI Disclosure Signer",
   description: "Batch-sign up to 50 JPG or PNG files with C2PA Content Credentials and honest AI disclosures.",

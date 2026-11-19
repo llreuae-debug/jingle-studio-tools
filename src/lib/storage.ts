@@ -8,8 +8,11 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { resolvePersistentDataDir } from "@/lib/data-dir";
 
-const LOCAL_STORAGE_DIR = path.join(process.cwd(), ".storage");
+function getLocalStorageDir(): string {
+  return process.env.LOCAL_STORAGE_DIR || path.join(resolvePersistentDataDir(), ".storage");
+}
 
 function useS3(): boolean {
   return Boolean(process.env.S3_BUCKET && process.env.S3_ACCESS_KEY_ID);
@@ -49,7 +52,7 @@ export async function putPrivateObject(
     return;
   }
 
-  const fullPath = path.join(LOCAL_STORAGE_DIR, key);
+  const fullPath = path.join(getLocalStorageDir(), key);
   await fs.mkdir(path.dirname(fullPath), { recursive: true });
   await fs.writeFile(fullPath, body);
 }
@@ -76,7 +79,7 @@ export async function getPrivateObject(key: string): Promise<Buffer | null> {
   }
 
   try {
-    const fullPath = path.join(LOCAL_STORAGE_DIR, key);
+    const fullPath = path.join(getLocalStorageDir(), key);
     return await fs.readFile(fullPath);
   } catch {
     return null;
@@ -100,7 +103,7 @@ export async function deletePrivateObject(key: string): Promise<void> {
   }
 
   try {
-    const fullPath = path.join(LOCAL_STORAGE_DIR, key);
+    const fullPath = path.join(getLocalStorageDir(), key);
     await fs.unlink(fullPath);
   } catch {
     // ignore missing

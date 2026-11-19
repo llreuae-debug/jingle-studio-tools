@@ -87,6 +87,7 @@ export function SignerClient({
   const [checkingFiles, setCheckingFiles] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
@@ -150,6 +151,7 @@ export function SignerClient({
 
     setSubmitting(true);
     setErrorMsg(null);
+    setSessionExpired(false);
 
     try {
       const fd = new FormData();
@@ -164,11 +166,19 @@ export function SignerClient({
 
       const res = await fetch("/api/jobs", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Idempotency-Key": idempotencyKey },
         body: fd,
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        setSessionExpired(true);
+        setErrorMsg(
+          "Your session has expired. Please sign in again to submit your signing job."
+        );
+        return;
+      }
       if (!res.ok) {
         setErrorMsg(data.error || "Failed to submit signing job.");
         return;
@@ -425,10 +435,20 @@ export function SignerClient({
         {errorMsg && (
           <div
             role="alert"
-            className="rounded-xl border border-[#C83C4D]/30 bg-rose-50 p-4 text-xs text-rose-950 flex items-center gap-2"
+            className="rounded-xl border border-[#C83C4D]/30 bg-rose-50 p-4 text-xs text-rose-950 flex flex-wrap items-center justify-between gap-3"
           >
-            <AlertTriangle aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C83C4D]" />
-            <span>{errorMsg}</span>
+            <div className="flex items-center gap-2">
+              <AlertTriangle aria-hidden="true" className="h-4 w-4 shrink-0 text-[#C83C4D]" />
+              <span>{errorMsg}</span>
+            </div>
+            {sessionExpired && (
+              <Link
+                href="/login?callbackUrl=/app/sign"
+                className="btn-plum px-3.5 py-1.5 text-xs font-semibold shrink-0"
+              >
+                Sign in again
+              </Link>
+            )}
           </div>
         )}
 

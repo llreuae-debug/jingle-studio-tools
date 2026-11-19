@@ -245,3 +245,43 @@ test("CredentialsResultCard works in browser on /tools and check tool at mobile 
 
   expect(errors).toEqual([]);
 });
+
+test("Authenticated user can submit a signing job on /app/sign without Unauthorized error", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+
+  // Establish a real database session via email-login in the browser context
+  await page.goto("/login", { waitUntil: "networkidle" });
+  const loginRes = await page.evaluate(async () => {
+    const r = await fetch("/api/auth/email-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: `e2e-signer-${Date.now()}@example.com`,
+        password: "test-password-123",
+        name: "E2E Signer",
+      }),
+    });
+    return r.status;
+  });
+  expect(loginRes).toBe(200);
+
+  await page.goto("/app/sign", { waitUntil: "networkidle" });
+  await expect(page.getByText(/Balance:\s*\d+\s*credits/i)).toBeVisible();
+
+  await page.locator('input[type="file"]').first().setInputFiles("public/favicon-96x96.png");
+  const creatorInput = page.locator('input[type="text"][required]').first();
+  await creatorInput.fill("E2E Signer");
+
+  await page.getByRole("button", { name: /Sign files/i }).click();
+
+  await page.waitForURL(/\/app\/jobs\/.+/, { timeout: 15000 });
+  await expect(page.locator("body")).toContainText("1 / 1 signed", { timeout: 20000 });
+
+  expect(errors).toEqual([]);
+});

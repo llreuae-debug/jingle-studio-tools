@@ -6,6 +6,8 @@ import { getSessionContext } from "@/lib/auth";
 import { isSigningTestMode } from "@/lib/c2pa-server";
 import { getWorkspaceBalance } from "@/lib/credits";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppSignPage() {
   const ctx = await getSessionContext();
   if (!ctx) {
