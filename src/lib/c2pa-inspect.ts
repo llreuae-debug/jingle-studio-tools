@@ -1,4 +1,4 @@
-import { createC2pa, Reader, type C2pa } from "@contentauth/c2pa-web/inline";
+import type { C2pa, Reader as ReaderType } from "@contentauth/c2pa-web/inline";
 
 export type VerificationStatusKind =
   | "verified"
@@ -66,11 +66,24 @@ export interface InspectionResult {
   cleanup: () => void;
 }
 
-let c2paPromise: Promise<C2pa> | null = null;
+interface C2paRuntime {
+  c2pa: C2pa;
+  Reader: typeof ReaderType;
+}
 
-async function getC2pa(): Promise<C2pa> {
+let c2paPromise: Promise<C2paRuntime> | null = null;
+
+async function getC2pa(): Promise<C2paRuntime> {
   if (!c2paPromise) {
-    c2paPromise = createC2pa();
+    c2paPromise = import("@contentauth/c2pa-web/inline")
+      .then(async (mod) => {
+        const c2pa = await mod.createC2pa();
+        return { c2pa, Reader: mod.Reader };
+      })
+      .catch((err) => {
+        c2paPromise = null;
+        throw err;
+      });
   }
   return c2paPromise;
 }
@@ -303,7 +316,7 @@ export async function inspectBlob(
     }
   };
 
-  const [sha256, c2pa, trust] = await Promise.all([
+  const [sha256, { c2pa, Reader }, trust] = await Promise.all([
     computeSha256Hex(blob),
     getC2pa(),
     getActiveTrustList(),

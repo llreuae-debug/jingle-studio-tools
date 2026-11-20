@@ -17,6 +17,40 @@ export function AnalyticsScripts() {
     }
   }, [pathname]);
 
+  useEffect(() => {
+    const maybeReloadOnStaleChunk = (rawMsg: string) => {
+      if (
+        /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported module|Importing a module script failed/i.test(
+          rawMsg
+        )
+      ) {
+        const key = "jingle_chunk_reload_ts";
+        const last = Number(sessionStorage.getItem(key) || "0");
+        if (Date.now() - last > 15_000) {
+          sessionStorage.setItem(key, String(Date.now()));
+          window.location.reload();
+        }
+      }
+    };
+
+    const onError = (e: ErrorEvent) => {
+      maybeReloadOnStaleChunk(`${e.message || ""} ${e.error?.message || ""}`);
+    };
+    const onRejection = (e: PromiseRejectionEvent) => {
+      const reason = e.reason;
+      const msg =
+        reason instanceof Error ? `${reason.name} ${reason.message}` : String(reason || "");
+      maybeReloadOnStaleChunk(msg);
+    };
+
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, []);
+
   return (
     <>
       {GA_ID && (
