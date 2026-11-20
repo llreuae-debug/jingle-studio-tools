@@ -3,7 +3,26 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, Menu, MessageCircle, X } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Camera,
+  ChevronDown,
+  CreditCard,
+  FileCheck2,
+  FileSearch,
+  FileSignature,
+  FileText,
+  Film,
+  FolderCheck,
+  LayoutGrid,
+  Maximize2,
+  Menu,
+  MessageCircle,
+  Minimize2,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { AccountMenu } from "./AccountMenu";
 import { GlassTabs, type GlassTabItem } from "./GlassTabs";
 import { useLanguage } from "./LanguageProvider";
@@ -12,10 +31,121 @@ import { Logo } from "./Logo";
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "923138654411";
 
 const MAIN_TABS: GlassTabItem[] = [
-  { id: "check", label: "Check", href: "/tools/content-credentials-check" },
-  { id: "sign", label: "Sign", href: "/tools/ai-disclosure-signer" },
-  { id: "proof", label: "Proof", href: "/app" },
-  { id: "pricing", label: "Pricing", href: "/pricing" },
+  {
+    id: "check",
+    label: "Check",
+    href: "/tools/content-credentials-check",
+    icon: <ShieldCheck className="h-3.5 w-3.5" />,
+    tooltip: "Check C2PA Content Credentials",
+  },
+  {
+    id: "sign",
+    label: "Sign",
+    href: "/tools/ai-disclosure-signer",
+    icon: <FileSignature className="h-3.5 w-3.5" />,
+    tooltip: "Sign & Disclose AI Work",
+  },
+  {
+    id: "proof",
+    label: "Proof",
+    href: "/app",
+    icon: <FolderCheck className="h-3.5 w-3.5" />,
+    tooltip: "Saved Proof & History",
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    href: "/pricing",
+    icon: <CreditCard className="h-3.5 w-3.5" />,
+    tooltip: "Plans & Credits",
+  },
+];
+
+const TOOLS_RIBBON_TABS: GlassTabItem[] = [
+  {
+    id: "all-tools",
+    label: "All Tools",
+    href: "/tools",
+    icon: <LayoutGrid className="h-3.5 w-3.5" />,
+    tooltip: "All Media Tools & Inspection Hub",
+  },
+  {
+    id: "media-metadata-inspector",
+    label: "Metadata",
+    href: "/tools/media-metadata-inspector",
+    icon: <FileSearch className="h-3.5 w-3.5" />,
+    tooltip: "Media Metadata Inspector",
+  },
+  {
+    id: "exif-viewer",
+    label: "EXIF",
+    href: "/tools/exif-viewer",
+    icon: <Camera className="h-3.5 w-3.5" />,
+    tooltip: "Image EXIF Viewer",
+  },
+  {
+    id: "content-credentials-check",
+    label: "C2PA",
+    href: "/tools/content-credentials-check",
+    icon: <ShieldCheck className="h-3.5 w-3.5" />,
+    tooltip: "C2PA Credential Verifier",
+  },
+  {
+    id: "file-integrity-checker",
+    label: "Integrity",
+    href: "/tools/file-integrity-checker",
+    icon: <FileCheck2 className="h-3.5 w-3.5" />,
+    tooltip: "File Integrity Checker (SHA-256)",
+  },
+  {
+    id: "image-converter",
+    label: "Converter",
+    href: "/tools/image-converter",
+    icon: <ArrowLeftRight className="h-3.5 w-3.5" />,
+    tooltip: "Image Format Converter (PNG/JPG/WebP)",
+  },
+  {
+    id: "image-resizer",
+    label: "Resizer",
+    href: "/tools/image-resizer",
+    icon: <Maximize2 className="h-3.5 w-3.5" />,
+    tooltip: "Image Resizer",
+  },
+  {
+    id: "image-compressor",
+    label: "Compress",
+    href: "/tools/image-compressor",
+    icon: <Minimize2 className="h-3.5 w-3.5" />,
+    tooltip: "Image Compression Tool",
+  },
+  {
+    id: "video-metadata-inspector",
+    label: "Video",
+    href: "/tools/video-metadata-inspector",
+    icon: <Film className="h-3.5 w-3.5" />,
+    tooltip: "Video Metadata Inspector",
+  },
+  {
+    id: "privacy-metadata-cleaner",
+    label: "Privacy Clean",
+    href: "/tools/privacy-metadata-cleaner",
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+    tooltip: "Privacy Metadata Cleaner",
+  },
+  {
+    id: "report-generator",
+    label: "Reports",
+    href: "/tools/report-generator",
+    icon: <FileText className="h-3.5 w-3.5" />,
+    tooltip: "Media Inspection Report Generator (JSON & PDF)",
+  },
+  {
+    id: "ai-disclosure-signer",
+    label: "AI Signer",
+    href: "/tools/ai-disclosure-signer",
+    icon: <FileSignature className="h-3.5 w-3.5" />,
+    tooltip: "AI Disclosure Signer",
+  },
 ];
 
 const TOOL_MENU_LINKS = [
@@ -233,13 +363,23 @@ export function AppHeader({
       </div>
 
       {/* Main Segmented Tabs */}
-      <div className="border-t border-[var(--border)]/70 py-2.5 bg-white/80 flex justify-center px-4">
+      <div className="border-t border-[var(--border)]/70 py-2.5 bg-white/80 flex flex-col items-center gap-2 px-4">
         <GlassTabs
           tabs={MAIN_TABS}
           activeId={activeTabId}
           onSelect={handleTabSelect}
           ariaLabel="Main tools navigation"
         />
+        {pathname?.startsWith("/tools") && (
+          <GlassTabs
+            tabs={TOOLS_RIBBON_TABS}
+            activeId={
+              TOOLS_RIBBON_TABS.find((tab) => tab.href === pathname)?.id ?? "all-tools"
+            }
+            onSelect={handleTabSelect}
+            ariaLabel="All media tools navigation"
+          />
+        )}
       </div>
 
       {mobileOpen && (

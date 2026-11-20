@@ -426,6 +426,7 @@ test.describe("JingleStudio Tools Reconstruction & 20-Scenario Verification", ()
     for (const route of toolRoutes) {
       const res = await page.goto(route, { waitUntil: "domcontentloaded" });
       expect(res?.status()).toBe(200);
+      await expect(page.getByRole("tablist", { name: "All media tools navigation" })).toBeVisible();
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth
       );

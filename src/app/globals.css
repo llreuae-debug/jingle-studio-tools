@@ -317,3 +317,96 @@ dialog[open] {
   inset-block-start: 0;
   z-index: 1;
 }
+
+/* Signature Liquid Glass Tabs & Orbiting Rainbow Glints */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.liquid-glass-track {
+  background: linear-gradient(
+    180deg,
+    rgba(244, 241, 255, 0.78) 0%,
+    rgba(239, 237, 248, 0.9) 100%
+  );
+  border: 1px solid rgba(228, 221, 255, 0.95);
+  box-shadow:
+    inset 0 1px 2px rgba(17, 17, 17, 0.05),
+    0 2px 10px -4px rgba(108, 71, 255, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+.liquid-glass-lens {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(248, 246, 255, 0.68) 55%,
+    rgba(255, 255, 255, 0.82) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px) saturate(1.75) contrast(1.06) brightness(1.04);
+  -webkit-backdrop-filter: blur(14px) saturate(1.75) contrast(1.06) brightness(1.04);
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1.5px 2px rgba(108, 71, 255, 0.14),
+    0 6px 18px -4px rgba(108, 71, 255, 0.24),
+    0 2px 6px -1px rgba(17, 17, 17, 0.08);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .liquid-glass-lens {
+    background: #ffffff;
+    border: 1px solid var(--color-brand-line);
+  }
+}
+
+@keyframes glass-glint-orbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.liquid-glass-glint {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  overflow: hidden;
+}
+
+.liquid-glass-glint::before {
+  content: "";
+  position: absolute;
+  inset: -120%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 138, 196, 0.48) 28deg,
+    rgba(108, 71, 255, 0.55) 62deg,
+    rgba(96, 205, 255, 0.48) 96deg,
+    transparent 130deg,
+    transparent 240deg,
+    rgba(167, 139, 250, 0.35) 290deg,
+    transparent 340deg
+  );
+  animation: glass-glint-orbit 7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-glint::before {
+    animation: none;
+  }
+}

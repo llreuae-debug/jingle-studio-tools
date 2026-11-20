@@ -7,10 +7,12 @@ export interface GlassTabItem {
   label: string;
   href?: string;
   controlsId?: string;
+  icon?: React.ReactNode;
+  tooltip?: string;
 }
 
 const STIFFNESS = 420;
-const DAMPING = 30;
+const DAMPING = 25;
 
 function lerpColor(t: number): string {
   // --color-text-muted (#55555d -> 85, 85, 93) to --color-brand (#6c47ff -> 108, 71, 255)
@@ -226,6 +228,9 @@ export function GlassTabs({
       applyLensTransform(x, w, 1, 1);
     };
     window.addEventListener("resize", onResize);
+    if (typeof document !== "undefined" && "fonts" in document) {
+      void document.fonts.ready.then(onResize);
+    }
     return () => {
       window.removeEventListener("resize", onResize);
       if (springRef.current.rafId !== null) {
@@ -316,36 +321,35 @@ export function GlassTabs({
   };
 
   return (
-    <div className="relative max-w-full overflow-x-auto no-scrollbar">
+    <div
+      className="relative max-w-full overflow-x-auto no-scrollbar"
+      onScroll={() => {
+        const s = springRef.current;
+        updateCharOverlaps(s.x, s.w);
+      }}
+    >
       <div
         ref={trackRef}
         role="tablist"
         aria-label={ariaLabel}
-        className="relative inline-flex items-center gap-1 p-1 min-h-[44px]"
-        style={{
-          background: "#f4f4f6",
-          border: "1px solid #e7e7ec",
-          borderRadius: "12px",
-        }}
+        className="liquid-glass-track relative inline-flex items-center gap-1 p-1 min-h-[44px] rounded-[14px]"
       >
-        {/* Elevated sliding active pill */}
+        {/* Thick Liquid Glass Lens with Refraction & Orbiting Rainbow Glints */}
         <div
           ref={lensRef}
           onPointerDown={onLensPointerDown}
           onPointerMove={onLensPointerMove}
           onPointerUp={onLensPointerUp}
           onPointerCancel={onLensPointerUp}
-          className="absolute left-0 top-1/2 h-[36px] cursor-grab active:cursor-grabbing touch-pan-y select-none z-10"
+          className="liquid-glass-lens absolute left-0 top-1/2 h-[36px] rounded-[10px] cursor-grab active:cursor-grabbing touch-pan-y select-none z-10"
           style={{
-            background: "#ffffff",
-            border: "1px solid #e7e7ec",
-            borderRadius: "9px",
-            boxShadow: "var(--shadow-2)",
             transformOrigin: "center center",
           }}
-        />
+        >
+          <span className="liquid-glass-glint" aria-hidden="true" />
+        </div>
 
-        {/* Tab buttons */}
+        {/* Tab buttons with Lucide icons */}
         {tabs.map((tab, ti) => {
           const isSelected = tab.id === activeId;
           return (
@@ -356,25 +360,40 @@ export function GlassTabs({
               }}
               type="button"
               role="tab"
+              title={tab.tooltip || tab.label}
               aria-selected={isSelected}
               aria-controls={tab.controlsId}
               tabIndex={focusedIdx === ti ? 0 : -1}
               onClick={() => onSelect(tab)}
               onKeyDown={(e) => handleKeyDown(e, ti)}
-              className="relative z-20 min-h-[36px] px-4 py-1.5 rounded-[9px] text-sm font-semibold whitespace-nowrap select-none cursor-pointer"
+              className={`relative z-20 min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] text-xs sm:text-sm font-semibold whitespace-nowrap select-none cursor-pointer transition-colors duration-150 ${
+                isSelected ? "text-[var(--color-brand)]" : "text-[var(--color-text-muted)]"
+              }`}
             >
-              {tab.label.split("").map((ch, ci) => (
+              {tab.icon && (
                 <span
-                  key={ci}
-                  ref={(el) => {
-                    if (!charRefs.current[ti]) charRefs.current[ti] = [];
-                    charRefs.current[ti][ci] = el;
-                  }}
-                  style={{ color: isSelected ? "#6c47ff" : "#55555d" }}
+                  aria-hidden="true"
+                  className={`shrink-0 ${
+                    isSelected ? "text-[var(--color-brand)]" : "text-[var(--color-text-muted)]"
+                  }`}
                 >
-                  {ch}
+                  {tab.icon}
                 </span>
-              ))}
+              )}
+              <span>
+                {tab.label.split("").map((ch, ci) => (
+                  <span
+                    key={ci}
+                    ref={(el) => {
+                      if (!charRefs.current[ti]) charRefs.current[ti] = [];
+                      charRefs.current[ti][ci] = el;
+                    }}
+                    style={{ color: isSelected ? "#6c47ff" : "#55555d" }}
+                  >
+                    {ch}
+                  </span>
+                ))}
+              </span>
             </button>
           );
         })}

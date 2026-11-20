@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { FileSearch, LayoutGrid, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { MediaInspectorWorkbench } from "@/components/MediaInspectorWorkbench";
 import { CREDIT_PACKS } from "@/config/pricing";
@@ -321,14 +321,16 @@ export function ToolsHomeClient() {
             <button
               type="button"
               onClick={handleInspectClick}
-              className="btn-plum inline-flex min-h-[44px] items-center justify-center px-6 py-2.5 text-sm font-semibold"
+              className="btn-plum inline-flex min-h-[44px] items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold"
             >
+              <FileSearch aria-hidden="true" className="h-4 w-4" />
               Inspect Your File
             </button>
             <a
               href="#tools-dashboard"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[var(--border)] bg-white px-6 py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
             >
+              <LayoutGrid aria-hidden="true" className="h-4 w-4 text-[var(--color-brand)]" />
               Explore Tools
             </a>
           </div>
@@ -370,10 +372,10 @@ export function ToolsHomeClient() {
           <div role="group" aria-label="Filter tools by category" className="flex flex-wrap gap-2">
             {(
               [
-                { id: "all", label: `All Tools (${CORE_TOOLS.length})` },
-                { id: "inspection", label: "Inspection & Provenance" },
-                { id: "privacy", label: "Privacy & Cleaning" },
-                { id: "image", label: "Image Utilities" },
+                { id: "all", label: `All Tools (${CORE_TOOLS.length})`, icon: <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" /> },
+                { id: "inspection", label: "Inspection & Provenance", icon: <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> },
+                { id: "privacy", label: "Privacy & Cleaning", icon: <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> },
+                { id: "image", label: "Image Utilities", icon: <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" /> },
               ] as const
             ).map((tab) => (
               <button
@@ -381,13 +383,14 @@ export function ToolsHomeClient() {
                 type="button"
                 aria-pressed={toolFilter === tab.id}
                 onClick={() => setToolFilter(tab.id)}
-                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                   toolFilter === tab.id
                     ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-brand)]"
                     : "border-[var(--border)] bg-white text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
                 }`}
               >
-                {tab.label}
+                {tab.icon}
+                <span>{tab.label}</span>
               </button>
             ))}
           </div>

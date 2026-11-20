@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  BarChart3,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -16,13 +17,16 @@ import {
   HelpCircle,
   Image as ImageIcon,
   Loader2,
+  Plus,
   RefreshCw,
   RotateCcw,
   Shield,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Upload,
+  X,
   XCircle,
 } from "lucide-react";
 import { CredentialsResultCard } from "@/components/CredentialsResultCard";
@@ -1139,16 +1143,18 @@ export function MediaInspectorWorkbench({
                   type="button"
                   disabled={processing}
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-[8px] border border-[var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
                 >
-                  + Add files
+                  <Plus aria-hidden="true" className="h-3 w-3" />
+                  Add files
                 </button>
                 <button
                   type="button"
                   disabled={processing}
                   onClick={handleReset}
-                  className="rounded-[8px] border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-[8px] border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
                 >
+                  <Trash2 aria-hidden="true" className="h-3 w-3" />
                   Clear All Files
                 </button>
               </div>
@@ -1733,6 +1739,7 @@ export function MediaInspectorWorkbench({
                       onClick={() => setReportOpen((v) => !v)}
                       className="inline-flex items-center gap-1.5 btn-mint px-4 py-2.5 text-xs sm:text-sm font-semibold"
                     >
+                      <BarChart3 aria-hidden="true" className="h-3.5 w-3.5" />
                       <span>{reportOpen ? "Hide Analysis Report" : "View Analysis Report"}</span>
                     </button>
                     <button
@@ -2189,6 +2196,7 @@ export function MediaInspectorWorkbench({
                       onClick={handleOpenCleanConfirm}
                       className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-2 btn-plum px-6 py-2.5 text-sm font-semibold disabled:opacity-60"
                     >
+                      <Sparkles aria-hidden="true" className="h-4 w-4" />
                       {processing
                         ? `${activeRunningStage?.label || "Processing"}…`
                         : "Clean Privacy Metadata"}
@@ -2281,15 +2289,17 @@ export function MediaInspectorWorkbench({
               type="submit"
               value="cancel"
               autoFocus
-              className="min-h-[40px] rounded-[10px] border border-[var(--border)] bg-white px-4 py-2 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-white px-4 py-2 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)]"
             >
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
               Cancel
             </button>
             <button
               type="submit"
               value="confirm"
-              className="min-h-[40px] rounded-[10px] bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-[10px] bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-brand-hover)]"
             >
+              <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
               Confirm &amp; Clean Copy
             </button>
           </form>
