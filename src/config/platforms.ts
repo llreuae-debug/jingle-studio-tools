@@ -3,6 +3,9 @@ export type PlacementId =
   | "instagram-story"
   | "instagram-reels"
   | "tiktok-ai"
+  | "youtube-ai"
+  | "facebook-ai"
+  | "x-ai"
   | "content-credentials";
 
 export interface PlacementSpec {
@@ -194,6 +197,131 @@ export const PLACEMENT_SPECS: Record<PlacementId, PlacementSpec> = {
     officialHelpLabel: {
       en: "TikTok AI-Generated Content Policy & Help",
       id: "Kebijakan & Bantuan Konten Buatan AI TikTok",
+    },
+  },
+  "youtube-ai": {
+    id: "youtube-ai",
+    route: "/tools/youtube-ai-label-check",
+    title: {
+      en: "YouTube AI Label Check",
+      id: "Pemeriksaan Label AI YouTube",
+    },
+    subtitle: {
+      en: "Verify C2PA credentials, video format fit, and YouTube Studio altered or synthetic content disclosure steps.",
+      id: "Verifikasi kredensial C2PA, kesesuaian format video, dan langkah pengungkapan konten sintetis YouTube Studio.",
+    },
+    platformName: "YouTube",
+    lastChecked: "2026-11-20",
+    acceptedMimePrefixes: ["video/mp4", "video/quicktime", "video/webm", "image/jpeg", "image/png"],
+    acceptedExtensions: [".mp4", ".mov", ".webm", ".jpg", ".jpeg", ".png"],
+    recommendedFormatsLabel: "MP4, MOV, WebM (16:9 or 9:16 Shorts)",
+    minWidth: 640,
+    aspectRatioRange: { min: 0.56, max: 1.78, label: "9:16 Shorts to 16:9 HD" },
+    maxFileSizeMb: 512,
+    recommendedCaption: {
+      en: "Disclosure: This video includes altered or synthetic content created with AI tools.",
+      id: "Pengungkapan: Video ini berisi konten yang diubah atau sintetis yang dibuat dengan alat AI.",
+    },
+    platformSteps: {
+      en: [
+        "Upload your video or Short in YouTube Studio and open the 'Details' step.",
+        "Scroll down and expand 'Show more', then locate the 'Altered content' section.",
+        "Select 'Yes' if the video contains realistic altered or synthetic people, places, or events.",
+      ],
+      id: [
+        "Unggah video atau Short Anda di YouTube Studio dan buka langkah 'Detail'.",
+        "Gulir ke bawah dan perluas 'Tampilkan lebih banyak', lalu temukan bagian 'Konten yang diubah'.",
+        "Pilih 'Ya' jika video berisi orang, tempat, atau peristiwa sintetis/diubah yang realistis.",
+      ],
+    },
+    officialHelpUrl: "https://support.google.com/youtube/answer/14328491",
+    officialHelpLabel: {
+      en: "YouTube Altered or Synthetic Content Help",
+      id: "Bantuan Konten Sintetis atau Diubah YouTube",
+    },
+  },
+  "facebook-ai": {
+    id: "facebook-ai",
+    route: "/tools/facebook-ai-label-check",
+    title: {
+      en: "Facebook AI Label Check",
+      id: "Pemeriksaan Label AI Facebook",
+    },
+    subtitle: {
+      en: "Inspect C2PA Content Credentials and Meta AI Info label readiness for Facebook posts and Reels.",
+      id: "Periksa Kredensial Konten C2PA dan kesiapan label Info AI Meta untuk postingan dan Reels Facebook.",
+    },
+    platformName: "Facebook",
+    lastChecked: "2026-11-20",
+    acceptedMimePrefixes: ["image/jpeg", "image/png", "image/webp", "video/mp4"],
+    acceptedExtensions: [".jpg", ".jpeg", ".png", ".webp", ".mp4"],
+    recommendedFormatsLabel: "JPEG, PNG, WebP, MP4",
+    minWidth: 320,
+    maxWidth: 2048,
+    aspectRatioRange: { min: 0.56, max: 1.91, label: "9:16 Reels to 1.91:1 Feed" },
+    maxFileSizeMb: 100,
+    recommendedCaption: {
+      en: "AI Info: Created or edited using AI-assisted tools.",
+      id: "Info AI: Dibuat atau diedit menggunakan alat bantu AI.",
+    },
+    platformSteps: {
+      en: [
+        "Create a Facebook post or Reel and attach your image or video.",
+        "Open the post options or audience/more settings menu before publishing.",
+        "Enable the Meta 'Add AI label' toggle when sharing photorealistic AI-generated or AI-edited visuals.",
+      ],
+      id: [
+        "Buat postingan atau Reel Facebook dan lampirkan gambar atau video Anda.",
+        "Buka opsi postingan atau menu pengaturan lainnya sebelum menerbitkan.",
+        "Aktifkan tombol 'Tambahkan label AI' Meta saat membagikan visual fotorealistis buatan atau editan AI.",
+      ],
+    },
+    officialHelpUrl: "https://www.facebook.com/help/1133375301371235",
+    officialHelpLabel: {
+      en: "Facebook & Meta AI Info Label Help",
+      id: "Bantuan Label Info AI Facebook & Meta",
+    },
+  },
+  "x-ai": {
+    id: "x-ai",
+    route: "/tools/x-ai-label-check",
+    title: {
+      en: "X (Twitter) AI Label Check",
+      id: "Pemeriksaan Label AI X (Twitter)",
+    },
+    subtitle: {
+      en: "Check C2PA Content Credentials, aspect ratio fit, and synthetic media disclosure best practices for X.",
+      id: "Periksa Kredensial Konten C2PA, rasio aspek, dan praktik pengungkapan media sintetis untuk X.",
+    },
+    platformName: "X",
+    lastChecked: "2026-11-20",
+    acceptedMimePrefixes: ["image/jpeg", "image/png", "image/webp", "video/mp4"],
+    acceptedExtensions: [".jpg", ".jpeg", ".png", ".webp", ".mp4"],
+    recommendedFormatsLabel: "JPEG, PNG, WebP, MP4",
+    minWidth: 320,
+    aspectRatioRange: { min: 0.5, max: 2.0, label: "1:2 vertical to 2:1 landscape" },
+    maxFileSizeMb: 512,
+    maxDurationSec: 140,
+    recommendedCaption: {
+      en: "Note: Image/video generated or edited with AI tools.",
+      id: "Catatan: Gambar/video dibuat atau diedit dengan alat AI.",
+    },
+    platformSteps: {
+      en: [
+        "Attach your media in the X post composer and inspect C2PA credentials before publishing.",
+        "Include clear AI disclosure context in your post text or alt text when sharing synthetic media.",
+        "Avoid stripping C2PA provenance so community and platform verification systems can read the origin chain.",
+      ],
+      id: [
+        "Lampirkan media Anda di komposer postingan X dan periksa kredensial C2PA sebelum menerbitkan.",
+        "Sertakan konteks pengungkapan AI yang jelas di teks postingan atau teks alt saat membagikan media sintetis.",
+        "Hindari menghapus provenans C2PA agar sistem verifikasi komunitas dan platform dapat membaca rantai asal.",
+      ],
+    },
+    officialHelpUrl: "https://help.x.com/en/rules-and-policies/manipulated-media",
+    officialHelpLabel: {
+      en: "X Synthetic & Manipulated Media Policy",
+      id: "Kebijakan Media Sintetis & Dimanipulasi X",
     },
   },
   "content-credentials": {

@@ -165,6 +165,9 @@ const TOOL_MENU_LINKS = [
   { href: "/tools/instagram-story-check", label: "Instagram Story Check" },
   { href: "/tools/instagram-reels-check", label: "Instagram Reels Check" },
   { href: "/tools/tiktok-ai-label-check", label: "TikTok AI Label Check" },
+  { href: "/tools/youtube-ai-label-check", label: "YouTube AI Label Check" },
+  { href: "/tools/facebook-ai-label-check", label: "Facebook AI Label Check" },
+  { href: "/tools/x-ai-label-check", label: "X (Twitter) AI Label Check" },
 ];
 
 export function AppHeader({

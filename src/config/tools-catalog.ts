@@ -165,4 +165,25 @@ export const SPECIALIZED_TOOLS: Array<{
       "Inspect TikTok AIGC label placement and bottom caption overlay safe zones.",
     tag: "Social Placement",
   },
+  {
+    title: "YouTube AI Label Check",
+    href: "/tools/youtube-ai-label-check",
+    description:
+      "Check C2PA provenance and YouTube Studio altered or synthetic content disclosure readiness.",
+    tag: "Social Placement",
+  },
+  {
+    title: "Facebook AI Label Check",
+    href: "/tools/facebook-ai-label-check",
+    description:
+      "Verify C2PA Content Credentials and Meta AI Info label readiness for Facebook posts and Reels.",
+    tag: "Social Placement",
+  },
+  {
+    title: "X (Twitter) AI Label Check",
+    href: "/tools/x-ai-label-check",
+    description:
+      "Check C2PA provenance, aspect ratio fit, and synthetic media disclosure best practices for X.",
+    tag: "Social Placement",
+  },
 ];

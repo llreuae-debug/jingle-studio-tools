@@ -419,6 +419,9 @@ test.describe("JingleStudio Tools Reconstruction & 20-Scenario Verification", ()
       "/tools/video-metadata-inspector",
       "/tools/privacy-metadata-cleaner",
       "/tools/report-generator",
+      "/tools/youtube-ai-label-check",
+      "/tools/facebook-ai-label-check",
+      "/tools/x-ai-label-check",
     ];
 
     // Mobile 375x812 check
