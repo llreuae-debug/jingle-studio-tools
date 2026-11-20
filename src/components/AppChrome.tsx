@@ -5,8 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeftRight,
+  BookOpen,
   Camera,
   ChevronDown,
+  Clapperboard,
+  Code2,
+  Cpu,
   CreditCard,
   FileCheck2,
   FileSearch,
@@ -14,13 +18,22 @@ import {
   FileText,
   Film,
   FolderCheck,
+  Globe,
+  HelpCircle,
+  Home,
+  KeyRound,
   LayoutGrid,
+  Lock,
+  Mail,
   Maximize2,
   Menu,
   MessageCircle,
   Minimize2,
+  Scale,
+  Share2,
   ShieldCheck,
   Sparkles,
+  Terminal,
   X,
 } from "lucide-react";
 import { AccountMenu } from "./AccountMenu";
@@ -149,25 +162,25 @@ const TOOLS_RIBBON_TABS: GlassTabItem[] = [
 ];
 
 const TOOL_MENU_LINKS = [
-  { href: "/tools", label: "All Media Tools" },
-  { href: "/tools/media-metadata-inspector", label: "Media Metadata Inspector" },
-  { href: "/tools/exif-viewer", label: "Image EXIF Viewer" },
-  { href: "/tools/content-credentials-check", label: "Content Credentials Check" },
-  { href: "/tools/file-integrity-checker", label: "File Integrity Checker" },
-  { href: "/tools/image-converter", label: "Image Format Converter" },
-  { href: "/tools/image-resizer", label: "Image Resizer" },
-  { href: "/tools/image-compressor", label: "Image Compression Tool" },
-  { href: "/tools/video-metadata-inspector", label: "Video Metadata Inspector" },
-  { href: "/tools/privacy-metadata-cleaner", label: "Privacy Metadata Cleaner" },
-  { href: "/tools/report-generator", label: "Inspection Report Generator" },
-  { href: "/tools/ai-disclosure-signer", label: "AI Disclosure Signer" },
-  { href: "/tools/instagram-post-check", label: "Instagram Post Check" },
-  { href: "/tools/instagram-story-check", label: "Instagram Story Check" },
-  { href: "/tools/instagram-reels-check", label: "Instagram Reels Check" },
-  { href: "/tools/tiktok-ai-label-check", label: "TikTok AI Label Check" },
-  { href: "/tools/youtube-ai-label-check", label: "YouTube AI Label Check" },
-  { href: "/tools/facebook-ai-label-check", label: "Facebook AI Label Check" },
-  { href: "/tools/x-ai-label-check", label: "X (Twitter) AI Label Check" },
+  { href: "/tools", label: "All Media Tools", icon: LayoutGrid },
+  { href: "/tools/media-metadata-inspector", label: "Media Metadata Inspector", icon: FileSearch },
+  { href: "/tools/exif-viewer", label: "Image EXIF Viewer", icon: Camera },
+  { href: "/tools/content-credentials-check", label: "Content Credentials Check", icon: ShieldCheck },
+  { href: "/tools/file-integrity-checker", label: "File Integrity Checker", icon: FileCheck2 },
+  { href: "/tools/video-metadata-inspector", label: "Video Metadata Inspector", icon: Film },
+  { href: "/tools/privacy-metadata-cleaner", label: "Privacy Metadata Cleaner", icon: Sparkles },
+  { href: "/tools/report-generator", label: "Inspection Report Generator", icon: FileText },
+  { href: "/tools/ai-disclosure-signer", label: "AI Disclosure Signer", icon: FileSignature },
+  { href: "/tools/image-converter", label: "Image Format Converter", icon: ArrowLeftRight },
+  { href: "/tools/image-resizer", label: "Image Resizer", icon: Maximize2 },
+  { href: "/tools/image-compressor", label: "Image Compression Tool", icon: Minimize2 },
+  { href: "/tools/instagram-post-check", label: "Instagram Post Check", icon: Share2 },
+  { href: "/tools/instagram-story-check", label: "Instagram Story Check", icon: Share2 },
+  { href: "/tools/instagram-reels-check", label: "Instagram Reels Check", icon: Clapperboard },
+  { href: "/tools/tiktok-ai-label-check", label: "TikTok AI Label Check", icon: Clapperboard },
+  { href: "/tools/youtube-ai-label-check", label: "YouTube AI Label Check", icon: Clapperboard },
+  { href: "/tools/facebook-ai-label-check", label: "Facebook AI Label Check", icon: Globe },
+  { href: "/tools/x-ai-label-check", label: "X (Twitter) AI Label Check", icon: Globe },
 ];
 
 export function AppHeader({
@@ -259,19 +272,26 @@ export function AppHeader({
               <span>{t.nav.tools}</span>
               <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
             </summary>
-            <div className="absolute left-0 mt-2 w-64 rounded-[14px] border border-[var(--border)] bg-white shadow-[var(--shadow-4)] p-1.5 z-50 space-y-1">
-              {TOOL_MENU_LINKS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => {
-                    if (toolsMenuRef.current) toolsMenuRef.current.open = false;
-                  }}
-                  className="block rounded-[10px] px-3 py-2 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)] transition-colors duration-150"
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="absolute left-0 mt-2 w-[460px] rounded-[16px] border border-[var(--border)] bg-white/95 backdrop-blur-md shadow-[var(--shadow-4)] p-2.5 z-50 grid grid-cols-2 gap-1">
+              {TOOL_MENU_LINKS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      if (toolsMenuRef.current) toolsMenuRef.current.open = false;
+                    }}
+                    className="group/item flex items-center gap-2 rounded-[10px] px-2.5 py-2 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-brand-soft)] hover:text-[var(--color-brand)] transition-colors duration-150"
+                  >
+                    <Icon
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5 shrink-0 text-[var(--color-brand)]/75 group-hover/item:text-[var(--color-brand)]"
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </details>
           <Link href="/how-it-works" className="text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors duration-150">
@@ -425,170 +445,150 @@ export function AppHeader({
 
 export function AppFooter() {
   const { t } = useLanguage();
+  const inspectionTools = TOOL_MENU_LINKS.slice(0, 9);
+  const utilityTools = TOOL_MENU_LINKS.slice(9);
+
+  const learnLinks = [
+    { href: "/blog", label: "Blog", icon: BookOpen },
+    { href: "/learn/content-credentials", label: "What are Content Credentials", icon: ShieldCheck },
+    { href: "/learn/synthid", label: "What is SynthID", icon: Cpu },
+    { href: "/how-it-works", label: "How it works", icon: Sparkles },
+    { href: "/pricing", label: "Pricing", icon: CreditCard },
+    { href: "/faq", label: "FAQ", icon: HelpCircle },
+  ];
+
+  const developerLinks = [
+    { href: "/developers", label: "Overview", icon: Code2 },
+    { href: "/developers/rest-api", label: "REST API", icon: Terminal },
+    { href: "/developers/mcp", label: "MCP server", icon: Cpu },
+    { href: "/developers/docs", label: "API docs", icon: FileText },
+    { href: "/app/developers", label: "API keys", icon: KeyRound },
+  ];
+
+  const companyLinks = [
+    { href: "/tools", label: "Home", icon: Home },
+    { href: "/contact", label: "Contact", icon: Mail },
+    { href: "/privacy", label: "Privacy", icon: Lock },
+    { href: "/terms", label: "Terms", icon: Scale },
+    { href: "/acceptable-use", label: "Acceptable use", icon: ShieldCheck },
+  ];
 
   return (
-    <footer className="relative z-10 border-t border-[var(--border)] bg-white text-[var(--color-text-muted)] mt-20">
-      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8 py-12 text-xs space-y-8">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+    <footer className="relative z-10 border-t border-[var(--border)] bg-white/95 backdrop-blur-sm text-[var(--color-text-muted)] mt-20">
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8 py-12 text-xs space-y-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8">
           <div className="space-y-3">
             <h2 className="font-semibold text-sm text-[var(--color-ink)]">Tools</h2>
             <ul className="space-y-2">
-              {TOOL_MENU_LINKS.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {inspectionTools.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="group inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors duration-150"
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--color-brand)]/70 group-hover:text-[var(--color-brand)]"
+                      />
+                      <span className="group-hover:underline">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="font-semibold text-sm text-[var(--color-ink)]">Utilities &amp; Social</h2>
+            <ul className="space-y-2">
+              {utilityTools.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="group inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors duration-150"
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--color-brand)]/70 group-hover:text-[var(--color-brand)]"
+                      />
+                      <span className="group-hover:underline">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
           <div className="space-y-3">
             <h2 className="font-semibold text-sm text-[var(--color-ink)]">Learn</h2>
             <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/blog"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/learn/content-credentials"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  What are Content Credentials
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/learn/synthid"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  What is SynthID
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/how-it-works"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  How it works
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/pricing"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/faq"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  FAQ
-                </Link>
-              </li>
+              {learnLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="group inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors duration-150"
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--color-brand)]/70 group-hover:text-[var(--color-brand)]"
+                      />
+                      <span className="group-hover:underline">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
           <div className="space-y-3">
             <h2 className="font-semibold text-sm text-[var(--color-ink)]">Developers</h2>
             <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/developers"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Overview
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/developers/rest-api"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  REST API
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/developers/mcp"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  MCP server
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/developers/docs"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  API docs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/app/developers"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  API keys
-                </Link>
-              </li>
+              {developerLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="group inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors duration-150"
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--color-brand)]/70 group-hover:text-[var(--color-brand)]"
+                      />
+                      <span className="group-hover:underline">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
           <div className="space-y-3">
             <h2 className="font-semibold text-sm text-[var(--color-ink)]">Company</h2>
             <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/tools"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Privacy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Terms
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/acceptable-use"
-                  className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-ink)] hover:underline transition-colors duration-150"
-                >
-                  Acceptable use
-                </Link>
-              </li>
+              {companyLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="group inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-ink)] transition-colors duration-150"
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--color-brand)]/70 group-hover:text-[var(--color-brand)]"
+                      />
+                      <span className="group-hover:underline">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
