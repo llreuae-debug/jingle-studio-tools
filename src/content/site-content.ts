@@ -118,6 +118,10 @@ export interface BlogPost {
   summary: Record<Locale, string>;
   body: Record<Locale, string[]>;
   sources: Array<{ label: string; url: string }>;
+  publishedAt?: string;
+  updatedAt?: string;
+  relatedTools?: Array<{ title: string; href: string }>;
+  aeoQuestions?: Array<{ q: string; a: string }>;
 }
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -226,6 +230,259 @@ export const BLOG_POSTS: BlogPost[] = [
     sources: [
       { label: "Google Support — Verify AI content in Gemini", url: "https://support.google.com/gemini/answer/16722517?hl=en" },
       { label: "C2PA Implementation Guidance", url: "https://spec.c2pa.org/specifications/specifications/2.3/guidance/Guidance.html" },
+    ],
+    publishedAt: "2026-11-18",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "C2PA Credential Verifier", href: "/tools/content-credentials-check" },
+      { title: "Media Metadata Inspector", href: "/tools/media-metadata-inspector" },
+    ],
+  },
+  {
+    slug: "what-is-image-metadata",
+    title: {
+      en: "What Is Image Metadata? EXIF, IPTC, XMP & C2PA Explained",
+      id: "Apa Itu Metadata Gambar? Penjelasan EXIF, IPTC, XMP & C2PA",
+    },
+    summary: {
+      en: "A practical technical guide to the four metadata standards embedded inside digital images: EXIF capture tags, IPTC press metadata, XMP editing history, and C2PA Content Credentials.",
+      id: "Panduan teknis praktis tentang empat standar metadata yang tertanam di dalam gambar digital: EXIF, IPTC, XMP, dan Kredensial Konten C2PA.",
+    },
+    body: {
+      en: [
+        "Image metadata is structured information stored inside an image container alongside the visual pixel data. When a camera, smartphone, design tool, or AI generator saves a PNG, JPEG, or WebP file, it writes dedicated binary segments or chunks that describe how the file was created.",
+        "EXIF (Exchangeable Image File Format) records device and capture parameters such as camera make, model, lens focal length, shutter speed, orientation, timestamps, and optional GPS latitude/longitude coordinates. IPTC and XMP blocks store editorial and workflow attributes including creator name, copyright notice, software agent, and digitalSourceType declarations.",
+        "C2PA Content Credentials add a cryptographic layer on top of traditional metadata. Unlike plain EXIF or XMP text fields that anyone can edit, a C2PA manifest binds assertions and parent ingredients to the asset's cryptographic hash using an X.509 digital signature.",
+      ],
+      id: [
+        "Metadata gambar adalah informasi terstruktur yang disimpan di dalam kontainer gambar bersama data piksel visual. Saat kamera, ponsel, atau alat desain menyimpan file PNG, JPEG, atau WebP, perangkat tersebut menulis segmen biner khusus yang menjelaskan cara file dibuat.",
+        "EXIF mencatat parameter perangkat dan pengambilan seperti merek kamera, model, lensa, orientasi, waktu, dan koordinat GPS. Blok IPTC dan XMP menyimpan atribut editorial seperti nama pembuat, hak cipta, dan deklarasi digitalSourceType.",
+        "Kredensial Konten C2PA menambahkan lapisan kriptografis di atas metadata tradisional dengan mengikat pernyataan dan bahan induk ke hash file menggunakan tanda tangan digital.",
+      ],
+    },
+    sources: [
+      { label: "CIPA EXIF 3.0 Standard Overview", url: "https://www.cipa.jp/std/documents/download_e.html?DC-008-Translation-2023-E" },
+      { label: "IPTC Photo Metadata Standard", url: "https://iptc.org/standards/photo-metadata/iptc-standard/" },
+      { label: "C2PA Technical Specification", url: "https://c2pa.org/specifications/specifications/2.1/specs/C2PA_Specification.html" },
+    ],
+    publishedAt: "2026-11-20",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "Media Metadata Inspector", href: "/tools/media-metadata-inspector" },
+      { title: "Image EXIF Viewer", href: "/tools/exif-viewer" },
+      { title: "C2PA Credential Verifier", href: "/tools/content-credentials-check" },
+    ],
+    aeoQuestions: [
+      {
+        q: "What are the main types of image metadata?",
+        a: "The four main types of image metadata are EXIF (camera settings, timestamps, and GPS), IPTC (creator, copyright, and press descriptions), XMP (extensible XML editing and AI source declarations), and C2PA Content Credentials (cryptographically signed provenance manifests).",
+      },
+      {
+        q: "Can I view image metadata without installing software?",
+        a: "Yes. You can inspect EXIF, IPTC, XMP, and C2PA metadata directly in your web browser using JingleStudio's Media Metadata Inspector without uploading your file to a server.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-view-exif-data-in-an-image",
+    title: {
+      en: "How to View EXIF Data in an Image Online (Camera, Lens & GPS)",
+      id: "Cara Melihat Data EXIF pada Gambar Secara Online (Kamera, Lensa & GPS)",
+    },
+    summary: {
+      en: "Step-by-step instructions to inspect camera make, model, capture timestamps, software tags, and GPS coordinates in JPEG, PNG, and WebP images.",
+      id: "Langkah demi langkah untuk memeriksa merek kamera, model, waktu pengambilan, tag perangkat lunak, dan koordinat GPS pada gambar JPEG, PNG, dan WebP.",
+    },
+    body: {
+      en: [
+        "Every smartphone and digital camera embeds EXIF tags inside photos by default unless location or metadata sharing is disabled. Viewing these tags helps photographers verify exposure settings and helps privacy-conscious users check whether a photo contains home GPS coordinates before posting.",
+        "In JPEG files, EXIF data lives inside the APP1 (0xFFE1) marker as a TIFF-formatted header containing IFD0 (device info), ExifIFD (capture settings), and GPSIFD (location coordinates). PNG files store EXIF in an eXIf chunk, while WebP files store it inside an EXIF RIFF chunk.",
+        "With JingleStudio's Image EXIF Viewer, your browser parses these binary structures locally. GPS coordinates remain masked by default so you can inspect files on a shared screen without exposing sensitive locations, and you can export the full tag table as JSON.",
+      ],
+      id: [
+        "Setiap ponsel cerdas dan kamera digital menyematkan tag EXIF di dalam foto secara default. Melihat tag ini membantu fotografer memverifikasi pengaturan eksposur dan memeriksa apakah foto berisi koordinat GPS sebelum dipublikasikan.",
+        "Pada file JPEG, data EXIF berada di dalam penanda APP1 (0xFFE1). File PNG menyimpan EXIF di dalam chunk eXIf, sedangkan WebP menyimpannya di dalam chunk RIFF EXIF.",
+        "Dengan Image EXIF Viewer JingleStudio, browser Anda mengurai struktur biner ini secara lokal dan menyembunyikan koordinat GPS secara default demi privasi.",
+      ],
+    },
+    sources: [
+      { label: "W3C PNG eXIf Chunk Specification", url: "https://www.w3.org/TR/png-3/#11eXIf" },
+      { label: "Google WebP Container Specification", url: "https://developers.google.com/speed/webp/docs/riff_container" },
+    ],
+    publishedAt: "2026-11-20",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "Image EXIF Viewer", href: "/tools/exif-viewer" },
+      { title: "Privacy Metadata Cleaner", href: "/tools/privacy-metadata-cleaner" },
+    ],
+    aeoQuestions: [
+      {
+        q: "How do I check if a photo has GPS coordinates embedded?",
+        a: "Open the photo in JingleStudio's Image EXIF Viewer. The GPS Coordinates card immediately reports whether location data is Detected or Not detected, and lets you toggle the decimal latitude and longitude.",
+      },
+      {
+        q: "Why does an image downloaded from social media have no EXIF data?",
+        a: "Most social networks (including Instagram, X, and Facebook) strip EXIF and GPS headers when re-encoding uploaded images for delivery.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-inspect-video-metadata",
+    title: {
+      en: "How to Inspect Video Metadata Online (MP4, MOV & WebM Streams)",
+      id: "Cara Memeriksa Metadata Video Secara Online (Aliran MP4, MOV & WebM)",
+    },
+    summary: {
+      en: "Learn how video containers store codec profiles, resolution, frame rate, overall bitrate, audio stream parameters, and C2PA provenance.",
+      id: "Pelajari cara kontainer video menyimpan profil codec, resolusi, frame rate, bitrate, parameter audio, dan provenans C2PA.",
+    },
+    body: {
+      en: [
+        "Video files such as MP4, QuickTime MOV, and WebM are multimedia containers that bundle compressed video tracks, audio streams, timing tables, and descriptive metadata atoms into a single file.",
+        "In ISO Base Media File Format (MP4 and MOV) containers, the ftyp box identifies the container brand, the moov/mvhd box stores overall timescale and duration, and each trak/mdia/minf/stbl/stsd hierarchy declares the video codec (such as avc1/H.264, hvc1/HEVC, or av01/AV1) and audio stream parameters (such as mp4a/AAC channel count and sample rate in Hz). WebM files use Matroska EBML elements for Info and Tracks.",
+        "JingleStudio's Video Metadata Inspector reads these container boxes directly in your browser and clearly distinguishes container-level header inspection from full frame-by-frame bitstream decoding.",
+      ],
+      id: [
+        "File video seperti MP4, QuickTime MOV, dan WebM adalah kontainer multimedia yang menggabungkan trek video, aliran audio, tabel waktu, dan metadata deskriptif.",
+        "Pada kontainer ISO-BMFF (MP4 dan MOV), kotak ftyp mengidentifikasi merek kontainer, moov/mvhd menyimpan durasi, dan stsd mendeklarasikan codec video serta parameter audio. File WebM menggunakan elemen EBML Matroska.",
+        "Video Metadata Inspector JingleStudio membaca kotak kontainer ini secara langsung di browser Anda tanpa mengunggah file video.",
+      ],
+    },
+    sources: [
+      { label: "ISO/IEC 14496-12 ISO Base Media File Format", url: "https://www.iso.org/standard/83102.html" },
+      { label: "WebM Container Guidelines", url: "https://www.webmproject.org/docs/container/" },
+    ],
+    publishedAt: "2026-11-20",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "Video Metadata Inspector", href: "/tools/video-metadata-inspector" },
+      { title: "YouTube AI Label Check", href: "/tools/youtube-ai-label-check" },
+      { title: "TikTok AI Label Check", href: "/tools/tiktok-ai-label-check" },
+    ],
+    aeoQuestions: [
+      {
+        q: "How can I check a video's codec, resolution, and audio sample rate online?",
+        a: "Select your MP4, MOV, or WebM file in the Video Metadata Inspector. It extracts the container brand, video codec, dimensions, duration, overall kbps bitrate, and audio codec/channels/sample rate locally.",
+      },
+    ],
+  },
+  {
+    slug: "image-compression-and-resizing-explained",
+    title: {
+      en: "Image Compression & Resizing Explained: Quality, Formats & Dimensions",
+      id: "Penjelasan Kompresi & Pengubahan Ukuran Gambar: Kualitas, Format & Dimensi",
+    },
+    summary: {
+      en: "How lossy vs. lossless compression, WebP/JPEG/PNG format selection, and aspect-ratio locked resizing affect visual quality and page speed.",
+      id: "Bagaimana kompresi lossy vs. lossless, pemilihan format WebP/JPEG/PNG, dan pengubahan ukuran memengaruhi kualitas visual.",
+    },
+    body: {
+      en: [
+        "Optimizing image dimensions and byte size improves website Core Web Vitals—especially Largest Contentful Paint (LCP)—and speeds up sharing across social platforms and messaging apps.",
+        "Resizing changes the actual pixel grid (width × height). If an image is displayed at 800×600 pixels on a page, serving a 4000×3000 camera original wastes over 90% of the transmitted pixels. Locking the aspect ratio ensures width and height scale proportionally without distortion.",
+        "Compression reduces the number of bytes required to store those pixels. PNG uses lossless DEFLATE compression ideal for sharp UI graphics, while JPEG and WebP offer adjustable quality sliders (typically 75–85% for web delivery) that substantially reduce byte size. Keep in mind that client-side Canvas re-encoding creates a clean derivative image without the original container's EXIF or C2PA manifest.",
+      ],
+      id: [
+        "Mengoptimalkan dimensi dan ukuran byte gambar meningkatkan Core Web Vitals situs web—terutama Largest Contentful Paint (LCP).",
+        "Pengubahan ukuran (resizing) mengubah kisi piksel aktual (lebar × tinggi). Mengunci rasio aspek memastikan lebar dan tinggi berubah secara proporsional tanpa distorsi.",
+        "Kompresi mengurangi jumlah byte yang diperlukan untuk menyimpan piksel tersebut menggunakan PNG lossless atau JPEG/WebP dengan pengatur kualitas.",
+      ],
+    },
+    sources: [
+      { label: "Web.dev — Serve Responsive Images", url: "https://web.dev/articles/serve-responsive-images" },
+      { label: "MDN — Image File Type and Format Guide", url: "https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types" },
+    ],
+    publishedAt: "2026-11-20",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "Image Compression Tool", href: "/tools/image-compressor" },
+      { title: "Image Resizer", href: "/tools/image-resizer" },
+      { title: "Image Format Converter", href: "/tools/image-converter" },
+    ],
+    aeoQuestions: [
+      {
+        q: "What is the best quality setting for JPEG and WebP compression?",
+        a: "A quality setting between 75% and 85% typically achieves a 50–75% file size reduction while preserving high visual fidelity for web and social media use.",
+      },
+    ],
+  },
+  {
+    slug: "understanding-digital-media-provenance",
+    title: {
+      en: "Understanding Digital Media Provenance & File Integrity (SHA-256 & C2PA)",
+      id: "Memahami Provenans Media Digital & Integritas File (SHA-256 & C2PA)",
+    },
+    summary: {
+      en: "How cryptographic SHA-256 digests, magic-byte header validation, and C2PA manifests work together to verify media authenticity.",
+      id: "Bagaimana hash SHA-256 kriptografis, validasi header magic-byte, dan manifes C2PA bekerja bersama untuk memverifikasi keaslian media.",
+    },
+    body: {
+      en: [
+        "Digital media integrity and provenance answer two distinct questions: 'Are these exact file bytes intact and well-formed?' (integrity) and 'Who created or modified this asset?' (provenance).",
+        "File integrity starts with magic-byte validation—verifying that the leading bytes match the claimed container specification—followed by structural chunk verification, polyglot screening, and a cryptographic SHA-256 checksum. Changing even a single bit in a file produces a completely different 64-character SHA-256 digest.",
+        "C2PA Content Credentials build on cryptographic hashing by signing the asset's hard bindings (content hashes) together with claim assertions using a private key issued by a certificate authority.",
+      ],
+      id: [
+        "Integritas dan provenans media digital menjawab dua pertanyaan berbeda: apakah byte file utuh (integritas) dan siapa yang membuat atau memodifikasi aset tersebut (provenans).",
+        "Integritas file dimulai dengan validasi magic-byte, pemeriksaan struktur kontainer, dan checksum kriptografis SHA-256.",
+        "Kredensial Konten C2PA menandatangani hash konten bersama pernyataan klaim menggunakan kunci kriptografis.",
+      ],
+    },
+    sources: [
+      { label: "NIST FIPS 180-4 Secure Hash Standard (SHA-256)", url: "https://csrc.nist.gov/publications/detail/fips/180/4/final" },
+      { label: "C2PA Explainer", url: "https://c2pa.org/post/c2pa-explainer/" },
+    ],
+    publishedAt: "2026-11-20",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "File Integrity Checker", href: "/tools/file-integrity-checker" },
+      { title: "Media Inspection Report Generator", href: "/tools/report-generator" },
+      { title: "C2PA Credential Verifier", href: "/tools/content-credentials-check" },
+    ],
+    aeoQuestions: [
+      {
+        q: "How does a SHA-256 checksum prove a file has not been altered?",
+        a: "SHA-256 is a one-way cryptographic hash function. If two files produce the exact same 64-character SHA-256 hex string, their binary contents are identical byte-for-byte.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-protect-personal-information-in-image-metadata",
+    title: {
+      en: "How to Protect Personal Information in Image & Video Metadata",
+      id: "Cara Melindungi Informasi Pribadi dalam Metadata Gambar & Video",
+    },
+    summary: {
+      en: "How to inspect and selectively remove GPS coordinates, camera serial numbers, and personal EXIF tags while preserving C2PA Content Credentials.",
+      id: "Cara memeriksa dan menghapus koordinat GPS, nomor seri kamera, dan tag EXIF pribadi secara selektif sambil mempertahankan Kredensial Konten C2PA.",
+    },
+    body: {
+      en: [
+        "Photos and videos shot on phones or cameras frequently contain precise GPS latitude, longitude, altitude, capture timestamps, device serial numbers, and owner names inside EXIF, XMP, or QuickTime udta metadata.",
+        "When sharing original files via email, cloud drives, or property portals that do not strip metadata, those personal tags travel with the file. Inspecting your media first lets you see exactly which personal fields are present.",
+        "JingleStudio's Privacy Metadata Cleaner lets you confirm and remove personal EXIF, GPS, and device tags into a separate cleaned copy while keeping embedded C2PA Content Credentials intact—protecting your personal privacy without misrepresenting AI provenance.",
+      ],
+      id: [
+        "Foto dan video yang diambil dengan ponsel atau kamera sering kali berisi koordinat GPS yang presisi, waktu pengambilan, dan nomor seri perangkat di dalam metadata EXIF, XMP, atau QuickTime.",
+        "Memeriksa media terlebih dahulu memungkinkan Anda melihat bidang pribadi mana yang ada sebelum membagikan file asli.",
+        "Privacy Metadata Cleaner JingleStudio menghapus tag EXIF dan GPS pribadi ke dalam salinan terpisah yang bersih sambil menjaga Kredensial Konten C2PA tetap utuh.",
+      ],
+    },
+    sources: [
+      { label: "C2PA Guidance on Privacy and Metadata", url: "https://spec.c2pa.org/specifications/specifications/2.3/guidance/Guidance.html" },
+    ],
+    publishedAt: "2026-11-20",
+    updatedAt: "2026-11-20",
+    relatedTools: [
+      { title: "Privacy Metadata Cleaner", href: "/tools/privacy-metadata-cleaner" },
+      { title: "Image EXIF Viewer", href: "/tools/exif-viewer" },
+      { title: "Media Metadata Inspector", href: "/tools/media-metadata-inspector" },
+    ],
+    aeoQuestions: [
+      {
+        q: "Can I remove GPS location data from a photo without losing image quality?",
+        a: "Yes. Container-level privacy metadata cleaning strips EXIF and GPS segments while preserving the image's pixel dimensions, visual quality, and C2PA Content Credentials.",
+      },
     ],
   },
 ];

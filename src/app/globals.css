@@ -410,3 +410,22 @@ dialog[open] {
     animation: none;
   }
 }
+
+/* Responsive Media Defaults (Images, Videos, Audio, Embeds) */
+img,
+video,
+canvas {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+audio {
+  inline-size: 100%;
+  max-inline-size: 100%;
+}
+
+iframe,
+embed,
+object {
+  max-inline-size: 100%;
+}

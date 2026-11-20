@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { CredentialsResultCard } from "@/components/CredentialsResultCard";
 import InspectionReportView from "@/components/InspectionReportView";
+import { trackToolEvent } from "@/lib/analytics";
 import {
   inspectMediaFileLocally,
   type LocalMediaInspection,
@@ -725,6 +726,10 @@ export function MediaInspectorWorkbench({
         setPreviewMeta(measured);
         setLocalInspection(localReport);
         setLocalC2pa(inspection);
+        trackToolEvent("file_uploaded", {
+          mediaKind: measured.mediaKind,
+          format: measured.formatLabel,
+        });
         setQueue((prev) => {
           const exists = prev.some((q) => q.file === file);
           if (exists) {
@@ -914,11 +919,18 @@ export function MediaInspectorWorkbench({
 
       setServerResult(data);
       setElapsedMs(data.processingTimeMs);
+      trackToolEvent("processing_completed", {
+        mediaKind: data.mediaKind,
+        processingTimeMs: data.processingTimeMs,
+      });
       void loadSessionInfo();
     } catch (err) {
       if (isAbortError(err)) {
         setCancelledMsg("Processing was cancelled. Your file remains loaded and ready if you want to retry.");
       } else {
+        trackToolEvent("processing_failed", {
+          reason: err instanceof Error ? err.name : "unknown",
+        });
         setProcessError(
           err instanceof Error ? err.message : "Processing failed. Please try again."
         );
@@ -1012,6 +1024,7 @@ export function MediaInspectorWorkbench({
       setDownloadConfirmation(
         `${kind === "cleaned" ? "Privacy-cleaned copy" : "Original file"} "${fileName}" (${formatBytes(blob.size)}) downloaded.`
       );
+      trackToolEvent("download_completed", { kind });
     } catch (err) {
       setDownloadError(
         err instanceof Error ? err.message : "Could not download file."
@@ -1321,6 +1334,8 @@ export function MediaInspectorWorkbench({
                   <img
                     src={previewMeta.previewUrl}
                     alt={`Preview of ${selectedFile.name}`}
+                    width={previewMeta.width || 640}
+                    height={previewMeta.height || 480}
                     className="w-full max-h-80 object-contain bg-[#f7f7fa]"
                   />
                 ) : (
@@ -1328,6 +1343,9 @@ export function MediaInspectorWorkbench({
                     src={previewMeta.previewUrl}
                     controls
                     playsInline
+                    preload="metadata"
+                    width={previewMeta.width || 640}
+                    height={previewMeta.height || 360}
                     className="w-full max-h-80 bg-black"
                   />
                 )}
@@ -1361,6 +1379,9 @@ export function MediaInspectorWorkbench({
                     <img
                       src={previewMeta.previewUrl}
                       alt=""
+                      width={44}
+                      height={44}
+                      loading="lazy"
                       className="h-full w-full object-cover"
                     />
                   ) : (

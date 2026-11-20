@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
+import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { AppFooter, AppHeader } from "@/components/AppChrome";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { SITE_CONFIG } from "@/config/site";
@@ -66,6 +67,12 @@ export const metadata: Metadata = {
     description: SITE_CONFIG.description,
     images: [`${SITE_CONFIG.siteUrl}/twitter-image.png`],
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION || undefined,
+    other: process.env.NEXT_PUBLIC_BING_VERIFICATION
+      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_VERIFICATION }
+      : undefined,
+  },
 };
 
 export default async function RootLayout({
@@ -86,10 +93,32 @@ export default async function RootLayout({
 
   const orgJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    name: SITE_CONFIG.name,
-    url: SITE_CONFIG.siteUrl,
-    logo: `${SITE_CONFIG.siteUrl}/brand/logo-square-512.png`,
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE_CONFIG.siteUrl}/#organization`,
+        name: SITE_CONFIG.name,
+        url: SITE_CONFIG.siteUrl,
+        description: SITE_CONFIG.description,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_CONFIG.siteUrl}/brand/logo-square-512.png`,
+          width: 512,
+          height: 512,
+        },
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_CONFIG.siteUrl}/#website`,
+        name: SITE_CONFIG.name,
+        url: SITE_CONFIG.siteUrl,
+        description: SITE_CONFIG.description,
+        publisher: {
+          "@id": `${SITE_CONFIG.siteUrl}/#organization`,
+        },
+        inLanguage: ["en", "id"],
+      },
+    ],
   };
 
   return (
@@ -118,6 +147,7 @@ export default async function RootLayout({
             {children}
           </main>
           <AppFooter />
+          <AnalyticsScripts />
         </LanguageProvider>
       </body>
     </html>

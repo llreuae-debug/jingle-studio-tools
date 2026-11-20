@@ -483,4 +483,64 @@ test.describe("JingleStudio Tools Reconstruction & 20-Scenario Verification", ()
     // Only the deliberately simulated 500 should ever appear
     expect(server500s.filter((s) => !s.includes("/api/privacy-clean"))).toEqual([]);
   });
+
+  test("Section 11 SEO, GEO, AEO & Structured Data Validation across Tool & Blog Routes", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    const seoRoutes = [
+      "/tools/media-metadata-inspector",
+      "/tools/exif-viewer",
+      "/tools/file-integrity-checker",
+      "/tools/image-converter",
+      "/tools/image-resizer",
+      "/tools/image-compressor",
+      "/tools/video-metadata-inspector",
+      "/tools/privacy-metadata-cleaner",
+      "/tools/report-generator",
+      "/blog/what-is-image-metadata",
+      "/blog/how-to-view-exif-data-in-an-image",
+      "/blog/how-to-inspect-video-metadata",
+      "/blog/image-compression-and-resizing-explained",
+      "/blog/understanding-digital-media-provenance",
+      "/blog/how-to-protect-personal-information-in-image-metadata",
+    ];
+
+    const seenTitles = new Set<string>();
+    const seenDescriptions = new Set<string>();
+
+    for (const route of seoRoutes) {
+      const res = await page.goto(route, { waitUntil: "domcontentloaded" });
+      expect(res?.status(), `HTTP 200 on ${route}`).toBe(200);
+
+      const title = await page.title();
+      expect(title.length).toBeGreaterThan(10);
+      expect(seenTitles.has(title), `Unique title on ${route}: ${title}`).toBe(false);
+      seenTitles.add(title);
+
+      const desc = await page.locator('meta[name="description"]').getAttribute("content");
+      expect(desc && desc.length > 20, `Meta description on ${route}`).toBeTruthy();
+      expect(seenDescriptions.has(desc!), `Unique description on ${route}`).toBe(false);
+      seenDescriptions.add(desc!);
+
+      const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+      expect(canonical).toContain(route);
+
+      // Single <main> landmark & single <h1>
+      expect(await page.locator("main").count(), `Single <main> on ${route}`).toBe(1);
+      expect(await page.locator("h1").count(), `Single <h1> on ${route}`).toBe(1);
+
+      // Valid JSON-LD structured data
+      const jsonLdTexts = await page
+        .locator('script[type="application/ld+json"]')
+        .allTextContents();
+      expect(jsonLdTexts.length).toBeGreaterThanOrEqual(2);
+      for (const raw of jsonLdTexts) {
+        const parsed = JSON.parse(raw);
+        expect(parsed["@context"]).toContain("schema.org");
+      }
+    }
+  });
 });

@@ -190,6 +190,8 @@ export function ExifViewerTool() {
               <img
                 src={previewUrl}
                 alt={`Preview of ${inspection.fileInfo.fileName}`}
+                width={inspection.fileInfo.width || 640}
+                height={inspection.fileInfo.height || 480}
                 className="w-full max-h-64 rounded-[14px] border border-[var(--border)] bg-[#f7f7fa] object-contain"
               />
             )}
@@ -605,6 +607,8 @@ export function ImageConverterTool() {
           <img
             src={result.previewUrl}
             alt={`Converted preview ${result.fileName}`}
+            width={result.width}
+            height={result.height}
             className="max-h-56 w-full rounded-[10px] bg-[#f7f7fa] object-contain"
           />
           <dl className="space-y-2 text-xs">
@@ -879,6 +883,8 @@ export function ImageResizerTool() {
           <img
             src={result.previewUrl}
             alt={`Resized preview ${result.fileName}`}
+            width={result.width}
+            height={result.height}
             className="max-h-56 w-full rounded-[10px] bg-[#f7f7fa] object-contain"
           />
           <dl className="space-y-2 text-xs">
@@ -1087,6 +1093,8 @@ export function ImageCompressorTool() {
           <img
             src={result.previewUrl}
             alt={`Compressed preview ${result.fileName}`}
+            width={result.width}
+            height={result.height}
             className="max-h-56 w-full rounded-[10px] bg-[#f7f7fa] object-contain"
           />
           <dl className="space-y-2 text-xs">
